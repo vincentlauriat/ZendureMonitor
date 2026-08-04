@@ -88,6 +88,18 @@
     "Général" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "General" } } }
     },
+    "Historique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "History" } } }
+    },
+    "%lld derniers jours" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Last %lld days" } } }
+    },
+    "Total : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Total: %@" } } }
+    },
+    "L'historique se construira jour après jour." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "History will build up day after day." } } }
+    },
     "Hôte de secours" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fallback host" } } }
     },
