@@ -18,7 +18,7 @@ struct MenuView: View {
                 solarCard(state)
                 batteryCard(state)
                 flowsCard(state)
-                footer(text: "Mis à jour à \(state.updatedAt.formatted(date: .omitted, time: .standard))")
+                footer(updatedAt: state.updatedAt)
             } else {
                 MetricCard(title: "Pas de données", systemImage: "sun.max.trianglebadge.exclamationmark") {
                     Text(monitor.lastError ?? "Connexion au SolarFlow en cours…")
@@ -26,7 +26,7 @@ struct MenuView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                footer(text: nil)
+                footer(updatedAt: nil)
             }
         }
         .padding(12)
@@ -121,7 +121,7 @@ struct MenuView: View {
         }
     }
 
-    private func footer(text: String?) -> some View {
+    private func footer(updatedAt: Date?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             if monitor.usingFallback {
                 Label("Connecté via l'hôte de secours", systemImage: "network")
@@ -135,8 +135,8 @@ struct MenuView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             HStack {
-                if let text {
-                    Text(text)
+                if let updatedAt {
+                    Text("Mis à jour à \(updatedAt.formatted(date: .omitted, time: .standard))")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -165,8 +165,8 @@ struct MenuView: View {
     }
 
     private func flowSubtext(_ state: DeviceState) -> String? {
-        if state.batteryFlow > 5 { return "charge" }
-        if state.batteryFlow < -5 { return "décharge" }
+        if state.batteryFlow > 5 { return String(localized: "charge") }
+        if state.batteryFlow < -5 { return String(localized: "décharge") }
         return nil
     }
 }

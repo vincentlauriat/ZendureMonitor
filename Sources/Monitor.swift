@@ -1,6 +1,29 @@
+import AppKit
 import Foundation
 import SwiftUI
 import UserNotifications
+
+/// Thème d'apparence choisi par l'utilisateur.
+enum AppearanceMode: String, CaseIterable, Identifiable {
+    case auto, dark, light
+    var id: String { rawValue }
+
+    var label: LocalizedStringKey {
+        switch self {
+        case .auto: return "Auto"
+        case .dark: return "Sombre"
+        case .light: return "Clair"
+        }
+    }
+
+    func apply() {
+        switch self {
+        case .auto: NSApp.appearance = nil
+        case .dark: NSApp.appearance = NSAppearance(named: .darkAqua)
+        case .light: NSApp.appearance = NSAppearance(named: .aqua)
+        }
+    }
+}
 
 @MainActor
 final class Monitor: ObservableObject {
@@ -47,6 +70,12 @@ final class Monitor: ObservableObject {
     @Published var lowSocThreshold: Double {
         didSet { UserDefaults.standard.set(lowSocThreshold, forKey: "lowSocThreshold") }
     }
+    @Published var appearance: AppearanceMode {
+        didSet {
+            UserDefaults.standard.set(appearance.rawValue, forKey: "appearanceMode")
+            appearance.apply()
+        }
+    }
 
     private var pollTask: Task<Void, Never>?
     private let session: URLSession
@@ -72,10 +101,13 @@ final class Monitor: ObservableObject {
         let threshold = defaults.double(forKey: "lowSocThreshold")
         lowSocThreshold = threshold > 0 ? threshold : 15
 
+        appearance = AppearanceMode(rawValue: defaults.string(forKey: "appearanceMode") ?? "auto") ?? .auto
+
         energyDay = Self.dayKey(.now)
         energyTodayWh = defaults.double(forKey: "energyWh-\(energyDay)")
 
         if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
+        appearance.apply()
         restart()
     }
 
@@ -169,8 +201,9 @@ final class Monitor: ObservableObject {
         if soc <= lowSocThreshold, !lowSocNotified {
             lowSocNotified = true
             let content = UNMutableNotificationContent()
-            content.title = "Batterie SolarFlow faible"
-            content.body = "Niveau de charge : \(Int(soc)) % (seuil : \(Int(lowSocThreshold)) %)."
+            content.title = String(localized: "Batterie SolarFlow faible")
+            content.body = String(localized: "Niveau de charge :") + " \(Int(soc)) % ("
+                + String(localized: "seuil") + " : \(Int(lowSocThreshold)) %)"
             content.sound = .default
             UNUserNotificationCenter.current().add(
                 UNNotificationRequest(identifier: "low-soc", content: content, trigger: nil)
