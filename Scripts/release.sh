@@ -63,15 +63,29 @@ echo "→ Staging to $STAGING_DIR"
 ditto --norsrc --noextattr --noacl "$APP" "$STAGING"
 
 # Apple's timestamp server is intermittently flaky — retry up to 5 times.
+# Optional 2nd arg: entitlements file (app + widget have different ones).
 codesign_ts() {
-  local target="$1" attempt
+  local target="$1" entitlements="${2:-}" attempt
+  local args=(--force --options runtime --timestamp --sign "$SIGNING_IDENTITY")
+  [ -n "$entitlements" ] && args+=(--entitlements "$entitlements")
   for attempt in 1 2 3 4 5; do
-    codesign --force --options runtime --timestamp --sign "$SIGNING_IDENTITY" "$target" && return 0
+    codesign "${args[@]}" "$target" && return 0
     [ "$attempt" -lt 5 ] && { echo "  ↻ codesign failed ($attempt/5), retry in 5s…"; sleep 5; }
   done
   echo "✗ codesign $target failed after 5 attempts" >&2
   return 1
 }
+
+# Extensions (.appex) are signed BEFORE the app that contains them, each with
+# its own entitlements (sandbox + App Group — mandatory for app extensions).
+if [ -d "$STAGING/Contents/PlugIns" ]; then
+  for appex in "$STAGING/Contents/PlugIns/"*.appex; do
+    [ -e "$appex" ] || continue
+    name="$(basename "$appex" .appex)"
+    echo "→ Codesigning $name.appex"
+    codesign_ts "$appex" "$ROOT/$name/$name.entitlements"
+  done
+fi
 
 echo "→ Codesigning Sparkle.framework nested binaries (deepest first)"
 SPARKLE_FW="$STAGING/Contents/Frameworks/Sparkle.framework"
@@ -83,7 +97,7 @@ codesign_ts "$SPARKLE_VER/Updater.app"
 codesign_ts "$SPARKLE_FW"
 
 echo "→ Codesigning the app itself with Developer ID + Hardened Runtime"
-codesign_ts "$STAGING"
+codesign_ts "$STAGING" "$ROOT/ZendureMonitor.entitlements"
 codesign --verify --strict --deep "$STAGING"
 
 # 5. Package as DMG (app + /Applications alias)

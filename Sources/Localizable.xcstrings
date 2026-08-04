@@ -88,6 +88,54 @@
     "Général" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "General" } } }
     },
+    "Contrôle" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Control" } } }
+    },
+    "Contrôle de la batterie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery control" } } }
+    },
+    "⚠️ Ces commandes pilotent réellement la batterie (POST /properties/write)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "⚠️ These commands actually drive the battery (POST /properties/write)." } } }
+    },
+    "Mode AC" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "AC mode" } } }
+    },
+    "Charge (depuis le secteur)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge (from grid)" } } }
+    },
+    "Décharge (vers la maison)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Discharge (to home)" } } }
+    },
+    "Appliquer le mode" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply mode" } } }
+    },
+    "Limite de sortie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Output limit" } } }
+    },
+    "Appliquer la limite de sortie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply output limit" } } }
+    },
+    "Limite de charge" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge limit" } } }
+    },
+    "Appliquer la limite de charge" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply charge limit" } } }
+    },
+    "Commande envoyée." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Command sent." } } }
+    },
+    "Exporter l'historique en CSV" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Export history as CSV" } } }
+    },
+    "Production, batterie et énergie du jour." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Production, battery and today's energy." } } }
+    },
+    "Ouvrez Zendure Monitor" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open Zendure Monitor" } } }
+    },
+    "Conteneur partagé indisponible" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Shared container unavailable" } } }
+    },
     "Historique" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "History" } } }
     },

@@ -10,8 +10,8 @@ packages:
     from: 2.9.1
 settings:
   base:
-    MARKETING_VERSION: "1.2.0"
-    CURRENT_PROJECT_VERSION: 3
+    MARKETING_VERSION: "1.3.0"
+    CURRENT_PROJECT_VERSION: 4
     SWIFT_VERSION: "5.9"
 targets:
   ZendureMonitor:
@@ -21,6 +21,8 @@ targets:
       - Sources
     dependencies:
       - package: Sparkle
+      - target: ZendureWidget
+        embed: true
     info:
       path: Info.plist
       properties:
@@ -44,5 +46,34 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.lauriat.ZendureMonitor
         CODE_SIGN_STYLE: Automatic
+        CODE_SIGN_ENTITLEMENTS: ZendureMonitor.entitlements
         ENABLE_HARDENED_RUNTIME: YES
         DEAD_CODE_STRIPPING: YES
+
+  # L'extension widget est obligatoirement sandboxée (contrainte macOS) alors
+  # que l'app ne l'est pas : elle ne parle pas au SolarFlow elle-même, elle
+  # relit l'instantané que l'app dépose dans le conteneur App Group partagé.
+  ZendureWidget:
+    type: app-extension
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - path: Sources/Shared
+      - path: Sources/Localizable.xcstrings
+      - path: ZendureWidget
+        excludes:
+          - "**/*.entitlements"
+    info:
+      path: ZendureWidget/Info.plist
+      properties:
+        CFBundleDevelopmentRegion: fr
+        CFBundleDisplayName: Zendure Monitor
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_NAME: ZendureWidget
+        PRODUCT_BUNDLE_IDENTIFIER: fr.lauriat.ZendureMonitor.widget
+        CODE_SIGN_ENTITLEMENTS: ZendureWidget/ZendureWidget.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        SKIP_INSTALL: YES

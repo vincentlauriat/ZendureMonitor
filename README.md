@@ -12,6 +12,8 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
+New in 1.3: a **macOS widget** (small/medium), a **battery control tab** (AC mode, output/charge limits via `POST /properties/write`) and **CSV export** of the production history.
+
 Options: choose what the menu bar shows (solar W, battery %, home W — or icon only), launch at login, low-battery notification with a configurable threshold, theme override (auto/dark/light), and an optional fallback host for remote access over a VPN. UI localized in **French and English**.
 
 ## Screenshots
@@ -157,6 +159,7 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.0 — live production in the menu bar, local zenSDK polling, Bonjour discovery, Sparkle auto-update
 - [x] v1.1 — trend graphs: metric cards with sparklines (solar, home, battery flow) and a battery ring gauge
 - [x] v1.2 — menu bar display options, launch at login, low-battery alert, today's energy counter, per-pack details, VPN fallback host
+- [x] v1.3 — macOS widget (App Group snapshot), battery control tab (`POST /properties/write`), CSV export of the history
 - [x] v1.2 — multi-day production history (daily kWh bar chart)
 
 ## Acknowledgements

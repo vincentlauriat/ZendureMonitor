@@ -2,6 +2,7 @@ import AppKit
 import Foundation
 import SwiftUI
 import UserNotifications
+import WidgetKit
 
 /// Thème d'apparence choisi par l'utilisateur.
 enum AppearanceMode: String, CaseIterable, Identifiable {
@@ -92,6 +93,9 @@ final class Monitor: ObservableObject {
     private var lastSampleAt: Date?
     private var energyDay: String
     private var lowSocNotified = false
+    /// Host of the last successful poll — control commands go there.
+    private var activeHost: String?
+    private var lastWidgetReload: Date = .distantPast
 
     init() {
         let config = URLSessionConfiguration.ephemeral
@@ -143,6 +147,7 @@ final class Monitor: ObservableObject {
             append(fresh.batteryFlow, to: &flowHistory)
             accumulateEnergy(solarPower: fresh.solarInputPower, at: fresh.updatedAt)
             checkLowSoc(fresh)
+            publishWidgetSnapshot(fresh)
         } catch {
             // Keep the last known values visible, but flag the problem.
             lastError = error.localizedDescription
@@ -163,12 +168,66 @@ final class Monitor: ObservableObject {
 
     private func fetchWithFallback() async throws -> (DeviceState, viaFallback: Bool) {
         do {
-            return (try await fetchReport(host: host), false)
+            let state = try await fetchReport(host: host)
+            activeHost = host
+            return (state, false)
         } catch {
             let fallback = fallbackHost.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !fallback.isEmpty else { throw error }
-            return (try await fetchReport(host: fallback), true)
+            let state = try await fetchReport(host: fallback)
+            activeHost = fallback
+            return (state, true)
         }
+    }
+
+    // MARK: - Control (POST /properties/write)
+
+    /// Sends a control command to the device. ⚠️ This drives the real battery.
+    func writeProperties(_ properties: [String: Any]) async throws {
+        guard let sn = state?.serialNumber else { throw ZendureError.noHost }
+        let target = (activeHost ?? host).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !target.isEmpty, let url = URL(string: "http://\(target)/properties/write") else {
+            throw ZendureError.noHost
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["sn": sn, "properties": properties])
+        let (_, response) = try await session.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+            throw ZendureError.badResponse(http.statusCode)
+        }
+        await refresh()
+    }
+
+    // MARK: - Widget
+
+    private func publishWidgetSnapshot(_ state: DeviceState) {
+        WidgetSnapshotStore.write(WidgetSnapshot(
+            capturedAt: state.updatedAt,
+            solarInputPower: state.solarInputPower,
+            electricLevel: state.electricLevel,
+            outputHomePower: state.outputHomePower,
+            batteryFlow: state.batteryFlow,
+            energyTodayWh: energyTodayWh,
+            solarHistory: Array(solarHistory.suffix(24))
+        ))
+        // Widgets refresh on their own timeline; a reload every 2 min keeps
+        // them reasonably fresh without hammering WidgetKit's budget.
+        if Date.now.timeIntervalSince(lastWidgetReload) >= 120 {
+            lastWidgetReload = .now
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    // MARK: - CSV export
+
+    /// CSV of every stored day (up to 90), oldest first: `date,wh`.
+    func historyCSV() -> String {
+        let all = collectDailyEnergy()
+        var lines = ["date,wh"]
+        lines += all.map { "\($0.day),\(Int($0.wh.rounded()))" }
+        return lines.joined(separator: "\n") + "\n"
     }
 
     private func fetchReport(host: String) async throws -> DeviceState {
@@ -208,9 +267,8 @@ final class Monitor: ObservableObject {
         }
     }
 
-    /// Rebuilds the daily history from UserDefaults, keeping the last 14 days
-    /// for display and pruning entries older than 90 days.
-    private func reloadDailyEnergy() {
+    /// All stored days (≤ 90, pruned), oldest first.
+    private func collectDailyEnergy() -> [DayEnergy] {
         let defaults = UserDefaults.standard
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -228,7 +286,12 @@ final class Monitor: ObservableObject {
             let wh = (value as? Double) ?? (value as? NSNumber)?.doubleValue ?? 0
             days.append(DayEnergy(day: dayString, date: date, wh: wh))
         }
-        dailyEnergy = Array(days.sorted { $0.date < $1.date }.suffix(14))
+        return days.sorted { $0.date < $1.date }
+    }
+
+    /// Rebuilds the history card data (last 14 days).
+    private func reloadDailyEnergy() {
+        dailyEnergy = Array(collectDailyEnergy().suffix(14))
     }
 
     private static func dayKey(_ date: Date) -> String {

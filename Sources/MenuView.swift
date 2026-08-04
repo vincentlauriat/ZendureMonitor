@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// Panneau principal, style MacInside : cartes MetricCard avec jauge circulaire
 /// pour la batterie et sparklines pour les tendances.
@@ -137,6 +138,14 @@ struct MenuView: View {
                         Text("Total : \(Format.kilowattHours(total))")
                             .font(.caption2.monospacedDigit())
                             .foregroundStyle(.secondary)
+                        Button {
+                            exportCSV()
+                        } label: {
+                            Image(systemName: "square.and.arrow.up")
+                        }
+                        .buttonStyle(.borderless)
+                        .font(.caption)
+                        .help(Text("Exporter l'historique en CSV"))
                     }
                 } else {
                     Text("L'historique se construira jour après jour.")
@@ -144,6 +153,16 @@ struct MenuView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+        }
+    }
+
+    private func exportCSV() {
+        let panel = NSSavePanel()
+        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.nameFieldStringValue = "zendure-production.csv"
+        NSApp.activate(ignoringOtherApps: true)
+        if panel.runModal() == .OK, let url = panel.url {
+            try? monitor.historyCSV().write(to: url, atomically: true, encoding: .utf8)
         }
     }
 

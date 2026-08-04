@@ -15,6 +15,8 @@ struct SettingsView: View {
                 .tabItem { Label("Général", systemImage: "gearshape") }
             NotificationSettingsTab()
                 .tabItem { Label("Notifications", systemImage: "bell.badge") }
+            ControlSettingsTab()
+                .tabItem { Label("Contrôle", systemImage: "slider.horizontal.3") }
             RemoteSettingsTab()
                 .tabItem { Label("Distant", systemImage: "network") }
         }
@@ -190,6 +192,98 @@ private struct NotificationSettingsTab: View {
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+// MARK: - Contrôle
+
+private struct ControlSettingsTab: View {
+    @EnvironmentObject var monitor: Monitor
+    @State private var acMode = 2
+    @State private var outputLimit: Double = 800
+    @State private var inputLimit: Double = 1200
+    @State private var seeded = false
+    @State private var sending = false
+    @State private var status: String?
+    @State private var statusOK = false
+
+    var body: some View {
+        Form {
+            Section("Contrôle de la batterie") {
+                Text("⚠️ Ces commandes pilotent réellement la batterie (POST /properties/write).")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Picker("Mode AC", selection: $acMode) {
+                    Text("Charge (depuis le secteur)").tag(1)
+                    Text("Décharge (vers la maison)").tag(2)
+                }
+                HStack {
+                    Spacer()
+                    Button("Appliquer le mode") { send(["acMode": acMode]) }
+                        .disabled(sending || monitor.state == nil)
+                }
+
+                VStack(alignment: .leading) {
+                    Slider(value: $outputLimit, in: 0...2400, step: 50) {
+                        Text("Limite de sortie")
+                    }
+                    HStack {
+                        Text(verbatim: "\(Int(outputLimit)) W").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Appliquer la limite de sortie") { send(["outputLimit": Int(outputLimit)]) }
+                            .disabled(sending || monitor.state == nil)
+                    }
+                }
+
+                VStack(alignment: .leading) {
+                    Slider(value: $inputLimit, in: 0...2400, step: 100) {
+                        Text("Limite de charge")
+                    }
+                    HStack {
+                        Text(verbatim: "\(Int(inputLimit)) W").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Appliquer la limite de charge") { send(["inputLimit": Int(inputLimit)]) }
+                            .disabled(sending || monitor.state == nil)
+                    }
+                }
+
+                if let status {
+                    Label(status, systemImage: statusOK ? "checkmark.circle" : "xmark.circle")
+                        .foregroundStyle(statusOK ? .green : .red)
+                        .font(.callout)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .onAppear { seedFromDevice() }
+    }
+
+    /// Pré-remplit les contrôles avec les valeurs actuelles du device (une fois).
+    private func seedFromDevice() {
+        guard !seeded, let state = monitor.state else { return }
+        seeded = true
+        if let mode = state.acMode, mode == 1 || mode == 2 { acMode = mode }
+        if let output = state.outputLimit { outputLimit = min(max(output, 0), 2400) }
+        if let input = state.inputLimit { inputLimit = min(max(input, 0), 2400) }
+    }
+
+    private func send(_ properties: [String: Any]) {
+        sending = true
+        status = nil
+        Task {
+            do {
+                try await monitor.writeProperties(properties)
+                statusOK = true
+                status = String(localized: "Commande envoyée.")
+            } catch {
+                statusOK = false
+                status = error.localizedDescription
+            }
+            sending = false
+        }
     }
 }
 
