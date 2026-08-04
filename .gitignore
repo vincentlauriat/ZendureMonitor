@@ -1,0 +1,20 @@
+# Claude session docs
+COMMANDS.md
+MEMORY.md
+CHANGES.md
+TODOS.md
+PLAN.md
+
+# Build
+build/
+DerivedData/
+*.xcodeproj
+*.dmg
+*.zip
+.sparkle-tools/
+
+# macOS
+.DS_Store
+
+# OMC
+.omc/
