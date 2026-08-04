@@ -157,7 +157,7 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.0 — live production in the menu bar, local zenSDK polling, Bonjour discovery, Sparkle auto-update
 - [x] v1.1 — trend graphs: metric cards with sparklines (solar, home, battery flow) and a battery ring gauge
 - [x] v1.2 — menu bar display options, launch at login, low-battery alert, today's energy counter, per-pack details, VPN fallback host
-- [ ] Multi-day production history charts
+- [x] v1.2 — multi-day production history (daily kWh bar chart)
 
 ## Acknowledgements
 
