@@ -1,5 +1,19 @@
 import Foundation
 
+/// One physical battery pack, from the `packData` array of the report.
+struct PackInfo: Identifiable, Equatable {
+    var id: String { serialNumber }
+    var serialNumber: String
+    var socLevel: Double?      // %
+    var temperature: Double?   // °C (report gives 0.1 K)
+    var power: Double?         // W
+
+    /// `maxTemp` arrives in tenths of kelvin (e.g. 3081 → 35 °C).
+    static func celsius(fromTenthsKelvin raw: Double) -> Double {
+        raw / 10.0 - 273.15
+    }
+}
+
 /// Snapshot of the SolarFlow device, parsed from `GET /properties/report` (zenSDK local API).
 struct DeviceState {
     var solarInputPower: Double = 0      // W — total PV input
@@ -10,6 +24,7 @@ struct DeviceState {
     var packInputPower: Double = 0       // W — battery discharge
     var outputPackPower: Double = 0      // W — battery charge
     var serialNumber: String?
+    var packs: [PackInfo] = []
     var updatedAt: Date = .now
 
     /// Positive = charging, negative = discharging.
@@ -35,6 +50,17 @@ enum ZendureParser {
         state.outputPackPower = number(props["outputPackPower"]) ?? 0
         state.serialNumber = (root["sn"] as? String) ?? (props["sn"] as? String)
         state.solarChannels = (1...6).compactMap { number(props["solarPower\($0)"]) }
+        if let packData = root["packData"] as? [[String: Any]] {
+            state.packs = packData.compactMap { pack in
+                guard let sn = pack["sn"] as? String else { return nil }
+                return PackInfo(
+                    serialNumber: sn,
+                    socLevel: number(pack["socLevel"]),
+                    temperature: number(pack["maxTemp"]).map(PackInfo.celsius(fromTenthsKelvin:)),
+                    power: number(pack["power"])
+                )
+            }
+        }
         state.updatedAt = .now
         return state
     }
