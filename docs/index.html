@@ -56,14 +56,13 @@
   .btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
   .fineprint { color: var(--muted); font-size: .88rem; }
 
-  .shots { display: grid; grid-template-columns: 1fr; gap: 22px; margin-top: 48px; }
+  .shot { margin: 48px auto 0; max-width: 360px; }
   .shot img {
     display: block; width: 100%; height: auto;
     border-radius: 14px; border: 1px solid var(--border);
     box-shadow: 0 20px 60px rgba(0,0,0,.55);
   }
-  .shot figcaption { color: var(--muted); font-size: .85rem; margin-top: 10px; text-align: center; }
-  .shots.pair { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
+  .shot figcaption { color: var(--muted); font-size: .88rem; margin-top: 14px; text-align: center; }
 
   section { padding: 60px 0 8px; }
   h2 { font-size: 1.7rem; margin-bottom: 8px; letter-spacing: -.01em; }
@@ -149,12 +148,10 @@
   </div>
   <p class="fineprint">Free &amp; open source (MIT) · macOS 14+ · signed &amp; notarized DMG · Sparkle auto-updates · 100% local</p>
 
-  <div class="shots">
-    <figure class="shot">
-      <img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: solar production, battery state of charge with a ring gauge, output to the home, grid input and per-MPPT PV detail">
-      <figcaption>Click the menu bar item for the full picture — production, state of charge, energy flows and per-MPPT detail.</figcaption>
-    </figure>
-  </div>
+  <figure class="shot">
+    <img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: solar production, battery state of charge with a ring gauge, output to the home, grid input and per-MPPT PV detail">
+    <figcaption>Click the menu bar item for the full picture — production, state of charge, energy flows and per-MPPT detail.</figcaption>
+  </figure>
 </header>
 
 <section class="wrap">
@@ -248,19 +245,13 @@
 </section>
 
 <section class="wrap">
-  <h2>Both themes, natively</h2>
-  <div class="shots pair">
-    <figure class="shot">
-      <img src="panel-dark.png" alt="The Zendure Monitor panel rendered in the macOS dark theme">
-      <figcaption>Dark</figcaption>
-    </figure>
-    <figure class="shot">
-      <img src="panel-light.png" alt="The Zendure Monitor panel rendered in the macOS light theme">
-      <figcaption>Light</figcaption>
-    </figure>
-  </div>
-  <p class="lead" style="margin-top:22px">The panel follows the system appearance, and you can pin it
-  to dark or light if you'd rather it didn't.</p>
+  <h2>Light appearance too</h2>
+  <p class="lead">The panel follows the system appearance — and you can pin it to dark or light if
+  you'd rather it didn't follow along.</p>
+  <figure class="shot" style="margin-top:24px">
+    <img src="panel-light.png" alt="The same Zendure Monitor panel rendered in the macOS light theme">
+    <figcaption>The same panel, with the system set to light.</figcaption>
+  </figure>
 </section>
 
 <footer>
