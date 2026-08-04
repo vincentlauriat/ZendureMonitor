@@ -28,6 +28,12 @@ struct DeviceState {
     var acMode: Int?                     // 1 = charge secteur, 2 = injection
     var inputLimit: Double?              // W — plafond de charge AC
     var outputLimit: Double?             // W — plafond de sortie
+    var deviceTemperature: Double?       // °C (hyperTmp, 0.1 K)
+    var remainOutMinutes: Double?        // min — autonomie estimée en décharge
+    var rssi: Double?                    // dBm — signal WiFi du device
+    var batteryVoltage: Double?          // V (BatVolt, 0.01 V)
+    var socMax: Double?                  // % — plafond de charge (socSet, 0.1 %)
+    var socMin: Double?                  // % — plancher de décharge (minSoc, 0.1 %)
     var updatedAt: Date = .now
 
     /// Positive = charging, negative = discharging.
@@ -56,6 +62,13 @@ enum ZendureParser {
         state.acMode = number(props["acMode"]).map(Int.init)
         state.inputLimit = number(props["inputLimit"])
         state.outputLimit = number(props["outputLimit"])
+        state.deviceTemperature = number(props["hyperTmp"]).map { $0 / 10.0 - 273.15 }
+        // remainOutTime vaut 59940 quand l'estimation est indisponible (batterie à l'arrêt).
+        state.remainOutMinutes = number(props["remainOutTime"]).flatMap { $0 >= 59940 ? nil : $0 }
+        state.rssi = number(props["rssi"])
+        state.batteryVoltage = number(props["BatVolt"]).map { $0 / 100.0 }
+        state.socMax = number(props["socSet"]).map { $0 / 10.0 }
+        state.socMin = number(props["minSoc"]).map { $0 / 10.0 }
         if let packData = root["packData"] as? [[String: Any]] {
             state.packs = packData.compactMap { pack in
                 guard let sn = pack["sn"] as? String else { return nil }

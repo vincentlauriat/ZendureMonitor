@@ -17,6 +17,8 @@ final class DeviceDiscovery: NSObject, ObservableObject {
 
     @Published var devices: [Found] = []
     @Published var isSearching = false
+    /// True après la fin d'un scan (permet d'afficher « aucun appareil trouvé »).
+    @Published var hasSearched = false
 
     private var browsers: [NetServiceBrowser] = []
     private var pending: [NetService] = []
@@ -41,6 +43,7 @@ final class DeviceDiscovery: NSObject, ObservableObject {
         browsers.forEach { $0.stop() }
         browsers = []
         pending = []
+        if isSearching { hasSearched = true }
         isSearching = false
     }
 }

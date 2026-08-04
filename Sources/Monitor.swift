@@ -44,6 +44,8 @@ final class Monitor: ObservableObject {
     @Published var energyTodayWh: Double = 0
     /// Last days of production (oldest first, today included), for the history card.
     @Published var dailyEnergy: [DayEnergy] = []
+    /// True when the history currently displayed comes from the 24/7 collector.
+    @Published var historyFromServer = false
     /// Historiques glissants pour les sparklines (un point par poll réussi).
     @Published var solarHistory: [Double] = []
     @Published var homeHistory: [Double] = []
@@ -59,6 +61,12 @@ final class Monitor: ObservableObject {
     /// Tailscale/VPN address for remote access).
     @Published var fallbackHost: String {
         didSet { UserDefaults.standard.set(fallbackHost, forKey: "fallbackHost") }
+    }
+    /// Optional 24/7 collector base host:port (Scripts/collector) — when set and
+    /// reachable, the daily history and today's energy come from it instead of
+    /// the local (Mac-uptime-bound) accumulation.
+    @Published var historyServer: String {
+        didSet { UserDefaults.standard.set(historyServer, forKey: "historyServer"); lastServerFetch = .distantPast }
     }
     @Published var pollInterval: Double {
         didSet { UserDefaults.standard.set(pollInterval, forKey: "pollInterval"); restart() }
@@ -96,6 +104,7 @@ final class Monitor: ObservableObject {
     /// Host of the last successful poll — control commands go there.
     private var activeHost: String?
     private var lastWidgetReload: Date = .distantPast
+    private var lastServerFetch: Date = .distantPast
 
     init() {
         let config = URLSessionConfiguration.ephemeral
@@ -106,6 +115,7 @@ final class Monitor: ObservableObject {
         let defaults = UserDefaults.standard
         host = defaults.string(forKey: "deviceHost") ?? ""
         fallbackHost = defaults.string(forKey: "fallbackHost") ?? ""
+        historyServer = defaults.string(forKey: "historyServer") ?? ""
         let saved = defaults.double(forKey: "pollInterval")
         pollInterval = saved >= 2 ? saved : 5
         showSolarInBar = defaults.object(forKey: "showSolarInBar") as? Bool ?? true
@@ -148,6 +158,7 @@ final class Monitor: ObservableObject {
             accumulateEnergy(solarPower: fresh.solarInputPower, at: fresh.updatedAt)
             checkLowSoc(fresh)
             publishWidgetSnapshot(fresh)
+            await refreshHistoryFromServer()
         } catch {
             // Keep the last known values visible, but flag the problem.
             lastError = error.localizedDescription
@@ -240,6 +251,57 @@ final class Monitor: ObservableObject {
             throw ZendureError.badResponse(http.statusCode)
         }
         return try ZendureParser.parse(data)
+    }
+
+    // MARK: - 24/7 collector
+
+    /// Refreshes daily history + today's energy from the optional collector,
+    /// at most once a minute. Silently falls back to local data when absent.
+    private func refreshHistoryFromServer() async {
+        let server = historyServer.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !server.isEmpty else {
+            historyFromServer = false
+            return
+        }
+        guard Date.now.timeIntervalSince(lastServerFetch) >= 60 else { return }
+        lastServerFetch = .now
+
+        struct ServerDay: Decodable { let day: String; let wh: Double }
+        struct ServerToday: Decodable { let day: String; let wh: Double }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+
+        do {
+            guard let dailyURL = URL(string: "http://\(server)/daily?days=90"),
+                  let todayURL = URL(string: "http://\(server)/today") else { return }
+            let (dailyData, _) = try await session.data(from: dailyURL)
+            let (todayData, _) = try await session.data(from: todayURL)
+            let days = try JSONDecoder().decode([ServerDay].self, from: dailyData)
+            let today = try JSONDecoder().decode(ServerToday.self, from: todayData)
+
+            var merged = days.compactMap { entry -> DayEnergy? in
+                guard let date = formatter.date(from: entry.day) else { return nil }
+                return DayEnergy(day: entry.day, date: date, wh: entry.wh)
+            }
+            // Le collecteur peut avoir démarré après l'app : garder le meilleur
+            // des deux mondes pour les jours où l'app a compté davantage.
+            for local in collectDailyEnergy() {
+                if let index = merged.firstIndex(where: { $0.day == local.day }) {
+                    if local.wh > merged[index].wh {
+                        merged[index] = local
+                    }
+                } else {
+                    merged.append(local)
+                }
+            }
+            dailyEnergy = Array(merged.sorted { $0.date < $1.date }.suffix(14))
+            energyTodayWh = max(today.wh, energyTodayWh)
+            historyFromServer = true
+        } catch {
+            historyFromServer = false
+        }
     }
 
     // MARK: - Daily energy
@@ -350,5 +412,11 @@ enum Format {
             return String(format: "%.2f kWh", locale: .current, wh / 1000)
         }
         return "\(Int(wh.rounded())) Wh"
+    }
+
+    static func duration(minutes: Double) -> String {
+        let total = Int(minutes.rounded())
+        if total >= 60 { return "\(total / 60) h \(String(format: "%02d", total % 60))" }
+        return "\(total) min"
     }
 }

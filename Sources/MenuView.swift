@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 struct MenuView: View {
     @EnvironmentObject var monitor: Monitor
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
 
     private let solarColor = Color.yellow
     private let homeColor = Color.blue
@@ -87,7 +88,7 @@ struct MenuView: View {
                               value: state.batteryFlow > 5 ? Format.watts(state.batteryFlow) : "—")
                     LegendRow(color: dischargeColor, label: "Décharge",
                               value: state.batteryFlow < -5 ? Format.watts(-state.batteryFlow) : "—")
-                    SparklineChart(values: monitor.flowHistory, color: state.batteryFlow >= 0 ? chargeColor : dischargeColor)
+                    SparklineChart(values: monitor.flowHistory, color: state.batteryFlow >= 0 ? chargeColor : dischargeColor, baseline: 0)
                         .frame(height: 26)
                 }
             }
@@ -186,6 +187,13 @@ struct MenuView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+                Button {
+                    openWindow(id: "dashboard")
+                    NSApp.activate(ignoringOtherApps: true)
+                } label: {
+                    Label("Tableau de bord", systemImage: "rectangle.grid.2x2")
+                        .labelStyle(.titleOnly)
+                }
                 Button("Réglages…") {
                     openSettings()
                     NSApp.activate(ignoringOtherApps: true)

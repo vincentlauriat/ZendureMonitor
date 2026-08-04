@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>fr.lauriat.zendure-collector</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/python3</string>
+        <string>/Users/vincentlauriat/ZendureCollector/zendure-collector.py</string>
+    </array>
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>ZENDURE_HOST</key>
+        <string>192.168.68.46</string>
+        <key>COLLECTOR_PORT</key>
+        <string>8899</string>
+    </dict>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>StandardOutPath</key>
+    <string>/tmp/zendure-collector.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/zendure-collector.log</string>
+</dict>
+</plist>
