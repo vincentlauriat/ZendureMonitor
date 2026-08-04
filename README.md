@@ -10,7 +10,9 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 ☀️ 842 W          ← in your menu bar, refreshed every 5 s
 ```
 
-Click the icon for the details: battery state of charge, charge/discharge power, output to home, grid input, and per-MPPT PV input.
+Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
+
+Options: choose what the menu bar shows (solar W, battery %, home W — or icon only), launch at login, low-battery notification with a configurable threshold, and an optional fallback host for remote access over a VPN.
 
 ## Supported hardware
 
@@ -122,6 +124,16 @@ xcrun stapler validate ZendureMonitor-<v>.dmg
 codesign --verify --deep --strict ZendureMonitor.app
 ```
 
+## Remote access (away from home)
+
+The zenSDK API only exists on your LAN, and it has **no authentication** — so **never port-forward the device's port 80 to the internet**. The safe pattern is a VPN into your home network:
+
+1. Run [Tailscale](https://tailscale.com) (or WireGuard) on a machine that stays home (a Mac, a NAS, a Raspberry Pi, a router) and enable **subnet routing** for your LAN (e.g. `192.168.68.0/24`), or use the Zendure's IP through the tunnel.
+2. Install Tailscale on your Mac; when away, the SolarFlow's LAN IP stays reachable through the tunnel.
+3. In Zendure Monitor → *Réglages* → *Accès distant*, set the reachable address as **fallback host**. The app polls the primary (local) address first and switches to the fallback automatically when the primary doesn't answer.
+
+Alternative for Home Assistant users: keep HA as the single LAN client of the device (e.g. [Zendure-HA-zenSDK](https://github.com/Gielz1986/Zendure-HA-zenSDK)) and access HA remotely; this app remains the local, zero-dependency companion.
+
 ## Build from source
 
 ```bash
@@ -138,9 +150,8 @@ open build/Build/Products/Debug/ZendureMonitor.app
 
 - [x] v1.0 — live production in the menu bar, local zenSDK polling, Bonjour discovery, Sparkle auto-update
 - [x] v1.1 — trend graphs: metric cards with sparklines (solar, home, battery flow) and a battery ring gauge
-- [ ] Daily production history (persisted)
-- [ ] Launch at login toggle
-- [ ] Low-battery alert
+- [x] v1.2 — menu bar display options, launch at login, low-battery alert, today's energy counter, per-pack details, VPN fallback host
+- [ ] Multi-day production history charts
 
 ## Acknowledgements
 

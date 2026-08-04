@@ -38,10 +38,20 @@ struct MenuView: View {
     private func solarCard(_ state: DeviceState) -> some View {
         MetricCard(title: "Production solaire", systemImage: "sun.max.fill") {
             VStack(alignment: .leading, spacing: 10) {
-                Text(Format.watts(state.solarInputPower))
-                    .font(.system(.title, design: .rounded).weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(state.solarInputPower > 0 ? .primary : .secondary)
+                HStack(alignment: .firstTextBaseline) {
+                    Text(Format.watts(state.solarInputPower))
+                        .font(.system(.title, design: .rounded).weight(.semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(state.solarInputPower > 0 ? .primary : .secondary)
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 0) {
+                        Text(Format.kilowattHours(monitor.energyTodayWh))
+                            .font(.callout.monospacedDigit())
+                        Text("aujourd'hui")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
                 SparklineChart(values: monitor.solarHistory, color: solarColor)
                     .frame(height: 36)
@@ -79,7 +89,25 @@ struct MenuView: View {
                         .frame(height: 26)
                 }
             }
+            if !state.packs.isEmpty {
+                VStack(spacing: 4) {
+                    ForEach(Array(state.packs.enumerated()), id: \.element.id) { index, pack in
+                        LegendRow(color: .teal,
+                                  label: "Pack \(index + 1)",
+                                  value: packSummary(pack))
+                    }
+                }
+                .padding(.top, 6)
+            }
         }
+    }
+
+    private func packSummary(_ pack: PackInfo) -> String {
+        var parts: [String] = []
+        if let soc = pack.socLevel { parts.append("\(Int(soc)) %") }
+        if let temp = pack.temperature { parts.append("\(Int(temp.rounded())) °C") }
+        if let power = pack.power, abs(power) > 5 { parts.append(Format.watts(power)) }
+        return parts.isEmpty ? "—" : parts.joined(separator: " · ")
     }
 
     private func flowsCard(_ state: DeviceState) -> some View {
@@ -95,6 +123,11 @@ struct MenuView: View {
 
     private func footer(text: String?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
+            if monitor.usingFallback {
+                Label("Connecté via l'hôte de secours", systemImage: "network")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
             if monitor.state != nil, let error = monitor.lastError {
                 Label(error, systemImage: "exclamationmark.triangle")
                     .font(.caption)
