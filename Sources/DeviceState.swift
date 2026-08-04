@@ -25,6 +25,9 @@ struct DeviceState {
     var outputPackPower: Double = 0      // W — battery charge
     var serialNumber: String?
     var packs: [PackInfo] = []
+    var acMode: Int?                     // 1 = charge secteur, 2 = injection
+    var inputLimit: Double?              // W — plafond de charge AC
+    var outputLimit: Double?             // W — plafond de sortie
     var updatedAt: Date = .now
 
     /// Positive = charging, negative = discharging.
@@ -50,6 +53,9 @@ enum ZendureParser {
         state.outputPackPower = number(props["outputPackPower"]) ?? 0
         state.serialNumber = (root["sn"] as? String) ?? (props["sn"] as? String)
         state.solarChannels = (1...6).compactMap { number(props["solarPower\($0)"]) }
+        state.acMode = number(props["acMode"]).map(Int.init)
+        state.inputLimit = number(props["inputLimit"])
+        state.outputLimit = number(props["outputLimit"])
         if let packData = root["packData"] as? [[String: Any]] {
             state.packs = packData.compactMap { pack in
                 guard let sn = pack["sn"] as? String else { return nil }
