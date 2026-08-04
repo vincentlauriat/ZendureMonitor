@@ -87,6 +87,8 @@ Pure Swift / SwiftUI, no third-party dependency besides Sparkle. Generated with 
 ```
 Sources/
   ZendureMonitorApp.swift   @main — MenuBarExtra (LSUIElement agent app) + Settings scene
+  Components/               reusable card/gauge/sparkline views (Swift Charts), shared
+                            design language with the MacInside app
   Monitor.swift             @MainActor ObservableObject: async polling loop (2–60 s,
                             URLSession, 5 s timeout), UserDefaults persistence, W/kW formatting
   DeviceState.swift         zenSDK payload model + tolerant JSONSerialization parser
@@ -135,7 +137,8 @@ open build/Build/Products/Debug/ZendureMonitor.app
 ## Roadmap
 
 - [x] v1.0 — live production in the menu bar, local zenSDK polling, Bonjour discovery, Sparkle auto-update
-- [ ] Daily production history / sparkline
+- [x] v1.1 — trend graphs: metric cards with sparklines (solar, home, battery flow) and a battery ring gauge
+- [ ] Daily production history (persisted)
 - [ ] Launch at login toggle
 - [ ] Low-battery alert
 
