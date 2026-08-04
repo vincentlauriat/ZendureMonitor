@@ -1,0 +1,65 @@
+import Foundation
+
+/// Snapshot of the SolarFlow device, parsed from `GET /properties/report` (zenSDK local API).
+struct DeviceState {
+    var solarInputPower: Double = 0      // W — total PV input
+    var solarChannels: [Double] = []     // W — per-MPPT (solarPower1…6)
+    var electricLevel: Double?           // % — average SOC
+    var outputHomePower: Double = 0      // W — output to home
+    var gridInputPower: Double = 0       // W — grid input (AC charging)
+    var packInputPower: Double = 0       // W — battery discharge
+    var outputPackPower: Double = 0      // W — battery charge
+    var serialNumber: String?
+    var updatedAt: Date = .now
+
+    /// Positive = charging, negative = discharging.
+    var batteryFlow: Double { outputPackPower - packInputPower }
+}
+
+enum ZendureParser {
+    /// Parses a `/properties/report` payload. The report nests values under
+    /// `properties` on current firmwares, but older ones return them flat —
+    /// both shapes are accepted, and numbers may arrive as Int, Double or String.
+    static func parse(_ data: Data) throws -> DeviceState {
+        guard let root = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw ZendureError.badPayload
+        }
+        let props = (root["properties"] as? [String: Any]) ?? root
+
+        var state = DeviceState()
+        state.solarInputPower = number(props["solarInputPower"]) ?? 0
+        state.electricLevel = number(props["electricLevel"]) ?? number(props["socLevel"])
+        state.outputHomePower = number(props["outputHomePower"]) ?? 0
+        state.gridInputPower = number(props["gridInputPower"]) ?? 0
+        state.packInputPower = number(props["packInputPower"]) ?? 0
+        state.outputPackPower = number(props["outputPackPower"]) ?? 0
+        state.serialNumber = (root["sn"] as? String) ?? (props["sn"] as? String)
+        state.solarChannels = (1...6).compactMap { number(props["solarPower\($0)"]) }
+        state.updatedAt = .now
+        return state
+    }
+
+    private static func number(_ value: Any?) -> Double? {
+        switch value {
+        case let d as Double: return d
+        case let i as Int: return Double(i)
+        case let n as NSNumber: return n.doubleValue
+        case let s as String: return Double(s)
+        default: return nil
+        }
+    }
+}
+
+enum ZendureError: LocalizedError {
+    case badPayload
+    case badResponse(Int)
+    case noHost
+
+    var errorDescription: String? {
+        switch self {
+        case .badPayload: return "Réponse du device illisible (JSON inattendu)."
+        case .badResponse(let code): return "Le device a répondu HTTP \(code)."
+        case .noHost: return "Aucune adresse configurée — ouvrez les Réglages."
+        }
+    }
+}
