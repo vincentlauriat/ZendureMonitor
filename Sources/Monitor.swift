@@ -5,6 +5,11 @@ import SwiftUI
 final class Monitor: ObservableObject {
     @Published var state: DeviceState?
     @Published var lastError: String?
+    /// Historiques glissants pour les sparklines (un point par poll réussi).
+    @Published var solarHistory: [Double] = []
+    @Published var homeHistory: [Double] = []
+    @Published var flowHistory: [Double] = []
+    private let historyCapacity = 180
     @Published var host: String {
         didSet {
             UserDefaults.standard.set(host, forKey: "deviceHost")
@@ -45,14 +50,25 @@ final class Monitor: ObservableObject {
 
     func refresh() async {
         do {
-            state = try await fetchReport(host: host)
+            let fresh = try await fetchReport(host: host)
+            state = fresh
             lastError = nil
+            append(fresh.solarInputPower, to: &solarHistory)
+            append(fresh.outputHomePower, to: &homeHistory)
+            append(fresh.batteryFlow, to: &flowHistory)
         } catch {
             // Keep the last known values visible, but flag the problem.
             lastError = error.localizedDescription
             if state == nil || Date.now.timeIntervalSince(state!.updatedAt) > 60 {
                 state = nil
             }
+        }
+    }
+
+    private func append(_ value: Double, to history: inout [Double]) {
+        history.append(value)
+        if history.count > historyCapacity {
+            history.removeFirst(history.count - historyCapacity)
         }
     }
 
