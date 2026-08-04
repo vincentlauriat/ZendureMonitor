@@ -136,6 +136,81 @@
     "Conteneur partagé indisponible" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Shared container unavailable" } } }
     },
+    "Tableau de bord" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dashboard" } } }
+    },
+    "Zendure Monitor — Tableau de bord" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Dashboard" } } }
+    },
+    "Flux d'énergie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Energy flow" } } }
+    },
+    "Soleil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sun" } } }
+    },
+    "Maison" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Home" } } }
+    },
+    "Réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Grid" } } }
+    },
+    "Tension" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Voltage" } } }
+    },
+    "Autonomie estimée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Estimated runtime" } } }
+    },
+    "Plage SOC configurée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Configured SOC range" } } }
+    },
+    "Température" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Temperature" } } }
+    },
+    "Signal WiFi" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "WiFi signal" } } }
+    },
+    "Numéro de série" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Serial number" } } }
+    },
+    "Connexion" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection" } } }
+    },
+    "hôte de secours" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "fallback host" } } }
+    },
+    "réseau local" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "local network" } } }
+    },
+    "Mise à jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated" } } }
+    },
+    "collecteur 24/7" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "24/7 collector" } } }
+    },
+    "Record : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Best: %@" } } }
+    },
+    "Serveur d'historique 24/7" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "24/7 history server" } } }
+    },
+    "Collecteur optionnel qui tourne sur un Mac toujours allumé (voir Scripts/collector) : il enregistre la production 24 h/24 et l'app affiche alors un historique complet, même quand ce Mac est éteint." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional collector running on an always-on Mac (see Scripts/collector): it records production around the clock, so the app shows a complete history even while this Mac is off." } } }
+    },
+    "Aucun appareil trouvé. Vérifiez que le SolarFlow est sur le même réseau, et que son API locale est active (app Zendure : ajouter un HEMS puis le quitter)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No device found. Check that the SolarFlow is on the same network and that its local API is enabled (Zendure app: add a HEMS, then quit it)." } } }
+    },
+    "Mettre la limite à 0 W ?" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Set the limit to 0 W?" } } }
+    },
+    "Confirmer 0 W" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Confirm 0 W" } } }
+    },
+    "Annuler" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } } }
+    },
+    "Une limite à 0 W coupe complètement ce flux sur la batterie." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "A 0 W limit completely cuts this flow on the battery." } } }
+    },
     "Historique" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "History" } } }
     },

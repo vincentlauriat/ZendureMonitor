@@ -70,6 +70,9 @@ struct SolarWidgetView: View {
 
     @ViewBuilder
     private func content(_ snapshot: WidgetSnapshot) -> some View {
+        // Au-delà de 15 min, le snapshot est probablement figé (app fermée) :
+        // on grise et on affiche l'ancienneté plutôt que de faire croire au temps réel.
+        let stale = entry.date.timeIntervalSince(snapshot.capturedAt) > 15 * 60
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 4) {
@@ -96,15 +99,26 @@ struct SolarWidgetView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
-                Text(snapshot.capturedAt, style: .time)
+                if stale {
+                    Label {
+                        Text(snapshot.capturedAt, style: .relative)
+                    } icon: {
+                        Image(systemName: "clock.badge.exclamationmark")
+                    }
                     .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(.orange)
+                } else {
+                    Text(snapshot.capturedAt, style: .time)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
             if family == .systemMedium {
                 MiniSparkline(values: snapshot.solarHistory)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
+        .opacity(stale ? 0.55 : 1)
     }
 }
 

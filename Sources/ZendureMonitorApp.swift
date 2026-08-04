@@ -17,6 +17,12 @@ struct ZendureMonitorApp: App {
             SettingsView()
                 .environmentObject(monitor)
         }
+
+        Window("Tableau de bord", id: "dashboard") {
+            DashboardView()
+                .environmentObject(monitor)
+        }
+        .defaultSize(width: 820, height: 720)
     }
 }
 

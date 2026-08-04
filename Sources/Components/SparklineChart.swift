@@ -6,6 +6,9 @@ import Charts
 struct SparklineChart: View {
     var values: [Double]
     var color: Color
+    /// Trace une ligne de référence (ex. 0 pour un flux charge/décharge) pour
+    /// rendre lisibles les valeurs négatives.
+    var baseline: Double? = nil
 
     var body: some View {
         if values.count < 2 {
@@ -18,6 +21,11 @@ struct SparklineChart: View {
                 }
         } else {
             Chart {
+                if let baseline {
+                    RuleMark(y: .value("Base", baseline))
+                        .foregroundStyle(.secondary.opacity(0.4))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                }
                 ForEach(Array(values.enumerated()), id: \.offset) { index, value in
                     AreaMark(
                         x: .value("Index", index),

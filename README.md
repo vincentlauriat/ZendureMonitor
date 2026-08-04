@@ -12,6 +12,8 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
+New in 1.4: a **dashboard window** (animated energy-flow diagram, device temperature/WiFi/limits, per-pack detail, richer history) and an optional **24/7 collector** (`Scripts/collector/`) for an always-on Mac, so daily history no longer depends on this Mac's uptime.
+
 New in 1.3: a **macOS widget** (small/medium), a **battery control tab** (AC mode, output/charge limits via `POST /properties/write`) and **CSV export** of the production history.
 
 Options: choose what the menu bar shows (solar W, battery %, home W — or icon only), launch at login, low-battery notification with a configurable threshold, theme override (auto/dark/light), and an optional fallback host for remote access over a VPN. UI localized in **French and English**.
@@ -21,6 +23,10 @@ Options: choose what the menu bar shows (solar W, battery %, home W — or icon 
 | Light | Dark |
 |:---:|:---:|
 | ![Panel, light theme](docs/panel-light.png) | ![Panel, dark theme](docs/panel-dark.png) |
+
+**Dashboard window** — animated energy-flow diagram and every indicator the local API exposes:
+
+![Dashboard](docs/dashboard.png)
 
 ## Supported hardware
 
@@ -160,6 +166,7 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.1 — trend graphs: metric cards with sparklines (solar, home, battery flow) and a battery ring gauge
 - [x] v1.2 — menu bar display options, launch at login, low-battery alert, today's energy counter, per-pack details, VPN fallback host
 - [x] v1.3 — macOS widget (App Group snapshot), battery control tab (`POST /properties/write`), CSV export of the history
+- [x] v1.4 — dashboard window with animated energy-flow diagram; optional 24/7 collector (LaunchAgent + SQLite + JSON API) feeding complete history
 - [x] v1.2 — multi-day production history (daily kWh bar chart)
 
 ## Acknowledgements

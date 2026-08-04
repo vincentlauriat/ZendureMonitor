@@ -68,6 +68,16 @@ private struct DeviceSettingsTab: View {
                         Button("Utiliser") { monitor.host = device.host }
                     }
                 }
+                if discovery.hasSearched, !discovery.isSearching, discovery.devices.isEmpty {
+                    Label {
+                        Text("Aucun appareil trouvé. Vérifiez que le SolarFlow est sur le même réseau, et que son API locale est active (app Zendure : ajouter un HEMS puis le quitter).")
+                            .fixedSize(horizontal: false, vertical: true)
+                    } icon: {
+                        Image(systemName: "magnifyingglass")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
             }
         }
         .formStyle(.grouped)
@@ -206,6 +216,8 @@ private struct ControlSettingsTab: View {
     @State private var sending = false
     @State private var status: String?
     @State private var statusOK = false
+    @State private var pendingZero: [String: Any]?
+    @State private var confirmZero = false
 
     var body: some View {
         Form {
@@ -259,6 +271,15 @@ private struct ControlSettingsTab: View {
         }
         .formStyle(.grouped)
         .onAppear { seedFromDevice() }
+        .alert("Mettre la limite à 0 W ?", isPresented: $confirmZero) {
+            Button("Confirmer 0 W", role: .destructive) {
+                if let props = pendingZero { send(props) }
+                pendingZero = nil
+            }
+            Button("Annuler", role: .cancel) { pendingZero = nil }
+        } message: {
+            Text("Une limite à 0 W coupe complètement ce flux sur la batterie.")
+        }
     }
 
     /// Pré-remplit les contrôles avec les valeurs actuelles du device (une fois).
@@ -271,6 +292,13 @@ private struct ControlSettingsTab: View {
     }
 
     private func send(_ properties: [String: Any]) {
+        // Une limite à 0 W coupe réellement la charge ou la sortie : confirmation.
+        let zeroesSomething = properties.contains { ($0.key == "outputLimit" || $0.key == "inputLimit") && ($0.value as? Int) == 0 }
+        if zeroesSomething, pendingZero == nil {
+            pendingZero = properties
+            confirmZero = true
+            return
+        }
         sending = true
         status = nil
         Task {
@@ -282,6 +310,8 @@ private struct ControlSettingsTab: View {
                 statusOK = false
                 status = error.localizedDescription
             }
+            // Anti double-envoi : les boutons restent inactifs 2 s après la réponse.
+            try? await Task.sleep(for: .seconds(2))
             sending = false
         }
     }
@@ -298,6 +328,13 @@ private struct RemoteSettingsTab: View {
                 TextField("Hôte de secours", text: $monitor.fallbackHost, prompt: Text("ex. 100.x.y.z (IP Tailscale)"))
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
+                TextField("Serveur d'historique 24/7", text: $monitor.historyServer, prompt: Text(verbatim: "minicorse.local:8899"))
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+                Text("Collecteur optionnel qui tourne sur un Mac toujours allumé (voir Scripts/collector) : il enregistre la production 24 h/24 et l'app affiche alors un historique complet, même quand ce Mac est éteint.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text("Essayé automatiquement quand l'adresse principale ne répond pas (hors du réseau domestique). Recommandé : un VPN type Tailscale/WireGuard vers la maison. ⚠️ N'exposez jamais le port 80 du SolarFlow directement sur Internet : son API locale n'a aucune authentification.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
