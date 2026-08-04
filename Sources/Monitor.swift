@@ -25,6 +25,14 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// Solar energy produced on one day (persisted in UserDefaults as `energyWh-<yyyy-MM-dd>`).
+struct DayEnergy: Identifiable, Equatable {
+    let day: String   // "2026-08-04"
+    let date: Date
+    let wh: Double
+    var id: String { day }
+}
+
 @MainActor
 final class Monitor: ObservableObject {
     @Published var state: DeviceState?
@@ -33,6 +41,8 @@ final class Monitor: ObservableObject {
     @Published var usingFallback = false
     /// Solar energy produced today (Wh), integrated from the polls while the app runs.
     @Published var energyTodayWh: Double = 0
+    /// Last days of production (oldest first, today included), for the history card.
+    @Published var dailyEnergy: [DayEnergy] = []
     /// Historiques glissants pour les sparklines (un point par poll réussi).
     @Published var solarHistory: [Double] = []
     @Published var homeHistory: [Double] = []
@@ -108,6 +118,7 @@ final class Monitor: ObservableObject {
 
         if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
         appearance.apply()
+        reloadDailyEnergy()
         restart()
     }
 
@@ -188,6 +199,36 @@ final class Monitor: ObservableObject {
         }
         lastSampleAt = date
         UserDefaults.standard.set(energyTodayWh, forKey: "energyWh-\(day)")
+
+        // Keep today's bar in the history card live.
+        if let index = dailyEnergy.firstIndex(where: { $0.day == day }) {
+            dailyEnergy[index] = DayEnergy(day: day, date: dailyEnergy[index].date, wh: energyTodayWh)
+        } else {
+            reloadDailyEnergy()
+        }
+    }
+
+    /// Rebuilds the daily history from UserDefaults, keeping the last 14 days
+    /// for display and pruning entries older than 90 days.
+    private func reloadDailyEnergy() {
+        let defaults = UserDefaults.standard
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        let cutoff = Calendar.current.date(byAdding: .day, value: -90, to: .now)!
+
+        var days: [DayEnergy] = []
+        for (key, value) in defaults.dictionaryRepresentation() where key.hasPrefix("energyWh-") {
+            let dayString = String(key.dropFirst("energyWh-".count))
+            guard let date = formatter.date(from: dayString) else { continue }
+            if date < cutoff {
+                defaults.removeObject(forKey: key)
+                continue
+            }
+            let wh = (value as? Double) ?? (value as? NSNumber)?.doubleValue ?? 0
+            days.append(DayEnergy(day: dayString, date: date, wh: wh))
+        }
+        dailyEnergy = Array(days.sorted { $0.date < $1.date }.suffix(14))
     }
 
     private static func dayKey(_ date: Date) -> String {

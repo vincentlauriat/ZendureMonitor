@@ -18,6 +18,7 @@ struct MenuView: View {
                 solarCard(state)
                 batteryCard(state)
                 flowsCard(state)
+                historyCard()
                 footer(updatedAt: state.updatedAt)
             } else {
                 MetricCard(title: "Pas de données", systemImage: "sun.max.trianglebadge.exclamationmark") {
@@ -117,6 +118,31 @@ struct MenuView: View {
                 LegendRow(color: gridColor, label: "Depuis le réseau", value: Format.watts(state.gridInputPower))
                 SparklineChart(values: monitor.homeHistory, color: homeColor)
                     .frame(height: 36)
+            }
+        }
+    }
+
+    private func historyCard() -> some View {
+        MetricCard(title: "Historique", systemImage: "calendar") {
+            VStack(alignment: .leading, spacing: 8) {
+                if monitor.dailyEnergy.count > 1 {
+                    DailyBarChart(days: monitor.dailyEnergy, color: solarColor)
+                        .frame(height: 72)
+                    HStack {
+                        Text("\(monitor.dailyEnergy.count) derniers jours")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        let total = monitor.dailyEnergy.reduce(0) { $0 + $1.wh }
+                        Text("Total : \(Format.kilowattHours(total))")
+                            .font(.caption2.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text("L'historique se construira jour après jour.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
