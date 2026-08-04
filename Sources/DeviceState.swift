@@ -83,9 +83,9 @@ enum ZendureError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .badPayload: return "Réponse du device illisible (JSON inattendu)."
-        case .badResponse(let code): return "Le device a répondu HTTP \(code)."
-        case .noHost: return "Aucune adresse configurée — ouvrez les Réglages."
+        case .badPayload: return String(localized: "Réponse du device illisible (JSON inattendu).")
+        case .badResponse(let code): return String(localized: "Le device a répondu HTTP \(code).")
+        case .noHost: return String(localized: "Aucune adresse configurée — ouvrez les Réglages.")
         }
     }
 }

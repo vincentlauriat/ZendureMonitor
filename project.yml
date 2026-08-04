@@ -24,6 +24,7 @@ targets:
     info:
       path: Info.plist
       properties:
+        CFBundleDevelopmentRegion: fr
         CFBundleName: ZendureMonitor
         CFBundleDisplayName: Zendure Monitor
         CFBundleShortVersionString: $(MARKETING_VERSION)

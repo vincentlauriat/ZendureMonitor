@@ -1,0 +1,189 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "Accès distant (optionnel)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote access (optional)" } } }
+    },
+    "Adresse IP ou nom d'hôte" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "IP address or hostname" } } }
+    },
+    "Affichage" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Display" } } }
+    },
+    "Alerte batterie faible" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Low battery alert" } } }
+    },
+    "Appareil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Device" } } }
+    },
+    "Appareil SolarFlow" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow device" } } }
+    },
+    "Aucune adresse configurée — ouvrez les Réglages." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No address configured — open Settings." } } }
+    },
+    "aujourd'hui" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "today" } } }
+    },
+    "Auto" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Auto" } } }
+    },
+    "Barre de menu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Menu bar" } } }
+    },
+    "batterie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "battery" } } }
+    },
+    "Batterie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery" } } }
+    },
+    "Batterie SolarFlow faible" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow battery low" } } }
+    },
+    "charge" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "charging" } } }
+    },
+    "Charge" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charging" } } }
+    },
+    "Clair" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Light" } } }
+    },
+    "Connecté" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected" } } }
+    },
+    "Connecté via l'hôte de secours" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected via the fallback host" } } }
+    },
+    "Connexion au SolarFlow en cours…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to the SolarFlow…" } } }
+    },
+    "Consommation maison (W)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Home consumption (W)" } } }
+    },
+    "décharge" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "discharging" } } }
+    },
+    "Décharge" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Discharging" } } }
+    },
+    "Depuis le réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "From grid" } } }
+    },
+    "Distant" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote" } } }
+    },
+    "Entrée PV %lld" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "PV input %lld" } } }
+    },
+    "ex. 100.x.y.z (IP Tailscale)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "e.g. 100.x.y.z (Tailscale IP)" } } }
+    },
+    "Essayé automatiquement quand l'adresse principale ne répond pas (hors du réseau domestique). Recommandé : un VPN type Tailscale/WireGuard vers la maison. ⚠️ N'exposez jamais le port 80 du SolarFlow directement sur Internet : son API locale n'a aucune authentification." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tried automatically when the primary address does not answer (away from home). Recommended: a VPN such as Tailscale/WireGuard to your home network. ⚠️ Never expose the SolarFlow's port 80 directly to the internet: its local API has no authentication." } } }
+    },
+    "Flux" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows" } } }
+    },
+    "Général" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "General" } } }
+    },
+    "Hôte de secours" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fallback host" } } }
+    },
+    "Lancer au démarrage de la session" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Launch at login" } } }
+    },
+    "Le device a répondu HTTP %lld." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The device answered HTTP %lld." } } }
+    },
+    "Mis à jour à %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Updated at %@" } } }
+    },
+    "Mises à jour…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Check for updates…" } } }
+    },
+    "Niveau de batterie (%)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery level (%)" } } }
+    },
+    "Niveau de charge :" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge level:" } } }
+    },
+    "Notification quand la batterie passe sous" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Notify when the battery drops below" } } }
+    },
+    "Notifications" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Notifications" } } }
+    },
+    "Pack %lld" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Pack %lld" } } }
+    },
+    "Pas de données" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No data" } } }
+    },
+    "Pas encore de données" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No data yet" } } }
+    },
+    "Production solaire" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Solar production" } } }
+    },
+    "Production solaire (W)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Solar production (W)" } } }
+    },
+    "Quitter" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit" } } }
+    },
+    "Rafraîchissement" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Refresh" } } }
+    },
+    "Recherche…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Searching…" } } }
+    },
+    "Rechercher sur le réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Scan the network" } } }
+    },
+    "Réglages…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings…" } } }
+    },
+    "Réponse du device illisible (JSON inattendu)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unreadable device response (unexpected JSON)." } } }
+    },
+    "seuil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "threshold" } } }
+    },
+    "Seuil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Threshold" } } }
+    },
+    "solaire" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "solar" } } }
+    },
+    "Sombre" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dark" } } }
+    },
+    "Test…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Testing…" } } }
+    },
+    "Tester la connexion" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Test connection" } } }
+    },
+    "Thème" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Theme" } } }
+    },
+    "Tout décocher n'affiche que l'icône ☀️." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Uncheck everything to show only the ☀️ icon." } } }
+    },
+    "Toutes les %lld secondes" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Every %lld seconds" } } }
+    },
+    "Utiliser" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Use" } } }
+    },
+    "Vers la maison" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "To home" } } }
+    },
+    "192.168.1.xx ou Zendure-….local" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "192.168.1.xx or Zendure-….local" } } }
+    }
+  },
+  "version" : "1.0"
+}

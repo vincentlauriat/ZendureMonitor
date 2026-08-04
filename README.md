@@ -12,7 +12,13 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
-Options: choose what the menu bar shows (solar W, battery %, home W — or icon only), launch at login, low-battery notification with a configurable threshold, and an optional fallback host for remote access over a VPN.
+Options: choose what the menu bar shows (solar W, battery %, home W — or icon only), launch at login, low-battery notification with a configurable threshold, theme override (auto/dark/light), and an optional fallback host for remote access over a VPN. UI localized in **French and English**.
+
+## Screenshots
+
+| Light | Dark |
+|:---:|:---:|
+| ![Panel, light theme](docs/panel-light.png) | ![Panel, dark theme](docs/panel-dark.png) |
 
 ## Supported hardware
 
