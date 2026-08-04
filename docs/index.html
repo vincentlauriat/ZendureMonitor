@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zendure Monitor — live solar production of your Zendure SolarFlow, in the macOS menu bar</title>
+<meta name="description" content="A tiny native macOS menu bar app showing the live solar production of a Zendure SolarFlow battery. 100% local through the device's zenSDK REST API — no Zendure cloud account, no MQTT, no credentials. Free, open source, signed &amp; notarized.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Zendure Monitor — your Zendure SolarFlow in the macOS menu bar">
+<meta property="og:description" content="Live solar production, battery state of charge and per-MPPT detail, refreshed every 5 seconds — 100% local through the zenSDK REST API. Free and open source for macOS 14+.">
+<meta property="og:url" content="https://vincentlauriat.github.io/ZendureMonitor/">
+<meta property="og:image" content="https://vincentlauriat.github.io/ZendureMonitor/panel-dark.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root {
+    --bg: #0b0d14;
+    --bg-card: #151824;
+    --text: #e9ecf5;
+    --muted: #98a1b8;
+    --accent: #facc15;
+    --accent-soft: rgba(250, 204, 21, .14);
+    --border: #232838;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+  header { text-align: center; padding: 76px 0 24px; }
+  h1 { font-size: 2.7rem; margin: 20px 0 10px; letter-spacing: -.02em; }
+  .tagline { font-size: 1.22rem; color: var(--muted); max-width: 660px; margin: 0 auto; }
+  .tagline strong { color: var(--accent); font-weight: 600; }
+
+  .menubar {
+    display: inline-flex; align-items: center; gap: 14px;
+    background: rgba(255,255,255,.06); border: 1px solid var(--border);
+    border-radius: 10px; padding: 7px 14px;
+    font-size: .98rem; letter-spacing: .01em;
+    box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  }
+  .menubar .watt { font-weight: 600; }
+  .menubar .dim { color: var(--muted); font-size: .9rem; }
+  .menubar-note { color: var(--muted); font-size: .85rem; margin-top: 10px; }
+
+  .buttons { margin: 34px 0 10px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 13px 26px; border-radius: 12px;
+    font-weight: 600; text-decoration: none; font-size: 1.02rem;
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn-primary { background: var(--accent); color: #1b1400; box-shadow: 0 6px 26px rgba(250,204,21,.3); }
+  .btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
+  .fineprint { color: var(--muted); font-size: .88rem; }
+
+  .shots { display: grid; grid-template-columns: 1fr; gap: 22px; margin-top: 48px; }
+  .shot img {
+    display: block; width: 100%; height: auto;
+    border-radius: 14px; border: 1px solid var(--border);
+    box-shadow: 0 20px 60px rgba(0,0,0,.55);
+  }
+  .shot figcaption { color: var(--muted); font-size: .85rem; margin-top: 10px; text-align: center; }
+  .shots.pair { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); align-items: start; }
+
+  section { padding: 60px 0 8px; }
+  h2 { font-size: 1.7rem; margin-bottom: 8px; letter-spacing: -.01em; }
+  h2 .em { color: var(--accent); }
+  .lead { color: var(--muted); margin-bottom: 22px; max-width: 720px; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px 22px;
+  }
+  .card h3 { font-size: 1.05rem; margin-bottom: 6px; }
+  .card p { color: var(--muted); font-size: .95rem; }
+
+  .panel {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 24px 26px;
+  }
+  .panel ul { list-style: none; }
+  .panel li { color: var(--muted); padding-left: 26px; position: relative; margin-bottom: 10px; }
+  .panel li::before { content: "✓"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+  .panel li strong { color: var(--text); }
+  .panel li:last-child { margin-bottom: 0; }
+
+  .warn {
+    margin-top: 20px; padding: 16px 18px;
+    background: var(--accent-soft); border: 1px solid rgba(250,204,21,.3);
+    border-radius: 12px; color: var(--text); font-size: .93rem;
+  }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+  .chip {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 15px; font-size: .92rem;
+  }
+
+  .steps { counter-reset: step; margin-top: 8px; }
+  .step { display: flex; gap: 16px; margin-bottom: 22px; }
+  .step .n {
+    counter-increment: step; flex: 0 0 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #1b1400; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step .n::before { content: counter(step); }
+  .step p { color: var(--muted); }
+  .step strong { color: var(--text); }
+
+  code {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    background: rgba(255,255,255,.06); border: 1px solid var(--border);
+    border-radius: 7px; padding: 2px 7px; font-size: .9em;
+  }
+  a { color: var(--accent); }
+  footer { text-align: center; padding: 66px 0 44px; color: var(--muted); font-size: .9rem; }
+  footer a { color: var(--muted); }
+  footer .disclaimer { margin-top: 10px; font-size: .84rem; opacity: .8; }
+
+  @media (max-width: 560px) {
+    h1 { font-size: 2.1rem; }
+    .tagline { font-size: 1.08rem; }
+    header { padding-top: 52px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="menubar">
+    <span class="watt">☀️ 842 W</span>
+    <span class="dim">🔋 76 %</span>
+    <span class="dim">🏠 410 W</span>
+  </div>
+  <p class="menubar-note">…right there in your menu bar, refreshed every 5 seconds.</p>
+
+  <h1>Zendure Monitor</h1>
+  <p class="tagline">A tiny native macOS menu bar app showing the live solar production of a
+  Zendure SolarFlow battery — <strong>100% local</strong>, no Zendure cloud account,
+  no MQTT broker, no credentials.</p>
+
+  <div class="buttons">
+    <a class="btn btn-primary" href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">⬇︎&nbsp; Download for macOS</a>
+    <a class="btn btn-secondary" href="https://github.com/vincentlauriat/ZendureMonitor">View on GitHub</a>
+  </div>
+  <p class="fineprint">Free &amp; open source (MIT) · macOS 14+ · signed &amp; notarized DMG · Sparkle auto-updates · 100% local</p>
+
+  <div class="shots">
+    <figure class="shot">
+      <img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: solar production, battery state of charge with a ring gauge, output to the home, grid input and per-MPPT PV detail">
+      <figcaption>Click the menu bar item for the full picture — production, state of charge, energy flows and per-MPPT detail.</figcaption>
+    </figure>
+  </div>
+</header>
+
+<section class="wrap">
+  <h2>Features</h2>
+  <p class="lead">Everything the SolarFlow reports on your LAN, one click away — and a few things
+  you can send back to it.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>☀️ Live wattage in the menu bar</h3>
+      <p>Your current solar production sits permanently in the menu bar, polled every 5 seconds.
+      Prefer something else? Show the battery percentage, the power sent to the home — or just the icon.</p>
+    </div>
+    <div class="card">
+      <h3>📊 The full panel</h3>
+      <p>Battery state of charge, charge and discharge power, output to the home, grid input,
+      per-MPPT PV input, today's solar energy, and per-pack SOC and temperature.</p>
+    </div>
+    <div class="card">
+      <h3>🧩 macOS widget</h3>
+      <p>Added in 1.3: a small and a medium widget for Notification Center and the desktop, so the
+      current production stays visible even with the panel closed.</p>
+    </div>
+    <div class="card">
+      <h3>🎛️ Battery control</h3>
+      <p>A dedicated tab to change the AC mode and the output and charge limits of the battery,
+      written straight to the device over the local API.</p>
+    </div>
+    <div class="card">
+      <h3>📄 CSV export</h3>
+      <p>Export the recorded production history to CSV and take it to a spreadsheet — daily kWh,
+      multi-day trends, whatever you feel like plotting yourself.</p>
+    </div>
+    <div class="card">
+      <h3>🔔 Low-battery alerts</h3>
+      <p>An optional notification when the state of charge drops below a threshold you choose.
+      Plus launch at login, a theme override, and a UI localized in French and English.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>100% <span class="em">local</span></h2>
+  <p class="lead">Recent Zendure firmwares embed a plain HTTP server on the device itself — the
+  <a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API. Zendure Monitor talks to that,
+  and to nothing else.</p>
+  <div class="panel">
+    <ul>
+      <li><strong>One HTTP call on your LAN.</strong> The app polls <code>GET /properties/report</code> on the battery and gets everything back in a single JSON document.</li>
+      <li><strong>No Zendure cloud account.</strong> Nothing goes to Zendure's servers; the app never signs in anywhere.</li>
+      <li><strong>No MQTT broker, no credentials.</strong> Nothing to host, nothing to configure, no token or password to store.</li>
+      <li><strong>Bonjour discovery.</strong> The app finds the device on your network by itself — or you can simply type its IP address.</li>
+      <li><strong>Optional fallback host for VPN access.</strong> Set a second address — your battery reached through a Tailscale or WireGuard tunnel — and the app polls the local one first, switching over automatically when it doesn't answer.</li>
+    </ul>
+    <p class="warn"><strong>⚠️ A word on remote access:</strong> the zenSDK API has no authentication
+    whatsoever. Never port-forward the device's port 80 to the internet — use a VPN into your home
+    network and point the fallback host at that. The
+    <a href="https://github.com/vincentlauriat/ZendureMonitor#remote-access-away-from-home">README</a>
+    walks through the Tailscale setup.</p>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Supported hardware</h2>
+  <p class="lead">Developed and tested on a <strong>SolarFlow 2400 Pro</strong>. Any Zendure device
+  that ships the local zenSDK REST API should work:</p>
+  <div class="chips">
+    <span class="chip">SolarFlow 2400 Pro</span>
+    <span class="chip">SolarFlow 2400 AC</span>
+    <span class="chip">SolarFlow 2400 AC+</span>
+    <span class="chip">SolarFlow 2400 AC Pro</span>
+    <span class="chip">SolarFlow 800 Pro</span>
+    <span class="chip">SolarFlow 800 Plus</span>
+    <span class="chip">SolarFlow 1600 AC+</span>
+    <span class="chip">SolarFlow 3000 Mix AC+</span>
+    <span class="chip">SolarFlow 4000 Mix</span>
+  </div>
+  <p class="lead" style="margin-top:20px">If discovery finds nothing, the local API may simply be
+  disabled on your unit — adding a <strong>HEMS</strong> integration in the Zendure mobile app and
+  then quitting it is the documented way to turn it on for good.</p>
+</section>
+
+<section class="wrap">
+  <h2>Install</h2>
+  <div class="steps">
+    <div class="step"><span class="n"></span><p><strong>Download the DMG</strong> from the <a href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">latest release</a> — signed and notarized, so it opens without a Gatekeeper detour.</p></div>
+    <div class="step"><span class="n"></span><p><strong>Drag ZendureMonitor.app to <code>/Applications</code></strong> and launch it. It lives in the menu bar, not in the Dock.</p></div>
+    <div class="step"><span class="n"></span><p><strong>Accept the local network prompt</strong> — macOS asks for it, and the app needs it to reach the battery on your LAN.</p></div>
+    <div class="step"><span class="n"></span><p><strong>Point it at your device.</strong> Click the ☀️ icon → Settings → scan the network (or type the IP address) → test the connection. Done.</p></div>
+  </div>
+  <p class="lead">Updates land in-app afterwards through <a href="https://sparkle-project.org">Sparkle</a> — no need to come back here.</p>
+</section>
+
+<section class="wrap">
+  <h2>Both themes, natively</h2>
+  <div class="shots pair">
+    <figure class="shot">
+      <img src="panel-dark.png" alt="The Zendure Monitor panel rendered in the macOS dark theme">
+      <figcaption>Dark</figcaption>
+    </figure>
+    <figure class="shot">
+      <img src="panel-light.png" alt="The Zendure Monitor panel rendered in the macOS light theme">
+      <figcaption>Light</figcaption>
+    </figure>
+  </div>
+  <p class="lead" style="margin-top:22px">The panel follows the system appearance, and you can pin it
+  to dark or light if you'd rather it didn't.</p>
+</section>
+
+<footer>
+  <p>MIT © Vincent Lauriat ·
+    <a href="https://github.com/vincentlauriat/ZendureMonitor">github.com/vincentlauriat/ZendureMonitor</a> ·
+    <a href="https://vincentlauriat.github.io/">more apps</a></p>
+  <p class="disclaimer">An independent open-source project. Not affiliated with Zendure.</p>
+</footer>
+
+</body>
+</html>
