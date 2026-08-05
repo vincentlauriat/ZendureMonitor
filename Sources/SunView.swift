@@ -4,6 +4,20 @@ import SwiftUI
 /// la production du jour, et productible théorique ciel clair. Séparée du
 /// tableau de bord — qui reste un tableau de bord.
 struct SunView: View {
+    var body: some View {
+        ScrollView {
+            SunContent()
+        }
+        .frame(minWidth: 480, idealWidth: 540, minHeight: 560, idealHeight: 680)
+        .navigationTitle(Text("Zendure Monitor — Soleil"))
+        .onAppear { WindowPolicy.retain() }
+        .onDisappear { WindowPolicy.release() }
+    }
+}
+
+/// Contenu de la fenêtre Soleil, séparé du ScrollView pour rester rendable
+/// hors fenêtre (ImageRenderer ne rend pas l'intérieur d'un ScrollView).
+struct SunContent: View {
     @EnvironmentObject var monitor: Monitor
     @AppStorage("sunLatitude") private var latitude: Double = 0
     @AppStorage("sunLongitude") private var longitude: Double = 0
@@ -12,23 +26,17 @@ struct SunView: View {
     private var configured: Bool { latitude != 0 || longitude != 0 }
 
     var body: some View {
-        ScrollView {
-            TimelineView(.periodic(from: .now, by: 60)) { timeline in
-                let sun = SunCalc.compute(at: timeline.date, latitude: latitude, longitude: longitude)
-                VStack(spacing: 14) {
-                    SunCard()
-                    if configured {
-                        sunProductionCard(sun, now: timeline.date)
-                        theoreticalCard(sun)
-                    }
+        TimelineView(.periodic(from: .now, by: 60)) { timeline in
+            let sun = SunCalc.compute(at: timeline.date, latitude: latitude, longitude: longitude)
+            VStack(spacing: 14) {
+                SunCard()
+                if configured {
+                    sunProductionCard(sun, now: timeline.date)
+                    theoreticalCard(sun)
                 }
-                .padding(16)
             }
+            .padding(16)
         }
-        .frame(minWidth: 480, idealWidth: 540, minHeight: 560, idealHeight: 680)
-        .navigationTitle(Text("Zendure Monitor — Soleil"))
-        .onAppear { WindowPolicy.retain() }
-        .onDisappear { WindowPolicy.release() }
     }
 
     // MARK: - Course du soleil × production
