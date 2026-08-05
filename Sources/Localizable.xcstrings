@@ -199,6 +199,66 @@
     "Utiliser la position de ce Mac" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Use this Mac's position" } } }
     },
+    "Le service de localisation de macOS est désactivé pour tout le système. Activez-le dans Réglages → Confidentialité et sécurité → Service de localisation, ou saisissez les coordonnées manuellement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "macOS Location Services are disabled system-wide. Enable them in System Settings → Privacy & Security → Location Services, or enter the coordinates manually." } } }
+    },
+    "Pas de réponse du service de localisation. Si aucune demande d'autorisation n'est apparue, vérifiez Réglages → Confidentialité et sécurité → Service de localisation — ou saisissez les coordonnées manuellement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No answer from Location Services. If no authorization prompt appeared, check System Settings → Privacy & Security → Location Services — or enter the coordinates manually." } } }
+    },
+    "Position introuvable pour ce Mac (pas de WiFi à proximité ?). Saisissez les coordonnées manuellement — une précision à la ville près suffit." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not locate this Mac (no nearby WiFi?). Enter the coordinates manually — city-level accuracy is enough." } } }
+    },
+    "Autorisations" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Permissions" } } }
+    },
+    "Réseau local" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Local network" } } }
+    },
+    "Autorisé — connexion au SolarFlow active" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allowed — SolarFlow connection active" } } }
+    },
+    "Bloqué par macOS — l'app ne peut pas joindre le SolarFlow" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Blocked by macOS — the app cannot reach the SolarFlow" } } }
+    },
+    "Vérification en cours…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking…" } } }
+    },
+    "Localisation" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Location" } } }
+    },
+    "Service désactivé pour tout le système (facultatif — sert au module Soleil)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Service disabled system-wide (optional — used by the Sun module)" } } }
+    },
+    "Autorisée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allowed" } } }
+    },
+    "Refusée (facultatif — sert au module Soleil)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Denied (optional — used by the Sun module)" } } }
+    },
+    "Demandée au premier usage (facultative)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Requested on first use (optional)" } } }
+    },
+    "Autorisées" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allowed" } } }
+    },
+    "Refusées — l'alerte batterie faible ne s'affichera pas" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Denied — the low-battery alert will not appear" } } }
+    },
+    "Refusées (alerte batterie désactivée)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Denied (battery alert is off)" } } }
+    },
+    "Demandées à l'activation de l'alerte batterie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Requested when enabling the battery alert" } } }
+    },
+    "Ouvrir…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open…" } } }
+    },
+    "Notifications refusées — l'alerte batterie faible ne s'affichera pas." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Notifications denied — the low-battery alert will not appear." } } }
+    },
+    "Autoriser…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow…" } } }
+    },
     "Position introuvable — autorisez Zendure Monitor dans Réglages → Confidentialité et sécurité → Service de localisation, ou saisissez les coordonnées manuellement." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position unavailable — allow Zendure Monitor in System Settings → Privacy & Security → Location Services, or enter the coordinates manually." } } }
     },

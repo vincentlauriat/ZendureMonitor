@@ -168,6 +168,7 @@ private struct GeneralSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            PermissionsSection()
             Section("Rafraîchissement") {
                 Slider(value: $monitor.pollInterval, in: 2...60, step: 1) {
                     Text("Rafraîchissement")

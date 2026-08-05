@@ -86,8 +86,11 @@ final class Monitor: ObservableObject {
         didSet {
             UserDefaults.standard.set(lowSocAlertEnabled, forKey: "lowSocAlertEnabled")
             if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
+            refreshNotificationsStatus()
         }
     }
+    /// Alerte batterie activée mais notifications refusées par macOS.
+    @Published var notificationsDenied = false
     @Published var lowSocThreshold: Double {
         didSet { UserDefaults.standard.set(lowSocThreshold, forKey: "lowSocThreshold") }
     }
@@ -136,6 +139,22 @@ final class Monitor: ObservableObject {
         appearance.apply()
         reloadDailyEnergy()
         restart()
+        refreshNotificationsStatus()
+    }
+
+    /// Vérification au démarrage (et au changement du réglage d'alerte) pour
+    /// signaler en amont une autorisation manquante plutôt que d'échouer en
+    /// silence au moment d'envoyer la notification.
+    func refreshNotificationsStatus() {
+        guard lowSocAlertEnabled else {
+            notificationsDenied = false
+            return
+        }
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            DispatchQueue.main.async {
+                self?.notificationsDenied = settings.authorizationStatus == .denied
+            }
+        }
     }
 
     func restart() {

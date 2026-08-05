@@ -196,6 +196,22 @@ struct MenuView: View {
             if monitor.localNetworkDenied {
                 LocalNetworkHint { monitor.restart() }
             }
+            if monitor.notificationsDenied {
+                HStack(spacing: 6) {
+                    Label("Notifications refusées — l'alerte batterie faible ne s'affichera pas.", systemImage: "bell.slash")
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer()
+                    Button("Autoriser…") {
+                        if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                    .buttonStyle(.borderless)
+                    .font(.caption)
+                }
+            }
             HStack {
                 if let updatedAt {
                     Text("Mis à jour à \(updatedAt.formatted(date: .omitted, time: .standard))")
