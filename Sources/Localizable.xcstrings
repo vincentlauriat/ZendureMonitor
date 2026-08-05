@@ -259,6 +259,102 @@
     "Autoriser…" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow…" } } }
     },
+    "Jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Day" } } }
+    },
+    "Pic : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak: %@" } } }
+    },
+    "Pic aujourd'hui : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak today: %@" } } }
+    },
+    "vs hier : %@%lld %" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "vs yesterday: %@%lld %" } } }
+    },
+    "≈ %.2f € · %.1f kg CO₂ évités" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "≈ %.2f € · %.1f kg CO₂ avoided" } } }
+    },
+    "Économie du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Savings today" } } }
+    },
+    "Économies" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Savings" } } }
+    },
+    "Prix du kWh (€)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "kWh price (€)" } } }
+    },
+    "Facteur CO₂ (g/kWh)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "CO₂ factor (g/kWh)" } } }
+    },
+    "Servent aux estimations « € économisés » et « CO₂ évité » du tableau de bord." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used for the dashboard's \"€ saved\" and \"CO₂ avoided\" estimates." } } }
+    },
+    "Notifications optionnelles" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional notifications" } } }
+    },
+    "Batterie pleine" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery full" } } }
+    },
+    "Tirage réseau alors que le solaire produit" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Grid draw while solar is producing" } } }
+    },
+    "Record de production battu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Production record beaten" } } }
+    },
+    "Batterie pleine : au plafond de charge configuré. Tirage réseau : > 50 W depuis le réseau avec > 100 W de solaire (au plus une fois par heure). Record : dès que la production du jour dépasse le meilleur jour connu." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery full: at the configured charge ceiling. Grid draw: > 50 W from the grid with > 100 W of solar (at most once per hour). Record: as soon as today's production beats the best known day." } } }
+    },
+    "Batterie SolarFlow pleine" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow battery full" } } }
+    },
+    "Niveau de charge : %lld %" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge level: %lld %" } } }
+    },
+    "Tirage réseau inattendu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unexpected grid draw" } } }
+    },
+    "Le SolarFlow tire %@ du réseau alors que le solaire produit %@." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The SolarFlow draws %@ from the grid while solar produces %@." } } }
+    },
+    "Record de production battu !" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Production record beaten!" } } }
+    },
+    "%@ aujourd'hui — ancien record : %@." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ today — previous record: %@." } } }
+    },
+    "Zendure Monitor — Soleil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Sun" } } }
+    },
+    "Course du soleil et production" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sun path and production" } } }
+    },
+    "Arc pointillé : trajectoire du soleil entre lever et coucher. Zone jaune : production mesurée aujourd'hui (max par tranche de 5 min)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dashed arc: sun path between sunrise and sunset. Yellow area: today's measured production (max per 5-min slot)." } } }
+    },
+    "Productible théorique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Theoretical output" } } }
+    },
+    "Théorique ciel clair (maintenant)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear-sky theoretical (now)" } } }
+    },
+    "Production mesurée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Measured production" } } }
+    },
+    "Rendement estimé" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Estimated efficiency" } } }
+    },
+    "Estimation indicative : puissance crête × sin(élévation) × 0,9 — sans météo ni orientation des panneaux." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Rough estimate: peak power × sin(elevation) × 0.9 — no weather, no panel orientation." } } }
+    },
+    "Renseignez la puissance crête de vos panneaux (Wc) dans Réglages → Général pour estimer le productible ciel clair et le rendement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Set your panels' peak power (Wp) in Settings → General to estimate the clear-sky output and efficiency." } } }
+    },
+    "Puissance crête (Wc)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak power (Wp)" } } }
+    },
+    "Position : sert aux éphémérides de la fenêtre Soleil, jamais transmise. Puissance crête : active l'estimation du productible ciel clair." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position: used for the Sun window ephemerides, never transmitted. Peak power: enables the clear-sky output estimate." } } }
+    },
     "Position introuvable — autorisez Zendure Monitor dans Réglages → Confidentialité et sécurité → Service de localisation, ou saisissez les coordonnées manuellement." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position unavailable — allow Zendure Monitor in System Settings → Privacy & Security → Location Services, or enter the coordinates manually." } } }
     },

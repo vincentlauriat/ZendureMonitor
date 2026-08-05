@@ -7,6 +7,8 @@ struct MenuView: View {
     @EnvironmentObject var monitor: Monitor
     @Environment(\.openSettings) private var openSettings
     @Environment(\.openWindow) private var openWindow
+    /// Période du graphe principal : "recent" (15 min), "today", "14d".
+    @AppStorage("chartPeriod") private var chartPeriod = "recent"
 
     private let solarColor = Color.yellow
     private let homeColor = Color.blue
@@ -56,9 +58,27 @@ struct MenuView: View {
                     }
                 }
 
-                SparklineChart(values: monitor.solarHistory, color: solarColor)
-                    .frame(height: 36)
-                    .openDashboardOnDoubleClick(openWindow)
+                Group {
+                    switch chartPeriod {
+                    case "today":
+                        SparklineChart(values: monitor.todayCurve, color: solarColor)
+                    case "14d":
+                        DailyBarChart(days: monitor.dailyEnergy, color: solarColor)
+                    default:
+                        SparklineChart(values: monitor.solarHistory, color: solarColor)
+                    }
+                }
+                .frame(height: 36)
+                .openDashboardOnDoubleClick(openWindow)
+
+                Picker("", selection: $chartPeriod) {
+                    Text("15 min").tag("recent")
+                    Text("Jour").tag("today")
+                    Text("14 j").tag("14d")
+                }
+                .pickerStyle(.segmented)
+                .controlSize(.mini)
+                .labelsHidden()
 
                 if state.solarChannels.count > 1 {
                     VStack(spacing: 4) {
@@ -152,6 +172,18 @@ struct MenuView: View {
                         .font(.caption)
                         .help(Text("Exporter l'historique en CSV"))
                     }
+                    HStack(spacing: 10) {
+                        if monitor.peakTodayW > 0 {
+                            Text("Pic : \(Format.watts(monitor.peakTodayW))")
+                        }
+                        if let yesterday = monitor.yesterdayWh, yesterday > 0 {
+                            let delta = Int(((monitor.energyTodayWh - yesterday) / yesterday * 100).rounded())
+                            Text("vs hier : \(delta >= 0 ? "+" : "")\(delta) %")
+                        }
+                        Spacer()
+                    }
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
                 } else {
                     Text("L'historique se construira jour après jour.")
                         .font(.caption)
@@ -219,6 +251,10 @@ struct MenuView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+                Button("Soleil") {
+                    openWindow(id: "sun")
+                    NSApp.activate(ignoringOtherApps: true)
+                }
                 Button("Réglages…") {
                     openSettings()
                     NSApp.activate(ignoringOtherApps: true)

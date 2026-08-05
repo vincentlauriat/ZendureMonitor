@@ -9,15 +9,8 @@ struct DashboardView: View {
         }
         .frame(minWidth: 760, idealWidth: 820, minHeight: 640, idealHeight: 720)
         .navigationTitle(Text("Zendure Monitor — Tableau de bord"))
-        // L'app est LSUIElement : sans bascule en .regular, la fenêtre n'a ni
-        // icône dans le Dock ni entrée Cmd-Tab et se perd derrière les autres.
-        .onAppear {
-            NSApp.setActivationPolicy(.regular)
-            NSApp.activate(ignoringOtherApps: true)
-        }
-        .onDisappear {
-            NSApp.setActivationPolicy(.accessory)
-        }
+        .onAppear { WindowPolicy.retain() }
+        .onDisappear { WindowPolicy.release() }
     }
 }
 
@@ -47,9 +40,8 @@ struct DashboardContent: View {
                     }
                     HStack(alignment: .top, spacing: 14) {
                         deviceCard(state)
-                        SunCard()
+                        historyCard()
                     }
-                    historyCard()
                 }
                 .padding(16)
             } else {
@@ -101,6 +93,8 @@ struct DashboardContent: View {
                     }
                     LegendRow(color: homeColor, label: "Vers la maison", value: Format.watts(state.outputHomePower))
                     LegendRow(color: gridColor, label: "Depuis le réseau", value: Format.watts(state.gridInputPower))
+                    LegendRow(color: .green, label: "Économie du jour",
+                              value: String(format: "%.2f €", monitor.energyTodayWh / 1000 * monitor.kwhPrice))
                 }
             }
         }
@@ -214,6 +208,22 @@ struct DashboardContent: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    HStack(spacing: 10) {
+                        if monitor.peakTodayW > 0 {
+                            Text("Pic aujourd'hui : \(Format.watts(monitor.peakTodayW))")
+                        }
+                        if let yesterday = monitor.yesterdayWh, yesterday > 0 {
+                            let delta = Int(((monitor.energyTodayWh - yesterday) / yesterday * 100).rounded())
+                            Text("vs hier : \(delta >= 0 ? "+" : "")\(delta) %")
+                        }
+                        Spacer()
+                        let totalWh = monitor.dailyEnergy.reduce(0) { $0 + $1.wh }
+                        Text(verbatim: String(format: String(localized: "≈ %.2f € · %.1f kg CO₂ évités"),
+                                              totalWh / 1000 * monitor.kwhPrice,
+                                              totalWh / 1000 * monitor.co2Factor / 1000))
+                    }
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
                 } else {
                     Text("L'historique se construira jour après jour.")
                         .font(.caption)

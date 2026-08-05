@@ -23,6 +23,33 @@ struct ZendureMonitorApp: App {
                 .environmentObject(monitor)
         }
         .defaultSize(width: 820, height: 720)
+
+        Window("Soleil", id: "sun") {
+            SunView()
+                .environmentObject(monitor)
+        }
+        .defaultSize(width: 540, height: 680)
+    }
+}
+
+/// L'app est LSUIElement : tant qu'au moins une fenêtre (tableau de bord,
+/// Soleil…) est ouverte, elle doit apparaître dans le Dock et Cmd-Tab.
+/// Compteur partagé pour ne repasser en .accessory qu'à la dernière fermeture.
+@MainActor
+enum WindowPolicy {
+    private static var openWindows = 0
+
+    static func retain() {
+        openWindows += 1
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    static func release() {
+        openWindows = max(0, openWindows - 1)
+        if openWindows == 0 {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
 

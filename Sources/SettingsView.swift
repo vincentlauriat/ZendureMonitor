@@ -145,6 +145,7 @@ private struct GeneralSettingsTab: View {
     @State private var loginError: String?
     @AppStorage("sunLatitude") private var sunLatitude: Double = 0
     @AppStorage("sunLongitude") private var sunLongitude: Double = 0
+    @AppStorage("sunPeakWatts") private var sunPeakWatts: Double = 0
 
     var body: some View {
         Form {
@@ -164,7 +165,15 @@ private struct GeneralSettingsTab: View {
                 TextField("Latitude", value: $sunLatitude, format: .number.precision(.fractionLength(0...5)))
                 TextField("Longitude", value: $sunLongitude, format: .number.precision(.fractionLength(0...5)))
                 UseMacLocationButton()
-                Text("Utilisée localement pour calculer lever, coucher et élévation du soleil dans le tableau de bord. Jamais transmise.")
+                TextField("Puissance crête (Wc)", value: $sunPeakWatts, format: .number)
+                Text("Position : sert aux éphémérides de la fenêtre Soleil, jamais transmise. Puissance crête : active l'estimation du productible ciel clair.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Section("Économies") {
+                TextField("Prix du kWh (€)", value: $monitor.kwhPrice, format: .number.precision(.fractionLength(0...4)))
+                TextField("Facteur CO₂ (g/kWh)", value: $monitor.co2Factor, format: .number)
+                Text("Servent aux estimations « € économisés » et « CO₂ évité » du tableau de bord.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -210,6 +219,15 @@ private struct NotificationSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
+            }
+            Section("Notifications optionnelles") {
+                Toggle("Batterie pleine", isOn: $monitor.notifyFullBattery)
+                Toggle("Tirage réseau alors que le solaire produit", isOn: $monitor.notifyGridDraw)
+                Toggle("Record de production battu", isOn: $monitor.notifyDailyRecord)
+                Text("Batterie pleine : au plafond de charge configuré. Tirage réseau : > 50 W depuis le réseau avec > 100 W de solaire (au plus une fois par heure). Record : dès que la production du jour dépasse le meilleur jour connu.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .formStyle(.grouped)
