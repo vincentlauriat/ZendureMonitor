@@ -35,6 +35,8 @@ targets:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
         NSLocalNetworkUsageDescription: Zendure Monitor communique avec votre batterie SolarFlow sur le réseau local pour lire la production solaire.
+        NSLocationUsageDescription: Utilisée une seule fois pour préremplir la position du module Soleil (lever/coucher du soleil). Jamais transmise.
+        NSLocationWhenInUseUsageDescription: Utilisée une seule fois pour préremplir la position du module Soleil (lever/coucher du soleil). Jamais transmise.
         NSBonjourServices:
           - _zendure._tcp
           - _http._tcp

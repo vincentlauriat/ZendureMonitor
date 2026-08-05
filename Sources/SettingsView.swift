@@ -163,6 +163,7 @@ private struct GeneralSettingsTab: View {
             Section("Position (module Soleil)") {
                 TextField("Latitude", value: $sunLatitude, format: .number.precision(.fractionLength(0...5)))
                 TextField("Longitude", value: $sunLongitude, format: .number.precision(.fractionLength(0...5)))
+                UseMacLocationButton()
                 Text("Utilisée localement pour calculer lever, coucher et élévation du soleil dans le tableau de bord. Jamais transmise.")
                     .font(.caption)
                     .foregroundStyle(.secondary)

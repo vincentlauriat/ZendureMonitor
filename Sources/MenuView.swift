@@ -58,6 +58,7 @@ struct MenuView: View {
 
                 SparklineChart(values: monitor.solarHistory, color: solarColor)
                     .frame(height: 36)
+                    .openDashboardOnDoubleClick(openWindow)
 
                 if state.solarChannels.count > 1 {
                     VStack(spacing: 4) {
@@ -90,6 +91,7 @@ struct MenuView: View {
                               value: state.batteryFlow < -5 ? Format.watts(-state.batteryFlow) : "—")
                     SparklineChart(values: monitor.flowHistory, color: state.batteryFlow >= 0 ? chargeColor : dischargeColor, baseline: 0)
                         .frame(height: 26)
+                        .openDashboardOnDoubleClick(openWindow)
                 }
             }
             if !state.packs.isEmpty {
@@ -120,6 +122,7 @@ struct MenuView: View {
                 LegendRow(color: gridColor, label: "Depuis le réseau", value: Format.watts(state.gridInputPower))
                 SparklineChart(values: monitor.homeHistory, color: homeColor)
                     .frame(height: 36)
+                    .openDashboardOnDoubleClick(openWindow)
             }
         }
     }
@@ -130,6 +133,7 @@ struct MenuView: View {
                 if monitor.dailyEnergy.count > 1 {
                     DailyBarChart(days: monitor.dailyEnergy, color: solarColor)
                         .frame(height: 72)
+                        .openDashboardOnDoubleClick(openWindow)
                     HStack {
                         Text("\(monitor.dailyEnergy.count) derniers jours")
                             .font(.caption2)
@@ -228,3 +232,16 @@ struct MenuView: View {
         return nil
     }
 }
+
+/// Double-clic sur un graphique du panneau → fenêtre Tableau de bord.
+private extension View {
+    func openDashboardOnDoubleClick(_ openWindow: OpenWindowAction) -> some View {
+        contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                openWindow(id: "dashboard")
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            .help(Text("Double-clic : ouvrir le tableau de bord"))
+    }
+}
+

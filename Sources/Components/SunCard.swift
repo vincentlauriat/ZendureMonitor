@@ -19,10 +19,13 @@ struct SunCard: View {
                             now: timeline.date)
                 }
             } else {
-                Text("Renseignez votre position (latitude/longitude) dans Réglages → Général pour afficher les éphémérides du soleil.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Renseignez votre position (latitude/longitude) dans Réglages → Général pour afficher les éphémérides du soleil.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                    UseMacLocationButton()
+                }
             }
         }
     }

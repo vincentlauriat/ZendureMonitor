@@ -196,6 +196,15 @@
     "Longitude" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Longitude" } } }
     },
+    "Utiliser la position de ce Mac" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Use this Mac's position" } } }
+    },
+    "Position introuvable — autorisez Zendure Monitor dans Réglages → Confidentialité et sécurité → Service de localisation, ou saisissez les coordonnées manuellement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position unavailable — allow Zendure Monitor in System Settings → Privacy & Security → Location Services, or enter the coordinates manually." } } }
+    },
+    "Double-clic : ouvrir le tableau de bord" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-click: open the dashboard" } } }
+    },
     "Utilisée localement pour calculer lever, coucher et élévation du soleil dans le tableau de bord. Jamais transmise." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used locally to compute sunrise, sunset and sun elevation in the dashboard. Never transmitted." } } }
     },
