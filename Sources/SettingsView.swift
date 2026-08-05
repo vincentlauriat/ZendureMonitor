@@ -11,16 +11,18 @@ struct SettingsView: View {
                 .tabItem { Label("Appareil", systemImage: "antenna.radiowaves.left.and.right") }
             DisplaySettingsTab()
                 .tabItem { Label("Affichage", systemImage: "menubar.rectangle") }
-            GeneralSettingsTab()
-                .tabItem { Label("Général", systemImage: "gearshape") }
+            SunSettingsTab()
+                .tabItem { Label("Soleil", systemImage: "sun.horizon") }
             NotificationSettingsTab()
                 .tabItem { Label("Notifications", systemImage: "bell.badge") }
             ControlSettingsTab()
                 .tabItem { Label("Contrôle", systemImage: "slider.horizontal.3") }
             RemoteSettingsTab()
                 .tabItem { Label("Distant", systemImage: "network") }
+            GeneralSettingsTab()
+                .tabItem { Label("Général", systemImage: "gearshape") }
         }
-        .frame(width: 440)
+        .frame(width: 500)
         .fixedSize(horizontal: false, vertical: true)
     }
 }
@@ -78,6 +80,18 @@ private struct DeviceSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
+            }
+            Section("Rafraîchissement") {
+                Slider(value: $monitor.pollInterval, in: 2...60, step: 1) {
+                    Text("Rafraîchissement")
+                } minimumValueLabel: {
+                    Text(verbatim: "2 s")
+                } maximumValueLabel: {
+                    Text(verbatim: "60 s")
+                }
+                Text("Toutes les \(Int(monitor.pollInterval)) secondes")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)
@@ -137,15 +151,40 @@ private struct DisplaySettingsTab: View {
     }
 }
 
+// MARK: - Soleil
+
+private struct SunSettingsTab: View {
+    @AppStorage("sunLatitude") private var sunLatitude: Double = 0
+    @AppStorage("sunLongitude") private var sunLongitude: Double = 0
+    @AppStorage("sunPeakWatts") private var sunPeakWatts: Double = 0
+
+    var body: some View {
+        Form {
+            Section("Position") {
+                TextField("Latitude", value: $sunLatitude, format: .number.precision(.fractionLength(0...5)))
+                TextField("Longitude", value: $sunLongitude, format: .number.precision(.fractionLength(0...5)))
+                UseMacLocationButton()
+                Text("Sert aux éphémérides de la fenêtre Soleil (lever, coucher, élévation). Jamais transmise.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Section("Panneaux") {
+                TextField("Puissance crête (Wc)", value: $sunPeakWatts, format: .number)
+                Text("Active l'estimation du productible ciel clair et du rendement dans la fenêtre Soleil.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+}
+
 // MARK: - Général
 
 private struct GeneralSettingsTab: View {
     @EnvironmentObject var monitor: Monitor
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var loginError: String?
-    @AppStorage("sunLatitude") private var sunLatitude: Double = 0
-    @AppStorage("sunLongitude") private var sunLongitude: Double = 0
-    @AppStorage("sunPeakWatts") private var sunPeakWatts: Double = 0
 
     var body: some View {
         Form {
@@ -161,15 +200,6 @@ private struct GeneralSettingsTab: View {
                         .foregroundStyle(.orange)
                 }
             }
-            Section("Position (module Soleil)") {
-                TextField("Latitude", value: $sunLatitude, format: .number.precision(.fractionLength(0...5)))
-                TextField("Longitude", value: $sunLongitude, format: .number.precision(.fractionLength(0...5)))
-                UseMacLocationButton()
-                TextField("Puissance crête (Wc)", value: $sunPeakWatts, format: .number)
-                Text("Position : sert aux éphémérides de la fenêtre Soleil, jamais transmise. Puissance crête : active l'estimation du productible ciel clair.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
             Section("Économies") {
                 TextField("Prix du kWh (€)", value: $monitor.kwhPrice, format: .number.precision(.fractionLength(0...4)))
                 TextField("Facteur CO₂ (g/kWh)", value: $monitor.co2Factor, format: .number)
@@ -178,18 +208,6 @@ private struct GeneralSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
             PermissionsSection()
-            Section("Rafraîchissement") {
-                Slider(value: $monitor.pollInterval, in: 2...60, step: 1) {
-                    Text("Rafraîchissement")
-                } minimumValueLabel: {
-                    Text(verbatim: "2 s")
-                } maximumValueLabel: {
-                    Text(verbatim: "60 s")
-                }
-                Text("Toutes les \(Int(monitor.pollInterval)) secondes")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
         }
         .formStyle(.grouped)
     }

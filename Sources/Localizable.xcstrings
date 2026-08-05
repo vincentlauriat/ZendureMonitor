@@ -262,6 +262,24 @@
     "Jour" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Day" } } }
     },
+    "Rechercher des mises à jour…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Check for updates…" } } }
+    },
+    "Quitter Zendure Monitor" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit Zendure Monitor" } } }
+    },
+    "Réglages" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } } }
+    },
+    "Position" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position" } } }
+    },
+    "Sert aux éphémérides de la fenêtre Soleil (lever, coucher, élévation). Jamais transmise." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used for the Sun window ephemerides (sunrise, sunset, elevation). Never transmitted." } } }
+    },
+    "Active l'estimation du productible ciel clair et du rendement dans la fenêtre Soleil." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Enables the clear-sky output and efficiency estimates in the Sun window." } } }
+    },
     "Pic : %@" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak: %@" } } }
     },
