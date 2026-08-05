@@ -35,6 +35,8 @@ targets:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.utilities
         NSLocalNetworkUsageDescription: Zendure Monitor communique avec votre batterie SolarFlow sur le réseau local pour lire la production solaire.
+        NSLocationUsageDescription: Utilisée une seule fois pour préremplir la position du module Soleil (lever/coucher du soleil). Jamais transmise.
+        NSLocationWhenInUseUsageDescription: Utilisée une seule fois pour préremplir la position du module Soleil (lever/coucher du soleil). Jamais transmise.
         NSBonjourServices:
           - _zendure._tcp
           - _http._tcp
@@ -51,6 +53,23 @@ targets:
         ENABLE_HARDENED_RUNTIME: YES
         DEAD_CODE_STRIPPING: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    scheme:
+      testTargets:
+        - ZendureMonitorTests
+
+  # Tests unitaires sans host app : compilent directement les sources pures
+  # (parser, éphémérides, formatage) — rapides et exécutables en CI.
+  ZendureMonitorTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+      - path: Sources/DeviceState.swift
+      - path: Sources/Shared/SunCalc.swift
+      - path: Sources/Shared/Format.swift
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.lauriat.ZendureMonitorTests
 
   # L'extension widget est obligatoirement sandboxée (contrainte macOS) alors
   # que l'app ne l'est pas : elle ne parle pas au SolarFlow elle-même, elle

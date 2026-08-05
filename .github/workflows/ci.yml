@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  build-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build
+        run: >
+          xcodebuild -project ZendureMonitor.xcodeproj -scheme ZendureMonitor
+          -configuration Debug build CODE_SIGNING_ALLOWED=NO
+      - name: Test
+        run: >
+          xcodebuild -project ZendureMonitor.xcodeproj -scheme ZendureMonitor
+          -configuration Debug test CODE_SIGNING_ALLOWED=NO

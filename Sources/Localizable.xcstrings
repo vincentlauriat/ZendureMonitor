@@ -139,6 +139,249 @@
     "Tableau de bord" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dashboard" } } }
     },
+    "Ouvrir le tableau de bord" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open dashboard" } } }
+    },
+    "Accès au réseau local bloqué ?" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Local network access blocked?" } } }
+    },
+    "macOS semble empêcher Zendure Monitor d'atteindre le réseau local. Si la batterie est bien allumée, vérifiez que l'app est autorisée dans Réglages → Confidentialité et sécurité → Réseau local (désactivez puis réactivez l'interrupteur), puis réessayez. Si le blocage persiste, redémarrez le Mac." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "macOS seems to be blocking Zendure Monitor from reaching the local network. If the battery is powered on, make sure the app is allowed in System Settings → Privacy & Security → Local Network (turn the switch off and back on), then retry. If it stays blocked, restart your Mac." } } }
+    },
+    "Ouvrir les réglages…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open settings…" } } }
+    },
+    "Réessayer" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } } }
+    },
+    "Panneaux" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Panels" } } }
+    },
+    "Réseau public" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Public grid" } } }
+    },
+    "Prise hors-réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Off-grid outlet" } } }
+    },
+    "Batteries" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Batteries" } } }
+    },
+    "Lever" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sunrise" } } }
+    },
+    "Coucher" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sunset" } } }
+    },
+    "Midi solaire" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Solar noon" } } }
+    },
+    "Durée du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Day length" } } }
+    },
+    "Élévation" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Elevation" } } }
+    },
+    "Azimut" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Azimuth" } } }
+    },
+    "Renseignez votre position (latitude/longitude) dans Réglages → Général pour afficher les éphémérides du soleil." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Set your position (latitude/longitude) in Settings → General to display sun ephemerides." } } }
+    },
+    "Position (module Soleil)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position (Sun module)" } } }
+    },
+    "Latitude" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Latitude" } } }
+    },
+    "Longitude" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Longitude" } } }
+    },
+    "Utiliser la position de ce Mac" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Use this Mac's position" } } }
+    },
+    "Le service de localisation de macOS est désactivé pour tout le système. Activez-le dans Réglages → Confidentialité et sécurité → Service de localisation, ou saisissez les coordonnées manuellement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "macOS Location Services are disabled system-wide. Enable them in System Settings → Privacy & Security → Location Services, or enter the coordinates manually." } } }
+    },
+    "Pas de réponse du service de localisation. Si aucune demande d'autorisation n'est apparue, vérifiez Réglages → Confidentialité et sécurité → Service de localisation — ou saisissez les coordonnées manuellement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No answer from Location Services. If no authorization prompt appeared, check System Settings → Privacy & Security → Location Services — or enter the coordinates manually." } } }
+    },
+    "Position introuvable pour ce Mac (pas de WiFi à proximité ?). Saisissez les coordonnées manuellement — une précision à la ville près suffit." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Could not locate this Mac (no nearby WiFi?). Enter the coordinates manually — city-level accuracy is enough." } } }
+    },
+    "Autorisations" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Permissions" } } }
+    },
+    "Réseau local" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Local network" } } }
+    },
+    "Autorisé — connexion au SolarFlow active" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allowed — SolarFlow connection active" } } }
+    },
+    "Bloqué par macOS — l'app ne peut pas joindre le SolarFlow" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Blocked by macOS — the app cannot reach the SolarFlow" } } }
+    },
+    "Vérification en cours…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Checking…" } } }
+    },
+    "Localisation" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Location" } } }
+    },
+    "Service désactivé pour tout le système (facultatif — sert au module Soleil)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Service disabled system-wide (optional — used by the Sun module)" } } }
+    },
+    "Autorisée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allowed" } } }
+    },
+    "Refusée (facultatif — sert au module Soleil)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Denied (optional — used by the Sun module)" } } }
+    },
+    "Demandée au premier usage (facultative)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Requested on first use (optional)" } } }
+    },
+    "Autorisées" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allowed" } } }
+    },
+    "Refusées — l'alerte batterie faible ne s'affichera pas" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Denied — the low-battery alert will not appear" } } }
+    },
+    "Refusées (alerte batterie désactivée)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Denied (battery alert is off)" } } }
+    },
+    "Demandées à l'activation de l'alerte batterie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Requested when enabling the battery alert" } } }
+    },
+    "Ouvrir…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open…" } } }
+    },
+    "Notifications refusées — l'alerte batterie faible ne s'affichera pas." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Notifications denied — the low-battery alert will not appear." } } }
+    },
+    "Autoriser…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow…" } } }
+    },
+    "Jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Day" } } }
+    },
+    "Rechercher des mises à jour…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Check for updates…" } } }
+    },
+    "Quitter Zendure Monitor" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Quit Zendure Monitor" } } }
+    },
+    "Réglages" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Settings" } } }
+    },
+    "Position" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position" } } }
+    },
+    "Sert aux éphémérides de la fenêtre Soleil (lever, coucher, élévation). Jamais transmise." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used for the Sun window ephemerides (sunrise, sunset, elevation). Never transmitted." } } }
+    },
+    "Active l'estimation du productible ciel clair et du rendement dans la fenêtre Soleil." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Enables the clear-sky output and efficiency estimates in the Sun window." } } }
+    },
+    "Pic : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak: %@" } } }
+    },
+    "Pic aujourd'hui : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak today: %@" } } }
+    },
+    "vs hier : %@%lld %" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "vs yesterday: %@%lld %" } } }
+    },
+    "≈ %.2f € · %.1f kg CO₂ évités" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "≈ %.2f € · %.1f kg CO₂ avoided" } } }
+    },
+    "Économie du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Savings today" } } }
+    },
+    "Économies" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Savings" } } }
+    },
+    "Prix du kWh (€)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "kWh price (€)" } } }
+    },
+    "Facteur CO₂ (g/kWh)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "CO₂ factor (g/kWh)" } } }
+    },
+    "Servent aux estimations « € économisés » et « CO₂ évité » du tableau de bord." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used for the dashboard's \"€ saved\" and \"CO₂ avoided\" estimates." } } }
+    },
+    "Notifications optionnelles" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional notifications" } } }
+    },
+    "Batterie pleine" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery full" } } }
+    },
+    "Tirage réseau alors que le solaire produit" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Grid draw while solar is producing" } } }
+    },
+    "Record de production battu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Production record beaten" } } }
+    },
+    "Batterie pleine : au plafond de charge configuré. Tirage réseau : > 50 W depuis le réseau avec > 100 W de solaire (au plus une fois par heure). Record : dès que la production du jour dépasse le meilleur jour connu." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery full: at the configured charge ceiling. Grid draw: > 50 W from the grid with > 100 W of solar (at most once per hour). Record: as soon as today's production beats the best known day." } } }
+    },
+    "Batterie SolarFlow pleine" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow battery full" } } }
+    },
+    "Niveau de charge : %lld %" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge level: %lld %" } } }
+    },
+    "Tirage réseau inattendu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unexpected grid draw" } } }
+    },
+    "Le SolarFlow tire %@ du réseau alors que le solaire produit %@." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The SolarFlow draws %@ from the grid while solar produces %@." } } }
+    },
+    "Record de production battu !" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Production record beaten!" } } }
+    },
+    "%@ aujourd'hui — ancien record : %@." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ today — previous record: %@." } } }
+    },
+    "Zendure Monitor — Soleil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Sun" } } }
+    },
+    "Course du soleil et production" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sun path and production" } } }
+    },
+    "Arc pointillé : trajectoire du soleil entre lever et coucher. Zone jaune : production mesurée aujourd'hui (max par tranche de 5 min)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dashed arc: sun path between sunrise and sunset. Yellow area: today's measured production (max per 5-min slot)." } } }
+    },
+    "Productible théorique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Theoretical output" } } }
+    },
+    "Théorique ciel clair (maintenant)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear-sky theoretical (now)" } } }
+    },
+    "Production mesurée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Measured production" } } }
+    },
+    "Rendement estimé" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Estimated efficiency" } } }
+    },
+    "Estimation indicative : puissance crête × sin(élévation) × 0,9 — sans météo ni orientation des panneaux." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Rough estimate: peak power × sin(elevation) × 0.9 — no weather, no panel orientation." } } }
+    },
+    "Renseignez la puissance crête de vos panneaux (Wc) dans Réglages → Général pour estimer le productible ciel clair et le rendement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Set your panels' peak power (Wp) in Settings → General to estimate the clear-sky output and efficiency." } } }
+    },
+    "Puissance crête (Wc)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak power (Wp)" } } }
+    },
+    "Position : sert aux éphémérides de la fenêtre Soleil, jamais transmise. Puissance crête : active l'estimation du productible ciel clair." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position: used for the Sun window ephemerides, never transmitted. Peak power: enables the clear-sky output estimate." } } }
+    },
+    "Position introuvable — autorisez Zendure Monitor dans Réglages → Confidentialité et sécurité → Service de localisation, ou saisissez les coordonnées manuellement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position unavailable — allow Zendure Monitor in System Settings → Privacy & Security → Location Services, or enter the coordinates manually." } } }
+    },
+    "Double-clic : ouvrir le tableau de bord" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Double-click: open the dashboard" } } }
+    },
+    "Utilisée localement pour calculer lever, coucher et élévation du soleil dans le tableau de bord. Jamais transmise." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used locally to compute sunrise, sunset and sun elevation in the dashboard. Never transmitted." } } }
+    },
     "Zendure Monitor — Tableau de bord" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Dashboard" } } }
     },

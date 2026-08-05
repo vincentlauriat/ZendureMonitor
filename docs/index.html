@@ -149,8 +149,8 @@
   <p class="fineprint">Free &amp; open source (MIT) · macOS 14+ · signed &amp; notarized DMG · Sparkle auto-updates · 100% local</p>
 
   <figure class="shot">
-    <img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: solar production, battery state of charge with a ring gauge, output to the home, grid input and per-MPPT PV detail">
-    <figcaption>Click the menu bar item for the full picture — production, state of charge, energy flows and per-MPPT detail.</figcaption>
+    <img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: header with icon actions, solar production with a period selector, battery state of charge with a ring gauge, energy flows and 14-day history">
+    <figcaption>Click the menu bar item for the full picture — production, state of charge, energy flows, history and stats.</figcaption>
   </figure>
 </header>
 
@@ -167,7 +167,20 @@
     <div class="card">
       <h3>📊 The full panel</h3>
       <p>Battery state of charge, charge and discharge power, output to the home, grid input,
-      per-MPPT PV input, today's solar energy, and per-pack SOC and temperature.</p>
+      per-MPPT PV input, today's solar energy, per-pack SOC and temperature — with a
+      15 min / day / 14 days selector, daily peak and a vs-yesterday comparison.</p>
+    </div>
+    <div class="card">
+      <h3>🔀 Energy-flow dashboard</h3>
+      <p>A dashboard window with a live diagram: the SolarFlow at the center, panels, batteries,
+      public grid, home and the off-grid outlet around it. Links animate only when energy
+      actually flows, with the wattage on each link — plus savings estimates in € and CO₂.</p>
+    </div>
+    <div class="card">
+      <h3>🌅 Sun window</h3>
+      <p>Sunrise, sunset, solar noon and elevation computed locally (NOAA algorithm — nothing
+      leaves your Mac), the sun's path overlaid with today's production, and a clear-sky
+      theoretical output based on your panels' peak power.</p>
     </div>
     <div class="card">
       <h3>🧩 macOS widget</h3>
@@ -185,11 +198,25 @@
       multi-day trends, whatever you feel like plotting yourself.</p>
     </div>
     <div class="card">
-      <h3>🔔 Low-battery alerts</h3>
-      <p>An optional notification when the state of charge drops below a threshold you choose.
-      Plus launch at login, a theme override, and a UI localized in French and English.</p>
+      <h3>🔔 Smart notifications</h3>
+      <p>Optional alerts: battery low or full, unexpected grid draw while the sun is shining, and
+      daily production records. Plus launch at login, a theme override, an upfront permissions
+      check, and a UI localized in French and English.</p>
     </div>
   </div>
+</section>
+
+<section class="wrap">
+  <h2>The <span class="em">dashboard</span> and the Sun window</h2>
+  <p class="lead">A dedicated window for the whole picture — and another one for the sun itself.</p>
+  <figure class="shot" style="max-width:760px">
+    <img src="dashboard.png" alt="Zendure Monitor dashboard: hub-centric energy-flow diagram with the SolarFlow at the center and panels, batteries, public grid, home and off-grid outlet as peripherals, plus production, battery, device and history cards">
+    <figcaption>The energy-flow diagram: links animate only when energy actually flows, with live wattage.</figcaption>
+  </figure>
+  <figure class="shot" style="max-width:520px; margin-top:32px">
+    <img src="sun.png" alt="Zendure Monitor Sun window: local ephemerides (sunrise, sunset, solar noon, elevation), the sun path overlaid with today's production, and a clear-sky theoretical output estimate">
+    <figcaption>The Sun window — 100% local NOAA ephemerides, today's production on the sun's path, theoretical output.</figcaption>
+  </figure>
 </section>
 
 <section class="wrap">

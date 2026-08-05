@@ -23,6 +23,7 @@ struct DeviceState {
     var gridInputPower: Double = 0       // W — grid input (AC charging)
     var packInputPower: Double = 0       // W — battery discharge
     var outputPackPower: Double = 0      // W — battery charge
+    var offGridPower: Double = 0         // W — prise de secours hors réseau (gridOffPower)
     var serialNumber: String?
     var packs: [PackInfo] = []
     var acMode: Int?                     // 1 = charge secteur, 2 = injection
@@ -57,6 +58,7 @@ enum ZendureParser {
         state.gridInputPower = number(props["gridInputPower"]) ?? 0
         state.packInputPower = number(props["packInputPower"]) ?? 0
         state.outputPackPower = number(props["outputPackPower"]) ?? 0
+        state.offGridPower = number(props["gridOffPower"]) ?? 0
         state.serialNumber = (root["sn"] as? String) ?? (props["sn"] as? String)
         state.solarChannels = (1...6).compactMap { number(props["solarPower\($0)"]) }
         state.acMode = number(props["acMode"]).map(Int.init)

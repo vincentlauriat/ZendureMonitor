@@ -9,6 +9,8 @@ struct DashboardView: View {
         }
         .frame(minWidth: 760, idealWidth: 820, minHeight: 640, idealHeight: 720)
         .navigationTitle(Text("Zendure Monitor — Tableau de bord"))
+        .onAppear { WindowPolicy.retain() }
+        .onDisappear { WindowPolicy.release() }
     }
 }
 
@@ -29,7 +31,7 @@ struct DashboardContent: View {
                 VStack(spacing: 14) {
                     MetricCard(title: "Flux d'énergie", systemImage: "arrow.triangle.swap") {
                         EnergyFlowView(state: state)
-                            .frame(height: 240)
+                            .frame(height: 300)
                     }
 
                     HStack(alignment: .top, spacing: 14) {
@@ -52,6 +54,10 @@ struct DashboardContent: View {
                     Text(monitor.lastError ?? "Connexion au SolarFlow en cours…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if monitor.localNetworkDenied {
+                        LocalNetworkHint { monitor.restart() }
+                            .frame(maxWidth: 420)
+                    }
                 }
                 .frame(maxWidth: .infinity, minHeight: 400)
                 .padding(16)
@@ -87,6 +93,8 @@ struct DashboardContent: View {
                     }
                     LegendRow(color: homeColor, label: "Vers la maison", value: Format.watts(state.outputHomePower))
                     LegendRow(color: gridColor, label: "Depuis le réseau", value: Format.watts(state.gridInputPower))
+                    LegendRow(color: .green, label: "Économie du jour",
+                              value: String(format: "%.2f €", monitor.energyTodayWh / 1000 * monitor.kwhPrice))
                 }
             }
         }
@@ -200,6 +208,22 @@ struct DashboardContent: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    HStack(spacing: 10) {
+                        if monitor.peakTodayW > 0 {
+                            Text("Pic aujourd'hui : \(Format.watts(monitor.peakTodayW))")
+                        }
+                        if let yesterday = monitor.yesterdayWh, yesterday > 0 {
+                            let delta = Int(((monitor.energyTodayWh - yesterday) / yesterday * 100).rounded())
+                            Text("vs hier : \(delta >= 0 ? "+" : "")\(delta) %")
+                        }
+                        Spacer()
+                        let totalWh = monitor.dailyEnergy.reduce(0) { $0 + $1.wh }
+                        Text(verbatim: String(format: String(localized: "≈ %.2f € · %.1f kg CO₂ évités"),
+                                              totalWh / 1000 * monitor.kwhPrice,
+                                              totalWh / 1000 * monitor.co2Factor / 1000))
+                    }
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
                 } else {
                     Text("L'historique se construira jour après jour.")
                         .font(.caption)

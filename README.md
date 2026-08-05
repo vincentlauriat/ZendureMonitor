@@ -12,7 +12,9 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
-New in 1.4: a **dashboard window** (animated energy-flow diagram, device temperature/WiFi/limits, per-pack detail, richer history) and an optional **24/7 collector** (`Scripts/collector/`) for an always-on Mac, so daily history no longer depends on this Mac's uptime.
+New in 1.5: a redesigned panel (header with icon actions, period selector 15 min / day / 14 days, peak & vs-yesterday stats), a **hub-centric energy-flow diagram** (SolarFlow at the center; panels, batteries, public grid, home and the off-grid outlet as peripherals — links animate only when energy actually flows, with live wattage), a dedicated **Sun window** (local NOAA ephemerides, sun path overlaid with today's production, clear-sky theoretical output), **savings estimates** (configurable €/kWh and g CO₂/kWh), extra opt-in notifications (battery full, unexpected grid draw, production record), an upfront **permissions check** (local network / location / notifications), unit tests and a GitHub Actions CI.
+
+New in 1.4: a **dashboard window** and an optional **24/7 collector** (`Scripts/collector/`) for an always-on Mac, so daily history no longer depends on this Mac's uptime.
 
 New in 1.3: a **macOS widget** (small/medium), a **battery control tab** (AC mode, output/charge limits via `POST /properties/write`) and **CSV export** of the production history.
 
@@ -24,9 +26,13 @@ Options: choose what the menu bar shows (solar W, battery %, home W — or icon 
 |:---:|:---:|
 | ![Panel, light theme](docs/panel-light.png) | ![Panel, dark theme](docs/panel-dark.png) |
 
-**Dashboard window** — animated energy-flow diagram and every indicator the local API exposes:
+**Dashboard window** — hub-centric animated energy-flow diagram and every indicator the local API exposes:
 
 ![Dashboard](docs/dashboard.png)
+
+**Sun window** — local ephemerides (NOAA algorithm, nothing leaves the Mac), the sun's path overlaid with today's production, and a clear-sky theoretical output estimate:
+
+![Sun window](docs/sun.png)
 
 ## Supported hardware
 
@@ -102,16 +108,23 @@ Pure Swift / SwiftUI, no third-party dependency besides Sparkle. Generated with 
 
 ```
 Sources/
-  ZendureMonitorApp.swift   @main — MenuBarExtra (LSUIElement agent app) + Settings scene
-  Components/               reusable card/gauge/sparkline views (Swift Charts), shared
-                            design language with the MacInside app
-  Monitor.swift             @MainActor ObservableObject: async polling loop (2–60 s,
-                            URLSession, 5 s timeout), UserDefaults persistence, W/kW formatting
+  ZendureMonitorApp.swift   @main — MenuBarExtra (LSUIElement agent app), Settings scene,
+                            dashboard & Sun windows, shared Dock activation policy
+  Components/               reusable card/gauge/sparkline views (Swift Charts), the energy-flow
+                            diagram and the Sun card — shared design language with MacInside
+  Monitor.swift             @MainActor ObservableObject: async polling loop (2–60 s, URLSession,
+                            5 s timeout), daily curve/peak persistence, savings, notifications
   DeviceState.swift         zenSDK payload model + tolerant JSONSerialization parser
   Discovery.swift           Bonjour browser (_zendure._tcp + _http._tcp) resolving hostnames
-  MenuView.swift            dropdown panel (production, SOC, flows, per-MPPT detail)
-  SettingsView.swift        host/IP, poll interval, network scan, connection test
+  MenuView.swift            dropdown panel (header with icon actions, cards, period selector)
+  DashboardView.swift       dashboard window (flow diagram + full indicator cards)
+  SunView.swift             Sun window (ephemerides, sun path × production, theoretical output)
+  SettingsView.swift        tabs: device, display, sun, notifications, control, remote, general
+  LocationFetcher.swift     one-shot CoreLocation fix to prefill the sun position
+  PermissionsStatus.swift   upfront permissions check (local network, location, notifications)
+  Shared/                   Format, SunCalc (NOAA), widget snapshot — also compiled into tests
   Updater.swift             Sparkle SPUStandardUpdaterController wiring
+Tests/                      unit tests (parser, SunCalc, Format) — run in CI on every PR
 ```
 
 Design choices:
@@ -168,6 +181,9 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.3 — macOS widget (App Group snapshot), battery control tab (`POST /properties/write`), CSV export of the history
 - [x] v1.4 — dashboard window with animated energy-flow diagram; optional 24/7 collector (LaunchAgent + SQLite + JSON API) feeding complete history
 - [x] v1.2 — multi-day production history (daily kWh bar chart)
+- [x] v1.5 — hub-centric flow diagram (batteries, grid, home, off-grid outlet as peripherals), Sun window (local ephemerides + production overlay + theoretical output), Juicy-style panel with period selector and stats, savings estimates (€/CO₂), extra opt-in notifications, permissions check, unit tests + GitHub Actions CI
+- [ ] v1.6 — large widget (14-day histogram), Chinese localization, reorderable cards, weather in the Sun window
+- [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements
 

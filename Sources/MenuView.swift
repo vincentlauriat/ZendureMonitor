@@ -7,6 +7,8 @@ struct MenuView: View {
     @EnvironmentObject var monitor: Monitor
     @Environment(\.openSettings) private var openSettings
     @Environment(\.openWindow) private var openWindow
+    /// Période du graphe principal : "recent" (15 min), "today", "14d".
+    @AppStorage("chartPeriod") private var chartPeriod = "recent"
 
     private let solarColor = Color.yellow
     private let homeColor = Color.blue
@@ -16,12 +18,12 @@ struct MenuView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            header
             if let state = monitor.state {
                 solarCard(state)
                 batteryCard(state)
                 flowsCard(state)
                 historyCard()
-                footer(updatedAt: state.updatedAt)
             } else {
                 MetricCard(title: "Pas de données", systemImage: "sun.max.trianglebadge.exclamationmark") {
                     Text(monitor.lastError ?? "Connexion au SolarFlow en cours…")
@@ -29,8 +31,8 @@ struct MenuView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                footer(updatedAt: nil)
             }
+            warnings
         }
         .padding(12)
         .frame(width: 320)
@@ -56,8 +58,27 @@ struct MenuView: View {
                     }
                 }
 
-                SparklineChart(values: monitor.solarHistory, color: solarColor)
-                    .frame(height: 36)
+                Group {
+                    switch chartPeriod {
+                    case "today":
+                        SparklineChart(values: monitor.todayCurve, color: solarColor)
+                    case "14d":
+                        DailyBarChart(days: monitor.dailyEnergy, color: solarColor)
+                    default:
+                        SparklineChart(values: monitor.solarHistory, color: solarColor)
+                    }
+                }
+                .frame(height: 36)
+                .openDashboardOnDoubleClick(openWindow)
+
+                Picker("", selection: $chartPeriod) {
+                    Text("15 min").tag("recent")
+                    Text("Jour").tag("today")
+                    Text("14 j").tag("14d")
+                }
+                .pickerStyle(.segmented)
+                .controlSize(.mini)
+                .labelsHidden()
 
                 if state.solarChannels.count > 1 {
                     VStack(spacing: 4) {
@@ -90,6 +111,7 @@ struct MenuView: View {
                               value: state.batteryFlow < -5 ? Format.watts(-state.batteryFlow) : "—")
                     SparklineChart(values: monitor.flowHistory, color: state.batteryFlow >= 0 ? chargeColor : dischargeColor, baseline: 0)
                         .frame(height: 26)
+                        .openDashboardOnDoubleClick(openWindow)
                 }
             }
             if !state.packs.isEmpty {
@@ -120,6 +142,7 @@ struct MenuView: View {
                 LegendRow(color: gridColor, label: "Depuis le réseau", value: Format.watts(state.gridInputPower))
                 SparklineChart(values: monitor.homeHistory, color: homeColor)
                     .frame(height: 36)
+                    .openDashboardOnDoubleClick(openWindow)
             }
         }
     }
@@ -130,6 +153,7 @@ struct MenuView: View {
                 if monitor.dailyEnergy.count > 1 {
                     DailyBarChart(days: monitor.dailyEnergy, color: solarColor)
                         .frame(height: 72)
+                        .openDashboardOnDoubleClick(openWindow)
                     HStack {
                         Text("\(monitor.dailyEnergy.count) derniers jours")
                             .font(.caption2)
@@ -148,6 +172,18 @@ struct MenuView: View {
                         .font(.caption)
                         .help(Text("Exporter l'historique en CSV"))
                     }
+                    HStack(spacing: 10) {
+                        if monitor.peakTodayW > 0 {
+                            Text("Pic : \(Format.watts(monitor.peakTodayW))")
+                        }
+                        if let yesterday = monitor.yesterdayWh, yesterday > 0 {
+                            let delta = Int(((monitor.energyTodayWh - yesterday) / yesterday * 100).rounded())
+                            Text("vs hier : \(delta >= 0 ? "+" : "")\(delta) %")
+                        }
+                        Spacer()
+                    }
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
                 } else {
                     Text("L'historique se construira jour après jour.")
                         .font(.caption)
@@ -167,44 +203,102 @@ struct MenuView: View {
         }
     }
 
-    private func footer(updatedAt: Date?) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if monitor.usingFallback {
-                Label("Connecté via l'hôte de secours", systemImage: "network")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            if monitor.state != nil, let error = monitor.lastError {
-                Label(error, systemImage: "exclamationmark.triangle")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            HStack {
-                if let updatedAt {
-                    Text("Mis à jour à \(updatedAt.formatted(date: .omitted, time: .standard))")
+    // MARK: - En-tete (style Juicy : actions en icones, pas de rangee de boutons)
+
+    private var header: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "sun.max.fill")
+                .font(.title3)
+                .foregroundStyle(.yellow)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(verbatim: "Zendure Monitor")
+                    .font(.headline)
+                if let updatedAt = monitor.state?.updatedAt {
+                    Text("Mis \u{00e0} jour \u{00e0} \(updatedAt.formatted(date: .omitted, time: .standard))")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("Connexion au SolarFlow en cours\u{2026}")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
-                Button {
-                    openWindow(id: "dashboard")
-                    NSApp.activate(ignoringOtherApps: true)
-                } label: {
-                    Label("Tableau de bord", systemImage: "rectangle.grid.2x2")
-                        .labelStyle(.titleOnly)
-                }
-                Button("Réglages…") {
-                    openSettings()
-                    NSApp.activate(ignoringOtherApps: true)
-                }
-                Button("Mises à jour…") { Updater.checkForUpdates() }
-                Button("Quitter") { NSApplication.shared.terminate(nil) }
             }
-            .buttonStyle(.borderless)
-            .font(.caption)
+            Spacer()
+            headerButton("gauge.with.dots.needle.67percent", help: "Tableau de bord") {
+                openWindow(id: "dashboard")
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            headerButton("sun.horizon.fill", help: "Soleil") {
+                openWindow(id: "sun")
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            headerButton("gearshape.fill", help: "R\u{00e9}glages") {
+                openSettings()
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            Menu {
+                Button("Rechercher des mises \u{00e0} jour\u{2026}") { Updater.checkForUpdates() }
+                Divider()
+                Button("Quitter Zendure Monitor") { NSApplication.shared.terminate(nil) }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
         }
-        .padding(.horizontal, 4)
+        .padding(.horizontal, 2)
+    }
+
+    private func headerButton(_ icon: String, help: LocalizedStringKey,
+                              action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.secondary)
+                .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.borderless)
+        .help(Text(help))
+    }
+
+    // MARK: - Avertissements
+
+    @ViewBuilder
+    private var warnings: some View {
+        if monitor.usingFallback {
+            Label("Connect\u{00e9} via l'h\u{00f4}te de secours", systemImage: "network")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        if monitor.state != nil, let error = monitor.lastError {
+            Label(error, systemImage: "exclamationmark.triangle")
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        if monitor.localNetworkDenied {
+            LocalNetworkHint { monitor.restart() }
+        }
+        if monitor.notificationsDenied {
+            HStack(spacing: 6) {
+                Label("Notifications refus\u{00e9}es \u{2014} l'alerte batterie faible ne s'affichera pas.", systemImage: "bell.slash")
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer()
+                Button("Autoriser\u{2026}") {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.notifications") {
+                        NSWorkspace.shared.open(url)
+                    }
+                }
+                .buttonStyle(.borderless)
+                .font(.caption)
+            }
+        }
     }
 
     // MARK: - Helpers
@@ -223,3 +317,16 @@ struct MenuView: View {
         return nil
     }
 }
+
+/// Double-clic sur un graphique du panneau → fenêtre Tableau de bord.
+private extension View {
+    func openDashboardOnDoubleClick(_ openWindow: OpenWindowAction) -> some View {
+        contentShape(Rectangle())
+            .onTapGesture(count: 2) {
+                openWindow(id: "dashboard")
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            .help(Text("Double-clic : ouvrir le tableau de bord"))
+    }
+}
+

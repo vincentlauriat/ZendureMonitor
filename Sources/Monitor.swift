@@ -40,6 +40,8 @@ final class Monitor: ObservableObject {
     @Published var lastError: String?
     /// True when the last successful poll went through the fallback host.
     @Published var usingFallback = false
+    /// Échecs réseau ressemblant à un refus TCC « réseau local » (voir LocalNetworkHint).
+    @Published var localNetworkDenied = false
     /// Solar energy produced today (Wh), integrated from the polls while the app runs.
     @Published var energyTodayWh: Double = 0
     /// Last days of production (oldest first, today included), for the history card.
@@ -51,6 +53,11 @@ final class Monitor: ObservableObject {
     @Published var homeHistory: [Double] = []
     @Published var flowHistory: [Double] = []
     private let historyCapacity = 180
+    /// Courbe de production du jour : le max de chaque tranche de 5 min (288 max),
+    /// persistée par jour (`solarCurve-<day>`) pour survivre aux relances.
+    @Published var todayCurve: [Double] = []
+    /// Pic de puissance solaire du jour (W), persisté (`peakW-<day>`).
+    @Published var peakTodayW: Double = 0
 
     // MARK: - Settings (persisted)
 
@@ -84,10 +91,39 @@ final class Monitor: ObservableObject {
         didSet {
             UserDefaults.standard.set(lowSocAlertEnabled, forKey: "lowSocAlertEnabled")
             if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
+            refreshNotificationsStatus()
         }
     }
+    /// Alerte batterie activée mais notifications refusées par macOS.
+    @Published var notificationsDenied = false
     @Published var lowSocThreshold: Double {
         didSet { UserDefaults.standard.set(lowSocThreshold, forKey: "lowSocThreshold") }
+    }
+    /// Prix du kWh (€) et facteur d'émission (g CO₂/kWh) pour les estimations.
+    @Published var kwhPrice: Double {
+        didSet { UserDefaults.standard.set(kwhPrice, forKey: "kwhPrice") }
+    }
+    @Published var co2Factor: Double {
+        didSet { UserDefaults.standard.set(co2Factor, forKey: "co2Factor") }
+    }
+    /// Notifications optionnelles (opt-in).
+    @Published var notifyFullBattery: Bool {
+        didSet {
+            UserDefaults.standard.set(notifyFullBattery, forKey: "notifyFullBattery")
+            if notifyFullBattery { Self.requestNotificationAuthorization() }
+        }
+    }
+    @Published var notifyGridDraw: Bool {
+        didSet {
+            UserDefaults.standard.set(notifyGridDraw, forKey: "notifyGridDraw")
+            if notifyGridDraw { Self.requestNotificationAuthorization() }
+        }
+    }
+    @Published var notifyDailyRecord: Bool {
+        didSet {
+            UserDefaults.standard.set(notifyDailyRecord, forKey: "notifyDailyRecord")
+            if notifyDailyRecord { Self.requestNotificationAuthorization() }
+        }
     }
     @Published var appearance: AppearanceMode {
         didSet {
@@ -105,6 +141,10 @@ final class Monitor: ObservableObject {
     private var activeHost: String?
     private var lastWidgetReload: Date = .distantPast
     private var lastServerFetch: Date = .distantPast
+    private var lastCurveSave: Date = .distantPast
+    private var fullBatteryNotified = false
+    private var lastGridDrawNotify: Date = .distantPast
+    private var recordNotifiedDay = ""
 
     init() {
         let config = URLSessionConfiguration.ephemeral
@@ -127,13 +167,38 @@ final class Monitor: ObservableObject {
 
         appearance = AppearanceMode(rawValue: defaults.string(forKey: "appearanceMode") ?? "auto") ?? .auto
 
+        kwhPrice = defaults.object(forKey: "kwhPrice") as? Double ?? 0.20
+        co2Factor = defaults.object(forKey: "co2Factor") as? Double ?? 55
+        notifyFullBattery = defaults.bool(forKey: "notifyFullBattery")
+        notifyGridDraw = defaults.bool(forKey: "notifyGridDraw")
+        notifyDailyRecord = defaults.bool(forKey: "notifyDailyRecord")
+
         energyDay = Self.dayKey(.now)
         energyTodayWh = defaults.double(forKey: "energyWh-\(energyDay)")
+        todayCurve = defaults.array(forKey: "solarCurve-\(energyDay)") as? [Double] ?? []
+        peakTodayW = defaults.double(forKey: "peakW-\(energyDay)")
+        pruneAuxKeys()
 
         if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
         appearance.apply()
         reloadDailyEnergy()
         restart()
+        refreshNotificationsStatus()
+    }
+
+    /// Vérification au démarrage (et au changement du réglage d'alerte) pour
+    /// signaler en amont une autorisation manquante plutôt que d'échouer en
+    /// silence au moment d'envoyer la notification.
+    func refreshNotificationsStatus() {
+        guard lowSocAlertEnabled else {
+            notificationsDenied = false
+            return
+        }
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            DispatchQueue.main.async {
+                self?.notificationsDenied = settings.authorizationStatus == .denied
+            }
+        }
     }
 
     func restart() {
@@ -152,21 +217,45 @@ final class Monitor: ObservableObject {
             state = fresh
             usingFallback = viaFallback
             lastError = nil
+            localNetworkDenied = false
             append(fresh.solarInputPower, to: &solarHistory)
             append(fresh.outputHomePower, to: &homeHistory)
             append(fresh.batteryFlow, to: &flowHistory)
             accumulateEnergy(solarPower: fresh.solarInputPower, at: fresh.updatedAt)
             checkLowSoc(fresh)
+            checkExtraNotifications(fresh)
             publishWidgetSnapshot(fresh)
             await refreshHistoryFromServer()
         } catch {
             // Keep the last known values visible, but flag the problem.
             lastError = error.localizedDescription
             lastSampleAt = nil
+            localNetworkDenied = Self.looksLikeLocalNetworkDenial(error)
             if state == nil || Date.now.timeIntervalSince(state!.updatedAt) > 60 {
                 state = nil
             }
         }
+    }
+
+    /// TN3179 : un refus TCC « réseau local » remonte en ENETDOWN (POSIX 50)
+    /// ou NSURLErrorNotConnectedToInternet. EHOSTUNREACH (65), -1004 et -1003
+    /// sont ambigus (device éteint, mDNS bloqué…) mais méritent le même
+    /// guidage — le bandeau reste formulé au conditionnel.
+    static func looksLikeLocalNetworkDenial(_ error: Error) -> Bool {
+        var current: NSError? = error as NSError
+        while let nsError = current {
+            if nsError.domain == NSPOSIXErrorDomain, nsError.code == 50 || nsError.code == 65 {
+                return true
+            }
+            if nsError.domain == NSURLErrorDomain,
+               [NSURLErrorNotConnectedToInternet,
+                NSURLErrorCannotConnectToHost,
+                NSURLErrorCannotFindHost].contains(nsError.code) {
+                return true
+            }
+            current = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return false
     }
 
     /// One-shot probe used by the settings window ("Tester la connexion").
@@ -312,6 +401,8 @@ final class Monitor: ObservableObject {
             energyDay = day
             energyTodayWh = 0
             lastSampleAt = nil
+            todayCurve = []
+            peakTodayW = 0
         }
         if let last = lastSampleAt {
             // Cap dt so a machine wake-up doesn't credit hours of sleep.
@@ -320,6 +411,22 @@ final class Monitor: ObservableObject {
         }
         lastSampleAt = date
         UserDefaults.standard.set(energyTodayWh, forKey: "energyWh-\(day)")
+
+        // Courbe du jour (buckets de 5 min) + pic de puissance.
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
+        let bucket = ((comps.hour ?? 0) * 60 + (comps.minute ?? 0)) / 5
+        if todayCurve.count <= bucket {
+            todayCurve.append(contentsOf: Array(repeating: 0, count: bucket + 1 - todayCurve.count))
+        }
+        todayCurve[bucket] = max(todayCurve[bucket], solarPower)
+        if solarPower > peakTodayW {
+            peakTodayW = solarPower
+            UserDefaults.standard.set(peakTodayW, forKey: "peakW-\(day)")
+        }
+        if date.timeIntervalSince(lastCurveSave) >= 60 {
+            lastCurveSave = date
+            UserDefaults.standard.set(todayCurve, forKey: "solarCurve-\(day)")
+        }
 
         // Keep today's bar in the history card live.
         if let index = dailyEnergy.firstIndex(where: { $0.day == day }) {
@@ -379,6 +486,70 @@ final class Monitor: ObservableObject {
         }
     }
 
+    // MARK: - Notifications optionnelles
+
+    private func checkExtraNotifications(_ state: DeviceState) {
+        if notifyFullBattery, let soc = state.electricLevel {
+            let target = min(state.socMax ?? 100, 100)
+            if soc >= target - 0.5, !fullBatteryNotified {
+                fullBatteryNotified = true
+                notify(id: "full-battery",
+                       title: String(localized: "Batterie SolarFlow pleine"),
+                       body: String(localized: "Niveau de charge : \(Int(soc)) %"))
+            } else if soc < target - 5 {
+                fullBatteryNotified = false
+            }
+        }
+        if notifyGridDraw, state.gridInputPower > 50, state.solarInputPower > 100,
+           Date.now.timeIntervalSince(lastGridDrawNotify) > 3600 {
+            lastGridDrawNotify = .now
+            notify(id: "grid-draw",
+                   title: String(localized: "Tirage réseau inattendu"),
+                   body: String(localized: "Le SolarFlow tire \(Format.watts(state.gridInputPower)) du réseau alors que le solaire produit \(Format.watts(state.solarInputPower))."))
+        }
+        if notifyDailyRecord, energyDay != recordNotifiedDay, dailyEnergy.count >= 4 {
+            let previousBest = dailyEnergy.filter { $0.day != energyDay }.map(\.wh).max() ?? 0
+            if previousBest > 0, energyTodayWh > previousBest {
+                recordNotifiedDay = energyDay
+                notify(id: "daily-record",
+                       title: String(localized: "Record de production battu !"),
+                       body: String(localized: "\(Format.kilowattHours(energyTodayWh)) aujourd'hui — ancien record : \(Format.kilowattHours(previousBest))."))
+            }
+        }
+    }
+
+    private func notify(id: String, title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        UNUserNotificationCenter.current().add(
+            UNNotificationRequest(identifier: id, content: content, trigger: nil)
+        )
+    }
+
+    // MARK: - Statistiques
+
+    /// Production d'hier (Wh), si connue.
+    var yesterdayWh: Double? {
+        guard let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: .now) else { return nil }
+        let wh = UserDefaults.standard.double(forKey: "energyWh-\(Self.dayKey(yesterday))")
+        return wh > 0 ? wh : nil
+    }
+
+    /// Purge les clés `solarCurve-` / `peakW-` des jours sortis de l'historique.
+    private func pruneAuxKeys() {
+        let defaults = UserDefaults.standard
+        let keep = Set(collectDailyEnergy().suffix(15).map(\.day))
+        for key in defaults.dictionaryRepresentation().keys
+        where key.hasPrefix("solarCurve-") || key.hasPrefix("peakW-") {
+            let day = String(key.split(separator: "-", maxSplits: 1)[1])
+            if !keep.contains(day), day != energyDay {
+                defaults.removeObject(forKey: key)
+            }
+        }
+    }
+
     private static func requestNotificationAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
     }
@@ -388,35 +559,5 @@ final class Monitor: ObservableObject {
         if history.count > historyCapacity {
             history.removeFirst(history.count - historyCapacity)
         }
-    }
-}
-
-enum Format {
-    static func watts(_ value: Double) -> String {
-        if abs(value) >= 1000 {
-            return String(format: "%.2f kW", locale: .current, value / 1000)
-        }
-        return "\(Int(value.rounded())) W"
-    }
-
-    /// Shorter variant for the menu bar itself.
-    static func wattsCompact(_ value: Double) -> String {
-        if abs(value) >= 1000 {
-            return String(format: "%.1f kW", locale: .current, value / 1000)
-        }
-        return "\(Int(value.rounded())) W"
-    }
-
-    static func kilowattHours(_ wh: Double) -> String {
-        if wh >= 1000 {
-            return String(format: "%.2f kWh", locale: .current, wh / 1000)
-        }
-        return "\(Int(wh.rounded())) Wh"
-    }
-
-    static func duration(minutes: Double) -> String {
-        let total = Int(minutes.rounded())
-        if total >= 60 { return "\(total / 60) h \(String(format: "%02d", total % 60))" }
-        return "\(total) min"
     }
 }
