@@ -142,6 +142,18 @@
     "Ouvrir le tableau de bord" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open dashboard" } } }
     },
+    "Accès au réseau local bloqué ?" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Local network access blocked?" } } }
+    },
+    "macOS semble empêcher Zendure Monitor d'atteindre le réseau local. Si la batterie est bien allumée, vérifiez que l'app est autorisée dans Réglages → Confidentialité et sécurité → Réseau local (désactivez puis réactivez l'interrupteur), puis réessayez. Si le blocage persiste, redémarrez le Mac." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "macOS seems to be blocking Zendure Monitor from reaching the local network. If the battery is powered on, make sure the app is allowed in System Settings → Privacy & Security → Local Network (turn the switch off and back on), then retry. If it stays blocked, restart your Mac." } } }
+    },
+    "Ouvrir les réglages…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open settings…" } } }
+    },
+    "Réessayer" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } } }
+    },
     "Zendure Monitor — Tableau de bord" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Dashboard" } } }
     },

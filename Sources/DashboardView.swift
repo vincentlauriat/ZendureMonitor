@@ -61,6 +61,10 @@ struct DashboardContent: View {
                     Text(monitor.lastError ?? "Connexion au SolarFlow en cours…")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                    if monitor.localNetworkDenied {
+                        LocalNetworkHint { monitor.restart() }
+                            .frame(maxWidth: 420)
+                    }
                 }
                 .frame(maxWidth: .infinity, minHeight: 400)
                 .padding(16)

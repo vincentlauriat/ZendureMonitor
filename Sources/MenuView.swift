@@ -189,6 +189,9 @@ struct MenuView: View {
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if monitor.localNetworkDenied {
+                LocalNetworkHint { monitor.restart() }
+            }
             HStack {
                 if let updatedAt {
                     Text("Mis à jour à \(updatedAt.formatted(date: .omitted, time: .standard))")

@@ -40,6 +40,8 @@ final class Monitor: ObservableObject {
     @Published var lastError: String?
     /// True when the last successful poll went through the fallback host.
     @Published var usingFallback = false
+    /// Échecs réseau ressemblant à un refus TCC « réseau local » (voir LocalNetworkHint).
+    @Published var localNetworkDenied = false
     /// Solar energy produced today (Wh), integrated from the polls while the app runs.
     @Published var energyTodayWh: Double = 0
     /// Last days of production (oldest first, today included), for the history card.
@@ -152,6 +154,7 @@ final class Monitor: ObservableObject {
             state = fresh
             usingFallback = viaFallback
             lastError = nil
+            localNetworkDenied = false
             append(fresh.solarInputPower, to: &solarHistory)
             append(fresh.outputHomePower, to: &homeHistory)
             append(fresh.batteryFlow, to: &flowHistory)
@@ -163,10 +166,32 @@ final class Monitor: ObservableObject {
             // Keep the last known values visible, but flag the problem.
             lastError = error.localizedDescription
             lastSampleAt = nil
+            localNetworkDenied = Self.looksLikeLocalNetworkDenial(error)
             if state == nil || Date.now.timeIntervalSince(state!.updatedAt) > 60 {
                 state = nil
             }
         }
+    }
+
+    /// TN3179 : un refus TCC « réseau local » remonte en ENETDOWN (POSIX 50)
+    /// ou NSURLErrorNotConnectedToInternet. EHOSTUNREACH (65), -1004 et -1003
+    /// sont ambigus (device éteint, mDNS bloqué…) mais méritent le même
+    /// guidage — le bandeau reste formulé au conditionnel.
+    static func looksLikeLocalNetworkDenial(_ error: Error) -> Bool {
+        var current: NSError? = error as NSError
+        while let nsError = current {
+            if nsError.domain == NSPOSIXErrorDomain, nsError.code == 50 || nsError.code == 65 {
+                return true
+            }
+            if nsError.domain == NSURLErrorDomain,
+               [NSURLErrorNotConnectedToInternet,
+                NSURLErrorCannotConnectToHost,
+                NSURLErrorCannotFindHost].contains(nsError.code) {
+                return true
+            }
+            current = nsError.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return false
     }
 
     /// One-shot probe used by the settings window ("Tester la connexion").
