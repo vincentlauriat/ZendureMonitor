@@ -154,6 +154,51 @@
     "Réessayer" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Retry" } } }
     },
+    "Panneaux" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Panels" } } }
+    },
+    "Réseau public" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Public grid" } } }
+    },
+    "Prise hors-réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Off-grid outlet" } } }
+    },
+    "Batteries" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Batteries" } } }
+    },
+    "Lever" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sunrise" } } }
+    },
+    "Coucher" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sunset" } } }
+    },
+    "Midi solaire" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Solar noon" } } }
+    },
+    "Durée du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Day length" } } }
+    },
+    "Élévation" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Elevation" } } }
+    },
+    "Azimut" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Azimuth" } } }
+    },
+    "Renseignez votre position (latitude/longitude) dans Réglages → Général pour afficher les éphémérides du soleil." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Set your position (latitude/longitude) in Settings → General to display sun ephemerides." } } }
+    },
+    "Position (module Soleil)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position (Sun module)" } } }
+    },
+    "Latitude" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Latitude" } } }
+    },
+    "Longitude" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Longitude" } } }
+    },
+    "Utilisée localement pour calculer lever, coucher et élévation du soleil dans le tableau de bord. Jamais transmise." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used locally to compute sunrise, sunset and sun elevation in the dashboard. Never transmitted." } } }
+    },
     "Zendure Monitor — Tableau de bord" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Dashboard" } } }
     },

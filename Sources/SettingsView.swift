@@ -143,6 +143,8 @@ private struct GeneralSettingsTab: View {
     @EnvironmentObject var monitor: Monitor
     @State private var launchAtLogin = LoginItem.isEnabled
     @State private var loginError: String?
+    @AppStorage("sunLatitude") private var sunLatitude: Double = 0
+    @AppStorage("sunLongitude") private var sunLongitude: Double = 0
 
     var body: some View {
         Form {
@@ -157,6 +159,13 @@ private struct GeneralSettingsTab: View {
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
+            }
+            Section("Position (module Soleil)") {
+                TextField("Latitude", value: $sunLatitude, format: .number.precision(.fractionLength(0...5)))
+                TextField("Longitude", value: $sunLongitude, format: .number.precision(.fractionLength(0...5)))
+                Text("Utilisée localement pour calculer lever, coucher et élévation du soleil dans le tableau de bord. Jamais transmise.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Section("Rafraîchissement") {
                 Slider(value: $monitor.pollInterval, in: 2...60, step: 1) {

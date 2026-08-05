@@ -1,67 +1,65 @@
 import SwiftUI
 
-/// Schéma de flux d'énergie animé : Soleil, Maison, Réseau en satellites,
-/// la batterie (anneau SOC) au centre. Chaque lien représente un flux réel :
-/// le solaire qui alimente la maison passe par l'arc du haut sans transiter
-/// par la batterie ; les liens de la batterie ne s'animent que lorsqu'elle
-/// charge ou décharge effectivement. Les pointillés défilent d'autant plus
-/// vite que la puissance est élevée, avec la valeur affichée sur le lien.
+/// Schéma de flux d'énergie animé : le SolarFlow (l'onduleur-hub) au centre,
+/// et en satellites tout ce qui s'y raccorde physiquement — panneaux
+/// solaires, batteries (anneau SOC), réseau public, maison, prise
+/// hors-réseau. Chaque lien ne s'anime que lorsque l'énergie circule
+/// réellement, dans le sens réel du flux, avec sa puissance affichée ;
+/// la vitesse des pointillés suit la puissance. Le lien batterie change de
+/// sens selon charge/décharge.
 struct EnergyFlowView: View {
     var state: DeviceState
 
-    private let sunColor = Color.yellow
+    private let pvColor = Color.yellow
     private let homeColor = Color.blue
     private let gridColor = Color.orange
     private let batteryColor = Color.green
-
-    // MARK: - Décomposition des flux
-    // Bilan du SolarFlow : solaire + réseau + décharge = maison + charge.
-    // Le solaire couvre d'abord la charge batterie, le reste part vers la
-    // maison ; le réseau complète la charge ; la décharge alimente la maison.
-    private var charge: Double { max(0, state.batteryFlow) }
-    private var discharge: Double { max(0, -state.batteryFlow) }
-    private var solarToBattery: Double { min(state.solarInputPower, charge) }
-    private var solarToHome: Double { max(0, state.solarInputPower - solarToBattery) }
-    private var batteryToHome: Double { discharge }
-    private var gridToBattery: Double { min(state.gridInputPower, max(0, charge - solarToBattery)) }
-    private var gridToHome: Double { max(0, state.gridInputPower - gridToBattery) }
+    private let outletColor = Color.purple
 
     var body: some View {
         GeometryReader { geo in
             let size = geo.size
-            let sunPoint = CGPoint(x: size.width * 0.13, y: size.height * 0.22)
-            let homePoint = CGPoint(x: size.width * 0.87, y: size.height * 0.22)
-            let gridPoint = CGPoint(x: size.width * 0.13, y: size.height * 0.82)
-            let batteryPoint = CGPoint(x: size.width * 0.5, y: size.height * 0.55)
-            // Les liens s'arrêtent au bord de l'anneau SOC (intérieur transparent).
-            let gaugeRadius: CGFloat = 54
+            let hub = CGPoint(x: size.width * 0.5, y: size.height * 0.46)
+            let pv = CGPoint(x: size.width * 0.13, y: size.height * 0.2)
+            let home = CGPoint(x: size.width * 0.87, y: size.height * 0.2)
+            let grid = CGPoint(x: size.width * 0.13, y: size.height * 0.78)
+            let outlet = CGPoint(x: size.width * 0.87, y: size.height * 0.78)
+            let battery = CGPoint(x: size.width * 0.5, y: size.height * 0.85)
+            let hubRadius: CGFloat = 42
+            let nodeRadius: CGFloat = 30
+            let batteryRadius: CGFloat = 42
 
             ZStack {
-                flowLink(from: sunPoint, to: homePoint,
-                         control: CGPoint(x: size.width * 0.5, y: size.height * 0.02),
-                         watts: solarToHome, color: sunColor)
-                flowLink(from: sunPoint, to: shorten(batteryPoint, toward: sunPoint, by: gaugeRadius),
-                         watts: solarToBattery, color: sunColor)
-                flowLink(from: shorten(batteryPoint, toward: homePoint, by: gaugeRadius), to: homePoint,
-                         watts: batteryToHome, color: batteryColor)
-                flowLink(from: gridPoint, to: shorten(batteryPoint, toward: gridPoint, by: gaugeRadius),
-                         watts: gridToBattery, color: gridColor)
-                // Arc par le coin inférieur droit pour éviter le libellé « Batterie ».
-                flowLink(from: gridPoint, to: homePoint,
-                         control: CGPoint(x: size.width * 0.95, y: size.height * 1.05),
-                         watts: gridToHome, color: gridColor)
+                link(from: pv, to: hub, trimFrom: nodeRadius, trimTo: hubRadius,
+                     watts: state.solarInputPower, color: pvColor)
+                link(from: hub, to: home, trimFrom: hubRadius, trimTo: nodeRadius,
+                     watts: state.outputHomePower, color: homeColor)
+                link(from: grid, to: hub, trimFrom: nodeRadius, trimTo: hubRadius,
+                     watts: state.gridInputPower, color: gridColor)
+                link(from: hub, to: outlet, trimFrom: hubRadius, trimTo: nodeRadius,
+                     watts: state.offGridPower, color: outletColor)
+                if state.batteryFlow >= 0 {
+                    link(from: hub, to: battery, trimFrom: hubRadius, trimTo: batteryRadius,
+                         watts: state.batteryFlow, color: batteryColor)
+                } else {
+                    link(from: battery, to: hub, trimFrom: batteryRadius, trimTo: hubRadius,
+                         watts: -state.batteryFlow, color: batteryColor)
+                }
 
-                node(at: sunPoint, icon: "sun.max.fill", tint: sunColor,
-                     label: "Soleil", value: Format.watts(state.solarInputPower),
-                     active: state.solarInputPower > 0)
-                node(at: homePoint, icon: "house.fill", tint: homeColor,
+                node(at: pv, icon: "sun.max.fill", tint: pvColor,
+                     label: "Panneaux", value: Format.watts(state.solarInputPower),
+                     active: state.solarInputPower > 1)
+                node(at: home, icon: "house.fill", tint: homeColor,
                      label: "Maison", value: Format.watts(state.outputHomePower),
-                     active: state.outputHomePower > 0)
-                node(at: gridPoint, icon: "bolt.fill", tint: gridColor,
-                     label: "Réseau", value: Format.watts(state.gridInputPower),
-                     active: state.gridInputPower > 0)
-
-                batteryNode(at: batteryPoint)
+                     active: state.outputHomePower > 1)
+                node(at: grid, icon: "bolt.fill", tint: gridColor,
+                     label: "Réseau public", value: Format.watts(state.gridInputPower),
+                     active: state.gridInputPower > 1)
+                node(at: outlet, icon: "powerplug.fill", tint: outletColor,
+                     label: "Prise hors-réseau", value: Format.watts(state.offGridPower),
+                     active: state.offGridPower > 1)
+                batteryNode(at: battery)
+                hubNode(at: hub)
             }
         }
     }
@@ -76,13 +74,11 @@ struct EnergyFlowView: View {
                        y: point.y + dy / length * distance)
     }
 
-    private func flowLink(from: CGPoint, to: CGPoint, control: CGPoint? = nil,
-                          watts: Double, color: Color) -> some View {
-        let mid = CGPoint(x: (from.x + to.x) / 2, y: (from.y + to.y) / 2)
-        let controlPoint = control ?? CGPoint(x: mid.x, y: mid.y - 18)
-        // Point du lien à t = 0,5 sur la courbe quadratique, pour l'étiquette.
-        let labelPoint = CGPoint(x: 0.25 * from.x + 0.5 * controlPoint.x + 0.25 * to.x,
-                                 y: 0.25 * from.y + 0.5 * controlPoint.y + 0.25 * to.y)
+    private func link(from: CGPoint, to: CGPoint, trimFrom: CGFloat, trimTo: CGFloat,
+                      watts: Double, color: Color) -> some View {
+        let start = shorten(from, toward: to, by: trimFrom)
+        let end = shorten(to, toward: from, by: trimTo)
+        let mid = CGPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
         let active = watts > 1
         return ZStack {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !active)) { timeline in
@@ -93,7 +89,7 @@ struct EnergyFlowView: View {
                     let speed = 12.0 + min(watts / 40.0, 48.0)
                     return CGFloat((t * speed).truncatingRemainder(dividingBy: 18)) * -1
                 }()
-                FlowPath(from: from, to: to, control: controlPoint)
+                LinkPath(from: start, to: end)
                     .stroke(active ? color : Color.secondary.opacity(0.2),
                             style: StrokeStyle(lineWidth: active ? 3 : 1.5,
                                                lineCap: .round,
@@ -107,20 +103,19 @@ struct EnergyFlowView: View {
                     .padding(.vertical, 2)
                     .background(Capsule().fill(.regularMaterial))
                     .overlay(Capsule().strokeBorder(color.opacity(0.5), lineWidth: 1))
-                    .position(labelPoint)
+                    .position(mid)
             }
         }
     }
 
-    private struct FlowPath: Shape {
+    private struct LinkPath: Shape {
         var from: CGPoint
         var to: CGPoint
-        var control: CGPoint
 
         func path(in rect: CGRect) -> Path {
             var path = Path()
             path.move(to: from)
-            path.addQuadCurve(to: to, control: control)
+            path.addLine(to: to)
             return path
         }
     }
@@ -149,18 +144,44 @@ struct EnergyFlowView: View {
         .position(point)
     }
 
+    private func hubNode(at point: CGPoint) -> some View {
+        ZStack {
+            Circle()
+                .fill(.regularMaterial)
+                .frame(width: 76, height: 76)
+                .overlay(Circle().strokeBorder(Color.teal.opacity(0.7), lineWidth: 2))
+            VStack(spacing: 2) {
+                Image(systemName: "bolt.horizontal.fill")
+                    .font(.title3)
+                    .foregroundStyle(.teal)
+                Text(verbatim: "SolarFlow")
+                    .font(.caption2.weight(.medium))
+                if let temp = state.deviceTemperature {
+                    Text(verbatim: "\(Int(temp.rounded())) °C")
+                        .font(.system(size: 9).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .position(point)
+    }
+
     private func batteryNode(at point: CGPoint) -> some View {
-        VStack(spacing: 4) {
+        HStack(spacing: 8) {
             CircularGauge(
                 segments: [GaugeSegment(value: state.electricLevel ?? 0, color: socColor)],
-                lineWidth: 8,
-                centerText: "\(Int(state.electricLevel ?? 0)) %",
-                centerSubtext: flowText
+                lineWidth: 7,
+                centerText: "\(Int(state.electricLevel ?? 0)) %"
             )
-            .frame(width: 92, height: 92)
-            Text("Batterie")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            .frame(width: 64, height: 64)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("Batteries")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                Text(flowText)
+                    .font(.caption.monospacedDigit().weight(.medium))
+                    .foregroundStyle(abs(state.batteryFlow) > 5 ? .primary : .secondary)
+            }
         }
         .position(point)
     }
@@ -172,9 +193,9 @@ struct EnergyFlowView: View {
         return batteryColor
     }
 
-    private var flowText: String? {
+    private var flowText: String {
         if state.batteryFlow > 5 { return "▲ " + Format.watts(state.batteryFlow) }
         if state.batteryFlow < -5 { return "▼ " + Format.watts(-state.batteryFlow) }
-        return nil
+        return "—"
     }
 }

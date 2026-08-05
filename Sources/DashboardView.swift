@@ -38,7 +38,7 @@ struct DashboardContent: View {
                 VStack(spacing: 14) {
                     MetricCard(title: "Flux d'énergie", systemImage: "arrow.triangle.swap") {
                         EnergyFlowView(state: state)
-                            .frame(height: 240)
+                            .frame(height: 300)
                     }
 
                     HStack(alignment: .top, spacing: 14) {
@@ -47,8 +47,9 @@ struct DashboardContent: View {
                     }
                     HStack(alignment: .top, spacing: 14) {
                         deviceCard(state)
-                        historyCard()
+                        SunCard()
                     }
+                    historyCard()
                 }
                 .padding(16)
             } else {
