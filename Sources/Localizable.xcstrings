@@ -139,6 +139,9 @@
     "Tableau de bord" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dashboard" } } }
     },
+    "Ouvrir le tableau de bord" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Open dashboard" } } }
+    },
     "Zendure Monitor — Tableau de bord" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Dashboard" } } }
     },

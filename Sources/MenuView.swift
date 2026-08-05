@@ -169,6 +169,15 @@ struct MenuView: View {
 
     private func footer(updatedAt: Date?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
+            Button {
+                openWindow(id: "dashboard")
+                NSApp.activate(ignoringOtherApps: true)
+            } label: {
+                Label("Ouvrir le tableau de bord", systemImage: "gauge.with.dots.needle.67percent")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.regular)
             if monitor.usingFallback {
                 Label("Connecté via l'hôte de secours", systemImage: "network")
                     .font(.caption2)
@@ -187,13 +196,6 @@ struct MenuView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                Button {
-                    openWindow(id: "dashboard")
-                    NSApp.activate(ignoringOtherApps: true)
-                } label: {
-                    Label("Tableau de bord", systemImage: "rectangle.grid.2x2")
-                        .labelStyle(.titleOnly)
-                }
                 Button("Réglages…") {
                     openSettings()
                     NSApp.activate(ignoringOtherApps: true)

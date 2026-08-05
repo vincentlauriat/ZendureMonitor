@@ -9,6 +9,15 @@ struct DashboardView: View {
         }
         .frame(minWidth: 760, idealWidth: 820, minHeight: 640, idealHeight: 720)
         .navigationTitle(Text("Zendure Monitor — Tableau de bord"))
+        // L'app est LSUIElement : sans bascule en .regular, la fenêtre n'a ni
+        // icône dans le Dock ni entrée Cmd-Tab et se perd derrière les autres.
+        .onAppear {
+            NSApp.setActivationPolicy(.regular)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+        .onDisappear {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
 
