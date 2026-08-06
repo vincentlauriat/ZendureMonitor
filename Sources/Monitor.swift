@@ -62,7 +62,7 @@ final class Monitor: ObservableObject {
     // MARK: - Settings (persisted)
 
     @Published var host: String {
-        didSet { UserDefaults.standard.set(host, forKey: "deviceHost"); restart() }
+        didSet { UserDefaults.standard.set(host, forKey: "deviceHost"); scheduleRestart() }
     }
     /// Optional second host tried when the primary is unreachable (e.g. a
     /// Tailscale/VPN address for remote access).
@@ -76,7 +76,7 @@ final class Monitor: ObservableObject {
         didSet { UserDefaults.standard.set(historyServer, forKey: "historyServer"); lastServerFetch = .distantPast }
     }
     @Published var pollInterval: Double {
-        didSet { UserDefaults.standard.set(pollInterval, forKey: "pollInterval"); restart() }
+        didSet { UserDefaults.standard.set(pollInterval, forKey: "pollInterval"); scheduleRestart() }
     }
     @Published var showSolarInBar: Bool {
         didSet { UserDefaults.standard.set(showSolarInBar, forKey: "showSolarInBar") }
@@ -133,6 +133,9 @@ final class Monitor: ObservableObject {
     }
 
     private var pollTask: Task<Void, Never>?
+    private var restartDebounce: Task<Void, Never>?
+    /// Dernier essai de l'hôte principal quand on est passé sur le secours.
+    private var lastPrimaryAttempt: Date = .distantPast
     private let session: URLSession
     private var lastSampleAt: Date?
     private var energyDay: String
@@ -202,12 +205,25 @@ final class Monitor: ObservableObject {
     }
 
     func restart() {
+        lastPrimaryAttempt = .distantPast
         pollTask?.cancel()
         pollTask = Task { [weak self] in
             while let self, !Task.isCancelled {
                 await self.refresh()
                 try? await Task.sleep(for: .seconds(self.pollInterval))
             }
+        }
+    }
+
+    /// Le champ hôte et le slider d'intervalle déclenchent leur didSet à
+    /// chaque frappe/cran : attendre que la saisie se pose avant de relancer
+    /// le polling (sinon on interroge des adresses partielles).
+    private func scheduleRestart() {
+        restartDebounce?.cancel()
+        restartDebounce = Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(800))
+            guard !Task.isCancelled else { return }
+            self?.restart()
         }
     }
 
@@ -227,13 +243,12 @@ final class Monitor: ObservableObject {
             publishWidgetSnapshot(fresh)
             await refreshHistoryFromServer()
         } catch {
-            // Keep the last known values visible, but flag the problem.
+            // Garder les dernières valeurs affichées (grisées côté panneau,
+            // voir MenuView.isStale) plutôt que de retomber sur « Pas de
+            // données » : en coupure réseau, l'état d'avant reste utile.
             lastError = error.localizedDescription
             lastSampleAt = nil
             localNetworkDenied = Self.looksLikeLocalNetworkDenial(error)
-            if state == nil || Date.now.timeIntervalSince(state!.updatedAt) > 60 {
-                state = nil
-            }
         }
     }
 
@@ -267,12 +282,24 @@ final class Monitor: ObservableObject {
     // MARK: - Fetching
 
     private func fetchWithFallback() async throws -> (DeviceState, viaFallback: Bool) {
+        let fallback = fallbackHost.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Une fois passé sur l'hôte de secours, rester dessus : réessayer le
+        // principal à chaque poll coûterait son timeout (5 s) à chaque
+        // rafraîchissement. On ne le reteste que toutes les 2 min.
+        if usingFallback, !fallback.isEmpty,
+           Date.now.timeIntervalSince(lastPrimaryAttempt) < 120 {
+            if let state = try? await fetchReport(host: fallback) {
+                activeHost = fallback
+                return (state, true)
+            }
+            // Le secours ne répond plus : retomber sur l'essai complet.
+        }
+        lastPrimaryAttempt = .now
         do {
             let state = try await fetchReport(host: host)
             activeHost = host
             return (state, false)
         } catch {
-            let fallback = fallbackHost.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !fallback.isEmpty else { throw error }
             let state = try await fetchReport(host: fallback)
             activeHost = fallback
@@ -463,8 +490,17 @@ final class Monitor: ObservableObject {
         dailyEnergy = Array(collectDailyEnergy().suffix(14))
     }
 
+    /// Clé de jour en fuseau LOCAL — la courbe 5 min et l'historique raisonnent
+    /// en heure locale ; l'ancien format ISO8601 basculait le jour à minuit UTC.
+    private static let dayKeyFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter
+    }()
+
     private static func dayKey(_ date: Date) -> String {
-        date.formatted(.iso8601.year().month().day())
+        dayKeyFormatter.string(from: date)
     }
 
     // MARK: - Low battery alert

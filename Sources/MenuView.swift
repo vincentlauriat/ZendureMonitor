@@ -20,10 +20,13 @@ struct MenuView: View {
         VStack(alignment: .leading, spacing: 10) {
             header
             if let state = monitor.state {
-                solarCard(state)
-                batteryCard(state)
-                flowsCard(state)
-                historyCard()
+                Group {
+                    solarCard(state)
+                    batteryCard(state)
+                    flowsCard(state)
+                    historyCard()
+                }
+                .opacity(isStale ? 0.55 : 1)
             } else {
                 MetricCard(title: "Pas de données", systemImage: "sun.max.trianglebadge.exclamationmark") {
                     Text(monitor.lastError ?? "Connexion au SolarFlow en cours…")
@@ -214,9 +217,15 @@ struct MenuView: View {
                 Text(verbatim: "Zendure Monitor")
                     .font(.headline)
                 if let updatedAt = monitor.state?.updatedAt {
-                    Text("Mis \u{00e0} jour \u{00e0} \(updatedAt.formatted(date: .omitted, time: .standard))")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
+                    if isStale {
+                        Text("Hors ligne \u{2014} derni\u{00e8}res donn\u{00e9}es \u{00e0} \(updatedAt.formatted(date: .omitted, time: .standard))")
+                            .font(.caption2)
+                            .foregroundStyle(.orange)
+                    } else {
+                        Text("Mis \u{00e0} jour \u{00e0} \(updatedAt.formatted(date: .omitted, time: .standard))")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 } else {
                     Text("Connexion au SolarFlow en cours\u{2026}")
                         .font(.caption2)
@@ -224,15 +233,15 @@ struct MenuView: View {
                 }
             }
             Spacer()
-            headerButton("gauge.with.dots.needle.67percent", help: "Tableau de bord") {
+            headerButton("gauge.with.dots.needle.67percent", color: .blue, help: "Tableau de bord") {
                 openWindow(id: "dashboard")
                 NSApp.activate(ignoringOtherApps: true)
             }
-            headerButton("sun.horizon.fill", help: "Soleil") {
+            headerButton("sun.horizon.fill", color: .orange, help: "Soleil") {
                 openWindow(id: "sun")
                 NSApp.activate(ignoringOtherApps: true)
             }
-            headerButton("gearshape.fill", help: "R\u{00e9}glages") {
+            headerButton("gearshape.fill", color: .teal, help: "R\u{00e9}glages") {
                 openSettings()
                 NSApp.activate(ignoringOtherApps: true)
             }
@@ -243,7 +252,7 @@ struct MenuView: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.primary)
             }
             .menuStyle(.borderlessButton)
             .menuIndicator(.hidden)
@@ -252,12 +261,12 @@ struct MenuView: View {
         .padding(.horizontal, 2)
     }
 
-    private func headerButton(_ icon: String, help: LocalizedStringKey,
+    private func headerButton(_ icon: String, color: Color, help: LocalizedStringKey,
                               action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(color)
                 .frame(width: 24, height: 24)
                 .contentShape(Rectangle())
         }
@@ -302,6 +311,13 @@ struct MenuView: View {
     }
 
     // MARK: - Helpers
+
+    /// Données périmées : le poll échoue et le dernier état a plus de 60 s.
+    /// Le panneau garde alors les dernières valeurs, grisées, avec l'heure.
+    private var isStale: Bool {
+        guard let state = monitor.state, monitor.lastError != nil else { return false }
+        return Date.now.timeIntervalSince(state.updatedAt) > 60
+    }
 
     private func socColor(_ soc: Double) -> Color {
         switch soc {

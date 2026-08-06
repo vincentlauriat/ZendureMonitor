@@ -17,14 +17,17 @@ final class PermissionsStatus: ObservableObject {
         Task.detached { [weak self] in
             let enabled = CLLocationManager.locationServicesEnabled()
             let auth = CLLocationManager().authorizationStatus
+            guard let self else { return }
             await MainActor.run {
-                self?.locationServicesOn = enabled
-                self?.locationAuth = auth
+                self.locationServicesOn = enabled
+                self.locationAuth = auth
             }
         }
-        UNUserNotificationCenter.current().getNotificationSettings { settings in
-            Task { @MainActor [weak self] in
-                self?.notificationsAuth = settings.authorizationStatus
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            guard let self else { return }
+            let auth = settings.authorizationStatus
+            Task { @MainActor in
+                self.notificationsAuth = auth
             }
         }
     }
