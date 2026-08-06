@@ -147,12 +147,9 @@ struct SunContent: View {
                                       value: Format.duration(minutes: sunshine / 60))
                         }
                         if peakWatts > 0, sun.elevation > 0 {
-                            // Théorique ciel clair × (1 − 0,75 × nuages^3), formule
-                            // de Kasten-Czeplak — indicatif, sans orientation.
                             let clearSky = peakWatts * max(0, sin(sun.elevation * .pi / 180)) * 0.9
-                            let factor = 1 - 0.75 * pow(weather.cloudCover / 100, 3)
                             LegendRow(color: .teal, label: "Productible ajusté nuages",
-                                      value: Format.watts(clearSky * factor))
+                                      value: Format.watts(clearSky * EnergyMath.cloudFactor(coverPercent: weather.cloudCover)))
                         }
                     }
                     Text("Source : Open-Meteo, rafraîchie toutes les 30 min.")

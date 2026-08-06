@@ -19,4 +19,12 @@ enum EnergyMath {
         guard solarWh >= 1 else { return nil }
         return min(storedWh / solarWh, 1)
     }
+
+    /// Facteur d'atténuation nuageuse de Kasten–Czeplak (1980) :
+    /// G = G_clair × (1 − 0,75 × (C/8)^3,4), C en octas — ici la couverture
+    /// arrive en % (0–100). Plancher naturel : 0,25 à ciel entièrement couvert.
+    static func cloudFactor(coverPercent: Double) -> Double {
+        let cover = min(max(coverPercent / 100, 0), 1)
+        return 1 - 0.75 * pow(cover, 3.4)
+    }
 }

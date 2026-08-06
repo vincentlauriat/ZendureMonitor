@@ -43,4 +43,24 @@ final class EnergyMathTests: XCTestCase {
     func testStoredShareCappedAtOne() {
         XCTAssertEqual(EnergyMath.storedShare(storedWh: 1200, solarWh: 1000), 1)
     }
+
+    // MARK: - cloudFactor (Kasten–Czeplak)
+
+    func testCloudFactorClearSky() {
+        XCTAssertEqual(EnergyMath.cloudFactor(coverPercent: 0), 1)
+    }
+
+    func testCloudFactorOvercast() {
+        XCTAssertEqual(EnergyMath.cloudFactor(coverPercent: 100), 0.25, accuracy: 0.0001)
+    }
+
+    func testCloudFactorHalfCover() {
+        // 1 − 0,75 × 0,5^3,4 ≈ 0,929
+        XCTAssertEqual(EnergyMath.cloudFactor(coverPercent: 50), 0.9290, accuracy: 0.001)
+    }
+
+    func testCloudFactorClampsOutOfRangeInput() {
+        XCTAssertEqual(EnergyMath.cloudFactor(coverPercent: -10), 1)
+        XCTAssertEqual(EnergyMath.cloudFactor(coverPercent: 140), 0.25, accuracy: 0.0001)
+    }
 }
