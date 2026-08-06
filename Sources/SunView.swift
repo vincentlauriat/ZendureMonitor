@@ -1,24 +1,24 @@
 import SwiftUI
 
-/// Fenêtre « Soleil » : éphémérides (SunCard), course du soleil superposée à
-/// la production du jour, et productible théorique ciel clair. Séparée du
-/// tableau de bord — qui reste un tableau de bord.
+/// Fenêtre « Soleil » : course du soleil × production en héros, puis
+/// éphémérides, productible théorique et météo côte à côte — tout tient
+/// sans scroll. Séparée du tableau de bord — qui reste un tableau de bord.
 struct SunView: View {
     var body: some View {
-        ScrollView {
-            SunContent()
-        }
-        .frame(minWidth: 480, idealWidth: 540, minHeight: 560, idealHeight: 680)
-        .navigationTitle(Text("Zendure Monitor — Soleil"))
-        .onAppear { WindowPolicy.retain() }
-        .onDisappear { WindowPolicy.release() }
+        SunContent()
+            .frame(minWidth: 760, idealWidth: 820, maxWidth: .infinity,
+                   minHeight: 480, idealHeight: 540, maxHeight: .infinity)
+            .navigationTitle(Text("Zendure Monitor — Soleil"))
+            .onAppear { WindowPolicy.retain() }
+            .onDisappear { WindowPolicy.release() }
     }
 }
 
-/// Contenu de la fenêtre Soleil, séparé du ScrollView pour rester rendable
-/// hors fenêtre (ImageRenderer ne rend pas l'intérieur d'un ScrollView).
+/// Contenu de la fenêtre Soleil, séparé de la scène pour rester rendable
+/// par ImageRenderer (captures d'écran de la doc).
 struct SunContent: View {
     @EnvironmentObject var monitor: Monitor
+    @StateObject private var weatherService = WeatherService()
     @AppStorage("sunLatitude") private var latitude: Double = 0
     @AppStorage("sunLongitude") private var longitude: Double = 0
     @AppStorage("sunPeakWatts") private var peakWatts: Double = 0
@@ -29,24 +29,33 @@ struct SunContent: View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
             let sun = SunCalc.compute(at: timeline.date, latitude: latitude, longitude: longitude)
             VStack(spacing: 14) {
-                SunCard()
                 if configured {
                     sunProductionCard(sun, now: timeline.date)
-                    theoreticalCard(sun)
+                    HStack(alignment: .top, spacing: 14) {
+                        ephemeridesCard(sun)
+                        theoreticalCard(sun)
+                        weatherCard(sun)
+                    }
+                } else {
+                    SunCard()
                 }
             }
             .padding(16)
+            .onAppear { weatherService.refresh(latitude: latitude, longitude: longitude) }
+            .onChange(of: timeline.date) {
+                weatherService.refresh(latitude: latitude, longitude: longitude)
+            }
         }
     }
 
-    // MARK: - Course du soleil × production
+    // MARK: - Héros : course du soleil × production
 
     private func sunProductionCard(_ sun: SunCalc.Ephemeris, now: Date) -> some View {
         MetricCard(title: "Course du soleil et production", systemImage: "chart.xyaxis.line") {
             VStack(alignment: .leading, spacing: 8) {
                 SunProductionChart(sun: sun, curve: monitor.todayCurve,
                                    peakW: max(monitor.peakTodayW, peakWatts), now: now)
-                    .frame(height: 150)
+                    .frame(minHeight: 170, maxHeight: .infinity)
                 Text("Arc pointillé : trajectoire du soleil entre lever et coucher. Zone jaune : production mesurée aujourd'hui (max par tranche de 5 min).")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -55,7 +64,31 @@ struct SunContent: View {
         }
     }
 
-    // MARK: - Productible théorique
+    // MARK: - Éphémérides (colonne 1)
+
+    private func ephemeridesCard(_ sun: SunCalc.Ephemeris) -> some View {
+        MetricCard(title: "Éphémérides", systemImage: "sun.horizon.fill") {
+            VStack(spacing: 5) {
+                if let sunrise = sun.sunrise, let sunset = sun.sunset {
+                    LegendRow(color: .orange, label: "Lever",
+                              value: sunrise.formatted(date: .omitted, time: .shortened))
+                    LegendRow(color: .indigo, label: "Coucher",
+                              value: sunset.formatted(date: .omitted, time: .shortened))
+                }
+                LegendRow(color: .yellow, label: "Midi solaire",
+                          value: sun.solarNoon.formatted(date: .omitted, time: .shortened))
+                LegendRow(color: .teal, label: "Durée du jour",
+                          value: Format.duration(minutes: sun.daylight / 60))
+                LegendRow(color: .mint, label: "Élévation",
+                          value: String(format: "%.0f° (max %.0f°)", sun.elevation, sun.maxElevation))
+                LegendRow(color: .gray, label: "Azimut",
+                          value: String(format: "%.0f°", sun.azimuth))
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Productible théorique (colonne 2)
 
     @ViewBuilder
     private func theoreticalCard(_ sun: SunCalc.Ephemeris) -> some View {
@@ -64,7 +97,7 @@ struct SunContent: View {
                 VStack(alignment: .leading, spacing: 8) {
                     let theoretical = peakWatts * max(0, sin(sun.elevation * .pi / 180)) * 0.9
                     VStack(spacing: 5) {
-                        LegendRow(color: .yellow, label: "Théorique ciel clair (maintenant)",
+                        LegendRow(color: .yellow, label: "Théorique ciel clair",
                                   value: Format.watts(theoretical))
                         if let solar = monitor.state?.solarInputPower {
                             LegendRow(color: .green, label: "Production mesurée", value: Format.watts(solar))
@@ -74,18 +107,66 @@ struct SunContent: View {
                             }
                         }
                     }
-                    Text("Estimation indicative : puissance crête × sin(élévation) × 0,9 — sans météo ni orientation des panneaux.")
+                    Text("Puissance crête × sin(élévation) × 0,9 — sans météo ni orientation.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             } else {
-                Text("Renseignez la puissance crête de vos panneaux (Wc) dans Réglages → Général pour estimer le productible ciel clair et le rendement.")
+                Text("Renseignez la puissance crête de vos panneaux (Wc) dans Réglages → Soleil pour estimer le productible et le rendement.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - Météo locale (colonne 3, Open-Meteo)
+
+    @ViewBuilder
+    private func weatherCard(_ sun: SunCalc.Ephemeris) -> some View {
+        MetricCard(title: "Météo locale", systemImage: "cloud.sun.fill") {
+            if let weather = weatherService.weather {
+                VStack(alignment: .leading, spacing: 8) {
+                    let wmo = WMOCode.describe(weather.weatherCode)
+                    HStack(spacing: 8) {
+                        Image(systemName: wmo.symbol)
+                            .font(.title3)
+                            .foregroundStyle(.yellow, .secondary)
+                        Text(wmo.label)
+                        Spacer()
+                        Text("\(Int(weather.temperature.rounded())) °C")
+                            .font(.title3.monospacedDigit())
+                    }
+                    VStack(spacing: 5) {
+                        LegendRow(color: .gray, label: "Couverture nuageuse",
+                                  value: "\(Int(weather.cloudCover)) %")
+                        if let sunshine = weather.sunshineForecastSec {
+                            LegendRow(color: .yellow, label: "Ensoleillement prévu",
+                                      value: Format.duration(minutes: sunshine / 60))
+                        }
+                        if peakWatts > 0, sun.elevation > 0 {
+                            let clearSky = peakWatts * max(0, sin(sun.elevation * .pi / 180)) * 0.9
+                            LegendRow(color: .teal, label: "Productible ajusté nuages",
+                                      value: Format.watts(clearSky * EnergyMath.cloudFactor(coverPercent: weather.cloudCover)))
+                        }
+                    }
+                    Text("Source : Open-Meteo, rafraîchie toutes les 30 min.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            } else if let error = weatherService.lastError {
+                Text("Météo indisponible : \(error)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Chargement de la météo…")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

@@ -3,6 +3,12 @@ import Foundation
 /// Instantané écrit par l'app dans le conteneur App Group et relu par
 /// l'extension widget (sandboxée, donc sans accès direct au SolarFlow).
 struct WidgetSnapshot: Codable, Equatable {
+    /// Un jour de production pour l'histogramme du widget large.
+    struct DayWh: Codable, Equatable {
+        var day: String     // "2026-08-06"
+        var wh: Double
+    }
+
     var capturedAt: Date
     var solarInputPower: Double     // W
     var electricLevel: Double?      // %
@@ -10,6 +16,9 @@ struct WidgetSnapshot: Codable, Equatable {
     var batteryFlow: Double         // W, >0 charge / <0 décharge
     var energyTodayWh: Double
     var solarHistory: [Double]      // derniers points pour la mini-courbe
+    /// 14 derniers jours, du plus ancien au plus récent (aujourd'hui inclus).
+    /// Optionnel : les snapshots écrits par les versions < 1.7 ne l'ont pas.
+    var dailyEnergy: [DayWh]?
 
     static let sample = WidgetSnapshot(
         capturedAt: .now,
@@ -18,7 +27,10 @@ struct WidgetSnapshot: Codable, Equatable {
         outputHomePower: 410,
         batteryFlow: 432,
         energyTodayWh: 3417,
-        solarHistory: [220, 380, 520, 610, 590, 700, 820, 842]
+        solarHistory: [220, 380, 520, 610, 590, 700, 820, 842],
+        dailyEnergy: [1820, 2540, 900, 3100, 2870, 1500, 2200, 2954, 3417].enumerated().map {
+            DayWh(day: "J-\(8 - $0.offset)", wh: Double($0.element))
+        }
     )
 }
 
