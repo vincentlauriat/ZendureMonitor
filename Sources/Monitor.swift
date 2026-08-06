@@ -142,7 +142,8 @@ final class Monitor: ObservableObject {
     /// Dernier essai de l'hôte principal quand on est passé sur le secours.
     private var lastPrimaryAttempt: Date = .distantPast
     private let session: URLSession
-    private var lastSampleAt: Date?
+    /// Logique pure des cumuls du jour (Wh, courbe, pic) — voir DailyAccumulator.
+    private var accumulator: DailyAccumulator
     private var energyDay: String
     private var lowSocNotified = false
     /// Host of the last successful poll — control commands go there.
@@ -182,11 +183,19 @@ final class Monitor: ObservableObject {
         notifyDailyRecord = defaults.bool(forKey: "notifyDailyRecord")
 
         energyDay = Self.dayKey(.now)
-        energyTodayWh = defaults.double(forKey: "energyWh-\(energyDay)")
-        todayCurve = defaults.array(forKey: "solarCurve-\(energyDay)") as? [Double] ?? []
-        peakTodayW = defaults.double(forKey: "peakW-\(energyDay)")
-        storedTodayWh = defaults.double(forKey: "storedWh-\(energyDay)")
-        gridTodayWh = defaults.double(forKey: "gridWh-\(energyDay)")
+        accumulator = DailyAccumulator(
+            day: energyDay,
+            solarWh: defaults.double(forKey: "energyWh-\(energyDay)"),
+            storedWh: defaults.double(forKey: "storedWh-\(energyDay)"),
+            gridWh: defaults.double(forKey: "gridWh-\(energyDay)"),
+            curve: defaults.array(forKey: "solarCurve-\(energyDay)") as? [Double] ?? [],
+            peakW: defaults.double(forKey: "peakW-\(energyDay)")
+        )
+        energyTodayWh = accumulator.solarWh
+        todayCurve = accumulator.curve
+        peakTodayW = accumulator.peakW
+        storedTodayWh = accumulator.storedWh
+        gridTodayWh = accumulator.gridWh
         pruneAuxKeys()
 
         if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
@@ -254,7 +263,7 @@ final class Monitor: ObservableObject {
             // voir MenuView.isStale) plutôt que de retomber sur « Pas de
             // données » : en coupure réseau, l'état d'avant reste utile.
             lastError = error.localizedDescription
-            lastSampleAt = nil
+            accumulator.resetSampleClock()
             localNetworkDenied = Self.looksLikeLocalNetworkDenial(error)
         }
     }
@@ -421,7 +430,8 @@ final class Monitor: ObservableObject {
                 }
             }
             dailyEnergy = Array(merged.sorted { $0.date < $1.date }.suffix(14))
-            energyTodayWh = max(today.wh, energyTodayWh)
+            accumulator.mergeSolarWh(today.wh)
+            energyTodayWh = accumulator.solarWh
             historyFromServer = true
         } catch {
             historyFromServer = false
@@ -431,43 +441,29 @@ final class Monitor: ObservableObject {
     // MARK: - Daily energy
 
     private func accumulateEnergy(_ state: DeviceState) {
-        let solarPower = state.solarInputPower
         let date = state.updatedAt
         let day = Self.dayKey(date)
-        if day != energyDay {
-            energyDay = day
-            energyTodayWh = 0
-            lastSampleAt = nil
-            todayCurve = []
-            peakTodayW = 0
-            storedTodayWh = 0
-            gridTodayWh = 0
-        }
-        if let last = lastSampleAt {
-            // Cap dt so a machine wake-up doesn't credit hours of sleep.
-            let dt = min(date.timeIntervalSince(last), pollInterval * 3)
-            if dt > 0 {
-                energyTodayWh += solarPower * dt / 3600
-                storedTodayWh += EnergyMath.solarToBattery(solar: solarPower,
-                                                           charge: state.outputPackPower,
-                                                           gridIn: state.gridInputPower) * dt / 3600
-                gridTodayWh += state.gridInputPower * dt / 3600
-            }
-        }
-        lastSampleAt = date
+        let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
+        let peakBefore = accumulator.peakW
+
+        accumulator.ingest(solar: state.solarInputPower,
+                           charge: state.outputPackPower,
+                           gridIn: state.gridInputPower,
+                           at: date, dayKey: day,
+                           minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0),
+                           maxDt: pollInterval * 3)
+
+        energyDay = accumulator.day
+        energyTodayWh = accumulator.solarWh
+        storedTodayWh = accumulator.storedWh
+        gridTodayWh = accumulator.gridWh
+        todayCurve = accumulator.curve
+        peakTodayW = accumulator.peakW
+
         UserDefaults.standard.set(energyTodayWh, forKey: "energyWh-\(day)")
         UserDefaults.standard.set(storedTodayWh, forKey: "storedWh-\(day)")
         UserDefaults.standard.set(gridTodayWh, forKey: "gridWh-\(day)")
-
-        // Courbe du jour (buckets de 5 min) + pic de puissance.
-        let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
-        let bucket = ((comps.hour ?? 0) * 60 + (comps.minute ?? 0)) / 5
-        if todayCurve.count <= bucket {
-            todayCurve.append(contentsOf: Array(repeating: 0, count: bucket + 1 - todayCurve.count))
-        }
-        todayCurve[bucket] = max(todayCurve[bucket], solarPower)
-        if solarPower > peakTodayW {
-            peakTodayW = solarPower
+        if peakTodayW > peakBefore {
             UserDefaults.standard.set(peakTodayW, forKey: "peakW-\(day)")
         }
         if date.timeIntervalSince(lastCurveSave) >= 60 {
