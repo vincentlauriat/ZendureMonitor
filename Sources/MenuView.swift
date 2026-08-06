@@ -146,6 +146,19 @@ struct MenuView: View {
                 SparklineChart(values: monitor.homeHistory, color: homeColor)
                     .frame(height: 36)
                     .openDashboardOnDoubleClick(openWindow)
+                if let stored = EnergyMath.storedShare(storedWh: monitor.storedTodayWh,
+                                                       solarWh: monitor.energyTodayWh) {
+                    let storedPct = Int((stored * 100).rounded())
+                    HStack(spacing: 10) {
+                        Text("Solaire du jour : \(100 - storedPct) % direct · \(storedPct) % stocké")
+                        Spacer()
+                        if monitor.gridTodayWh >= 10 {
+                            Text("Réseau : \(Format.kilowattHours(monitor.gridTodayWh))")
+                        }
+                    }
+                    .font(.caption2.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                }
             }
         }
     }

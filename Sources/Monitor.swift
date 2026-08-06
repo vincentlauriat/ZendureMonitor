@@ -58,6 +58,11 @@ final class Monitor: ObservableObject {
     @Published var todayCurve: [Double] = []
     /// Pic de puissance solaire du jour (W), persisté (`peakW-<day>`).
     @Published var peakTodayW: Double = 0
+    /// Part de la production du jour partie charger la batterie (Wh),
+    /// persistée (`storedWh-<day>`) — voir EnergyMath.solarToBattery.
+    @Published var storedTodayWh: Double = 0
+    /// Énergie tirée du réseau aujourd'hui (Wh), persistée (`gridWh-<day>`).
+    @Published var gridTodayWh: Double = 0
 
     // MARK: - Settings (persisted)
 
@@ -180,6 +185,8 @@ final class Monitor: ObservableObject {
         energyTodayWh = defaults.double(forKey: "energyWh-\(energyDay)")
         todayCurve = defaults.array(forKey: "solarCurve-\(energyDay)") as? [Double] ?? []
         peakTodayW = defaults.double(forKey: "peakW-\(energyDay)")
+        storedTodayWh = defaults.double(forKey: "storedWh-\(energyDay)")
+        gridTodayWh = defaults.double(forKey: "gridWh-\(energyDay)")
         pruneAuxKeys()
 
         if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
@@ -237,7 +244,7 @@ final class Monitor: ObservableObject {
             append(fresh.solarInputPower, to: &solarHistory)
             append(fresh.outputHomePower, to: &homeHistory)
             append(fresh.batteryFlow, to: &flowHistory)
-            accumulateEnergy(solarPower: fresh.solarInputPower, at: fresh.updatedAt)
+            accumulateEnergy(fresh)
             checkLowSoc(fresh)
             checkExtraNotifications(fresh)
             publishWidgetSnapshot(fresh)
@@ -422,7 +429,9 @@ final class Monitor: ObservableObject {
 
     // MARK: - Daily energy
 
-    private func accumulateEnergy(solarPower: Double, at date: Date) {
+    private func accumulateEnergy(_ state: DeviceState) {
+        let solarPower = state.solarInputPower
+        let date = state.updatedAt
         let day = Self.dayKey(date)
         if day != energyDay {
             energyDay = day
@@ -430,14 +439,24 @@ final class Monitor: ObservableObject {
             lastSampleAt = nil
             todayCurve = []
             peakTodayW = 0
+            storedTodayWh = 0
+            gridTodayWh = 0
         }
         if let last = lastSampleAt {
             // Cap dt so a machine wake-up doesn't credit hours of sleep.
             let dt = min(date.timeIntervalSince(last), pollInterval * 3)
-            if dt > 0 { energyTodayWh += solarPower * dt / 3600 }
+            if dt > 0 {
+                energyTodayWh += solarPower * dt / 3600
+                storedTodayWh += EnergyMath.solarToBattery(solar: solarPower,
+                                                           charge: state.outputPackPower,
+                                                           gridIn: state.gridInputPower) * dt / 3600
+                gridTodayWh += state.gridInputPower * dt / 3600
+            }
         }
         lastSampleAt = date
         UserDefaults.standard.set(energyTodayWh, forKey: "energyWh-\(day)")
+        UserDefaults.standard.set(storedTodayWh, forKey: "storedWh-\(day)")
+        UserDefaults.standard.set(gridTodayWh, forKey: "gridWh-\(day)")
 
         // Courbe du jour (buckets de 5 min) + pic de puissance.
         let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
@@ -573,12 +592,13 @@ final class Monitor: ObservableObject {
         return wh > 0 ? wh : nil
     }
 
-    /// Purge les clés `solarCurve-` / `peakW-` des jours sortis de l'historique.
+    /// Purge les clés auxiliaires par jour sorties de l'historique.
     private func pruneAuxKeys() {
         let defaults = UserDefaults.standard
         let keep = Set(collectDailyEnergy().suffix(15).map(\.day))
         for key in defaults.dictionaryRepresentation().keys
-        where key.hasPrefix("solarCurve-") || key.hasPrefix("peakW-") {
+        where key.hasPrefix("solarCurve-") || key.hasPrefix("peakW-")
+            || key.hasPrefix("storedWh-") || key.hasPrefix("gridWh-") {
             let day = String(key.split(separator: "-", maxSplits: 1)[1])
             if !keep.contains(day), day != energyDay {
                 defaults.removeObject(forKey: key)
