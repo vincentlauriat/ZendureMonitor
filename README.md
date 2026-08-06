@@ -12,7 +12,9 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
-New in 1.5: a redesigned panel (header with icon actions, period selector 15 min / day / 14 days, peak & vs-yesterday stats), a **hub-centric energy-flow diagram** (SolarFlow at the center; panels, batteries, public grid, home and the off-grid outlet as peripherals — links animate only when energy actually flows, with live wattage), a dedicated **Sun window** (local NOAA ephemerides, sun path overlaid with today's production, clear-sky theoretical output), **savings estimates** (configurable €/kWh and g CO₂/kWh), extra opt-in notifications (battery full, unexpected grid draw, production record), an upfront **permissions check** (local network / location / notifications), unit tests and a GitHub Actions CI.
+New in 1.6: **daily solar split** — how much of today's production went straight to the home vs into the battery (AC charging deducted), plus the grid total, shown in both the panel and the dashboard; offline resilience (the panel keeps the last values, dimmed with their age, instead of going blank), a smarter VPN fallback (no more 5 s primary-host timeout on every poll when away), and day counters that roll over at local midnight.
+
+In 1.5: a redesigned panel (header with icon actions, period selector 15 min / day / 14 days, peak & vs-yesterday stats), a **hub-centric energy-flow diagram** (SolarFlow at the center; panels, batteries, public grid, home and the off-grid outlet as peripherals — links animate only when energy actually flows, with live wattage), a dedicated **Sun window** (local NOAA ephemerides, sun path overlaid with today's production, clear-sky theoretical output), **savings estimates** (configurable €/kWh and g CO₂/kWh), extra opt-in notifications (battery full, unexpected grid draw, production record), an upfront **permissions check** (local network / location / notifications), unit tests and a GitHub Actions CI.
 
 New in 1.4: a **dashboard window** and an optional **24/7 collector** (`Scripts/collector/`) for an always-on Mac, so daily history no longer depends on this Mac's uptime.
 
@@ -182,7 +184,8 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.4 — dashboard window with animated energy-flow diagram; optional 24/7 collector (LaunchAgent + SQLite + JSON API) feeding complete history
 - [x] v1.2 — multi-day production history (daily kWh bar chart)
 - [x] v1.5 — hub-centric flow diagram (batteries, grid, home, off-grid outlet as peripherals), Sun window (local ephemerides + production overlay + theoretical output), Juicy-style panel with period selector and stats, savings estimates (€/CO₂), extra opt-in notifications, permissions check, unit tests + GitHub Actions CI
-- [ ] v1.6 — large widget (14-day histogram), Chinese localization, reorderable cards, weather in the Sun window
+- [x] v1.6 — daily solar split (direct/stored + grid total) in panel & dashboard, offline resilience (stale values kept & dimmed), sticky VPN fallback, local-midnight day rollover, colored header actions, EnergyMath unit tests
+- [ ] v1.7 — large widget (14-day histogram), Chinese localization, reorderable cards, weather in the Sun window
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements
