@@ -96,6 +96,19 @@ struct DashboardContent: View {
                     LegendRow(color: .green, label: "Économie du jour",
                               value: String(format: "%.2f €", monitor.energyTodayWh / 1000 * monitor.kwhPrice))
                 }
+                if let stored = EnergyMath.storedShare(storedWh: monitor.storedTodayWh,
+                                                       solarWh: monitor.energyTodayWh) {
+                    let storedPct = Int((stored * 100).rounded())
+                    HStack(spacing: 10) {
+                        Text("Solaire du jour : \(100 - storedPct) % direct · \(storedPct) % stocké")
+                        Spacer()
+                        if monitor.gridTodayWh >= 10 {
+                            Text("Réseau : \(Format.kilowattHours(monitor.gridTodayWh))")
+                        }
+                    }
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+                }
             }
         }
     }
