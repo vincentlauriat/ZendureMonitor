@@ -37,7 +37,7 @@ struct SolarProductionWidget: Widget {
         }
         .configurationDisplayName("Production solaire")
         .description(String(localized: "Production, batterie et énergie du jour."))
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
@@ -73,6 +73,14 @@ struct SolarWidgetView: View {
         // Au-delà de 15 min, le snapshot est probablement figé (app fermée) :
         // on grise et on affiche l'ancienneté plutôt que de faire croire au temps réel.
         let stale = entry.date.timeIntervalSince(snapshot.capturedAt) > 15 * 60
+        if family == .systemLarge {
+            largeContent(snapshot, stale: stale)
+        } else {
+            smallMediumContent(snapshot, stale: stale)
+        }
+    }
+
+    private func smallMediumContent(_ snapshot: WidgetSnapshot, stale: Bool) -> some View {
         HStack(spacing: 14) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 4) {
@@ -119,6 +127,90 @@ struct SolarWidgetView: View {
             }
         }
         .opacity(stale ? 0.55 : 1)
+    }
+
+    // MARK: - Grand format : en-tête + histogramme 14 jours
+
+    private func largeContent(_ snapshot: WidgetSnapshot, stale: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .firstTextBaseline) {
+                HStack(spacing: 4) {
+                    Image(systemName: "sun.max.fill")
+                        .foregroundStyle(.yellow)
+                    Text(WidgetFormat.watts(snapshot.solarInputPower))
+                        .font(.system(.title2, design: .rounded).weight(.semibold))
+                        .monospacedDigit()
+                }
+                Spacer()
+                if let soc = snapshot.electricLevel {
+                    Label("\(Int(soc)) %", systemImage: "battery.100percent")
+                        .font(.callout.monospacedDigit())
+                        .foregroundStyle(soc <= 15 ? .red : .secondary)
+                }
+                Label(WidgetFormat.watts(snapshot.outputHomePower), systemImage: "house")
+                    .font(.callout.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            MiniSparkline(values: snapshot.solarHistory)
+                .frame(height: 42)
+            if let days = snapshot.dailyEnergy, days.count > 1 {
+                MiniBars(days: days)
+                    .frame(maxHeight: .infinity)
+                HStack {
+                    Text("\(days.count) derniers jours")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    let total = days.reduce(0) { $0 + $1.wh }
+                    Text("Total : \(WidgetFormat.kilowattHours(total))")
+                        .monospacedDigit()
+                }
+                .font(.caption2)
+            } else {
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: 4) {
+                Text(WidgetFormat.kilowattHours(snapshot.energyTodayWh))
+                    .font(.caption.monospacedDigit())
+                Text("aujourd'hui")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                if stale {
+                    Label {
+                        Text(snapshot.capturedAt, style: .relative)
+                    } icon: {
+                        Image(systemName: "clock.badge.exclamationmark")
+                    }
+                    .font(.caption2)
+                    .foregroundStyle(.orange)
+                } else {
+                    Text(snapshot.capturedAt, style: .time)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
+        .opacity(stale ? 0.55 : 1)
+    }
+}
+
+/// Histogramme quotidien sans dépendance Charts — la barre du jour en plein,
+/// les précédentes atténuées.
+struct MiniBars: View {
+    var days: [WidgetSnapshot.DayWh]
+
+    var body: some View {
+        GeometryReader { geo in
+            let maxWh = max(days.map(\.wh).max() ?? 1, 1)
+            HStack(alignment: .bottom, spacing: 3) {
+                ForEach(Array(days.enumerated()), id: \.offset) { index, day in
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(.yellow.opacity(index == days.count - 1 ? 1 : 0.55))
+                        .frame(height: max(2, (geo.size.height - 2) * day.wh / maxWh))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                }
+            }
+        }
     }
 }
 

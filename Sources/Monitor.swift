@@ -344,7 +344,8 @@ final class Monitor: ObservableObject {
             outputHomePower: state.outputHomePower,
             batteryFlow: state.batteryFlow,
             energyTodayWh: energyTodayWh,
-            solarHistory: Array(solarHistory.suffix(24))
+            solarHistory: Array(solarHistory.suffix(24)),
+            dailyEnergy: dailyEnergy.map { WidgetSnapshot.DayWh(day: $0.day, wh: $0.wh) }
         ))
         // Widgets refresh on their own timeline; a reload every 2 min keeps
         // them reasonably fresh without hammering WidgetKit's budget.
