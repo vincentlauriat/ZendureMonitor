@@ -19,6 +19,7 @@ struct SunView: View {
 /// hors fenêtre (ImageRenderer ne rend pas l'intérieur d'un ScrollView).
 struct SunContent: View {
     @EnvironmentObject var monitor: Monitor
+    @StateObject private var weatherService = WeatherService()
     @AppStorage("sunLatitude") private var latitude: Double = 0
     @AppStorage("sunLongitude") private var longitude: Double = 0
     @AppStorage("sunPeakWatts") private var peakWatts: Double = 0
@@ -33,9 +34,63 @@ struct SunContent: View {
                 if configured {
                     sunProductionCard(sun, now: timeline.date)
                     theoreticalCard(sun)
+                    weatherCard(sun)
                 }
             }
             .padding(16)
+            .onAppear { weatherService.refresh(latitude: latitude, longitude: longitude) }
+            .onChange(of: timeline.date) {
+                weatherService.refresh(latitude: latitude, longitude: longitude)
+            }
+        }
+    }
+
+    // MARK: - Météo locale (Open-Meteo)
+
+    @ViewBuilder
+    private func weatherCard(_ sun: SunCalc.Ephemeris) -> some View {
+        MetricCard(title: "Météo locale", systemImage: "cloud.sun.fill") {
+            if let weather = weatherService.weather {
+                VStack(alignment: .leading, spacing: 8) {
+                    let wmo = WMOCode.describe(weather.weatherCode)
+                    HStack(spacing: 8) {
+                        Image(systemName: wmo.symbol)
+                            .font(.title3)
+                            .foregroundStyle(.yellow, .secondary)
+                        Text(wmo.label)
+                        Spacer()
+                        Text("\(Int(weather.temperature.rounded())) °C")
+                            .font(.title3.monospacedDigit())
+                    }
+                    VStack(spacing: 5) {
+                        LegendRow(color: .gray, label: "Couverture nuageuse",
+                                  value: "\(Int(weather.cloudCover)) %")
+                        if let sunshine = weather.sunshineForecastSec {
+                            LegendRow(color: .yellow, label: "Ensoleillement prévu aujourd'hui",
+                                      value: Format.duration(minutes: sunshine / 60))
+                        }
+                        if peakWatts > 0, sun.elevation > 0 {
+                            // Théorique ciel clair × (1 − 0,75 × nuages^3), formule
+                            // de Kasten-Czeplak — indicatif, sans orientation.
+                            let clearSky = peakWatts * max(0, sin(sun.elevation * .pi / 180)) * 0.9
+                            let factor = 1 - 0.75 * pow(weather.cloudCover / 100, 3)
+                            LegendRow(color: .teal, label: "Productible ajusté nuages",
+                                      value: Format.watts(clearSky * factor))
+                        }
+                    }
+                    Text("Source : Open-Meteo, rafraîchie toutes les 30 min.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            } else if let error = weatherService.lastError {
+                Text("Météo indisponible : \(error)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("Chargement de la météo…")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
