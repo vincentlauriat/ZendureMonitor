@@ -6,16 +6,16 @@
     <description>ZendureMonitor release feed</description>
     <language>en</language>
     <item>
-      <title>v1.7.0</title>
-      <pubDate>Thu, 06 Aug 2026 18:29:36 +0200</pubDate>
-      <sparkle:version>9</sparkle:version>
-      <sparkle:shortVersionString>1.7.0</sparkle:shortVersionString>
+      <title>v1.8.0</title>
+      <pubDate>Fri, 07 Aug 2026 23:38:06 +0200</pubDate>
+      <sparkle:version>10</sparkle:version>
+      <sparkle:shortVersionString>1.8.0</sparkle:shortVersionString>
       <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-      <sparkle:releaseNotesLink>https://github.com/vincentlauriat/ZendureMonitor/releases/tag/v1.7.0</sparkle:releaseNotesLink>
+      <sparkle:releaseNotesLink>https://github.com/vincentlauriat/ZendureMonitor/releases/tag/v1.8.0</sparkle:releaseNotesLink>
       <enclosure
-        url="https://github.com/vincentlauriat/ZendureMonitor/releases/download/v1.7.0/ZendureMonitor-1.7.0.dmg"
+        url="https://github.com/vincentlauriat/ZendureMonitor/releases/download/v1.8.0/ZendureMonitor-1.8.0.dmg"
         type="application/octet-stream"
-        sparkle:edSignature="DkrlE4hEzLIEONEjQm7l13NcjtzjaX0D5K7jWotBH18njRDqZj2uy61azeNQ8EKgZ3G16wS/QLqZsHvakhGmAA==" length="3138059" />
+        sparkle:edSignature="kNE+f93PxwTeKxRwjd1/+WOeS7UIUELl9emkfcEo7FLmCdAp0lx0wI6pvg9ZlU+96SjJoaH1r1D6b/SezsvSCA==" length="3198039" />
     </item>
   </channel>
 </rss>

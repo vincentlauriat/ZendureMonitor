@@ -194,7 +194,8 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.5 — hub-centric flow diagram (batteries, grid, home, off-grid outlet as peripherals), Sun window (local ephemerides + production overlay + theoretical output), Juicy-style panel with period selector and stats, savings estimates (€/CO₂), extra opt-in notifications, permissions check, unit tests + GitHub Actions CI
 - [x] v1.6 — daily solar split (direct/stored + grid total) in panel & dashboard, offline resilience (stale values kept & dimmed), sticky VPN fallback, local-midnight day rollover, colored header actions, EnergyMath unit tests
 - [x] v1.7 — large widget (14-day histogram), weather in the Sun window (Open-Meteo, cloud-adjusted forecast), redesigned Sun window, extracted & tested DailyAccumulator
-- [ ] v1.8 — Chinese localization, reorderable cards, widget refresh button (AppIntents)
+- [x] v1.8 — outage alerts: device-unreachable notification, zero-production-in-daylight notification, ⚠️ menu bar offline state (tested OutageWatchdog)
+- [ ] v1.9 — zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents)
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements
