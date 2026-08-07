@@ -57,7 +57,12 @@ struct MenuBarLabel: View {
     @ObservedObject var monitor: Monitor
 
     var body: some View {
-        if let state = monitor.state {
+        if monitor.offlineAlert {
+            // Appareil injoignable au-delà du seuil : état d'alerte franc,
+            // plus visible que le simple grisage du panneau.
+            let image = Image(systemName: "exclamationmark.triangle.fill")
+            Text("\(image) \(String(localized: "hors ligne"))")
+        } else if let state = monitor.state {
             let image = Image(systemName: state.solarInputPower > 0 ? "sun.max.fill" : "sun.min")
             let text = segments(state).joined(separator: "  ")
             Text(text.isEmpty ? "\(image)" : "\(image) \(text)")

@@ -13,14 +13,26 @@
     "Alerte batterie faible" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Low battery alert" } } }
     },
+    "Alerte quand le SolarFlow répond mais ne produit ni n'injecte rien pendant 30 min alors que le soleil est à plus de 20° (nécessite la position configurée dans l'onglet Soleil) — signe d'un défaut ou d'une batterie pleine sans exutoire." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Alerts when the SolarFlow responds but produces and injects nothing for 30 min while the sun is above 20° (requires the position configured in the Sun tab) — sign of a fault or a full battery with no outlet." } } }
+    },
+    "Alertes de panne" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Outage alerts" } } }
+    },
     "Appareil" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Device" } } }
+    },
+    "Appareil injoignable" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Device unreachable" } } }
     },
     "Appareil SolarFlow" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow device" } } }
     },
     "Aucune adresse configurée — ouvrez les Réglages." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No address configured — open Settings." } } }
+    },
+    "Aucune réponse de l'appareil depuis %lld min — vérifier la batterie et son réseau." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No response from the device for %lld min — check the battery and its network." } } }
     },
     "aujourd'hui" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "today" } } }
@@ -73,6 +85,9 @@
     "Distant" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote" } } }
     },
+    "Délai" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delay" } } }
+    },
     "Entrée PV %lld" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "PV input %lld" } } }
     },
@@ -93,6 +108,27 @@
     },
     "Contrôle de la batterie" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery control" } } }
+    },
+    "hors ligne" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "offline" } } }
+    },
+    "Le SolarFlow ne produit ni n'injecte rien depuis %lld min alors que le soleil est haut — vérifier l'appareil (défaut, batterie pleine sans exutoire…)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The SolarFlow has produced and injected nothing for %lld min while the sun is high — check the device (fault, full battery with no outlet…)." } } }
+    },
+    "Notification après" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Notification after" } } }
+    },
+    "Production nulle en plein jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No production in broad daylight" } } }
+    },
+    "Production solaire anormale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Abnormal solar production" } } }
+    },
+    "sans réponse — l'icône de la barre de menu passe aussi en ⚠️" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "without a response — the menu bar icon also switches to ⚠️" } } }
+    },
+    "SolarFlow injoignable" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow unreachable" } } }
     },
     "⚠️ Ces commandes pilotent réellement la batterie (POST /properties/write)." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "⚠️ These commands actually drive the battery (POST /properties/write)." } } }

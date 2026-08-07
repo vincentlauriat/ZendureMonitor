@@ -247,6 +247,30 @@ private struct NotificationSettingsTab: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            Section("Alertes de panne") {
+                Toggle("Appareil injoignable", isOn: $monitor.notifyUnreachable)
+                if monitor.notifyUnreachable {
+                    Slider(value: $monitor.unreachableMinutes, in: 5...60, step: 5) {
+                        Text("Délai")
+                    } minimumValueLabel: {
+                        Text(verbatim: "5 min")
+                    } maximumValueLabel: {
+                        Text(verbatim: "60 min")
+                    }
+                    HStack(spacing: 4) {
+                        Text("Notification après")
+                        Text(verbatim: "\(Int(monitor.unreachableMinutes)) min")
+                        Text("sans réponse — l'icône de la barre de menu passe aussi en ⚠️")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
+                Toggle("Production nulle en plein jour", isOn: $monitor.notifyNoProduction)
+                Text("Alerte quand le SolarFlow répond mais ne produit ni n'injecte rien pendant 30 min alors que le soleil est à plus de 20° (nécessite la position configurée dans l'onglet Soleil) — signe d'un défaut ou d'une batterie pleine sans exutoire.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
         }
         .formStyle(.grouped)
     }

@@ -130,6 +130,30 @@ final class Monitor: ObservableObject {
             if notifyDailyRecord { Self.requestNotificationAuthorization() }
         }
     }
+    /// Alertes de panne (activées par défaut — incident du 2026-08-07 : le
+    /// SolarFlow est tombé en défaut puis hors réseau sans que l'app ne dise rien).
+    @Published var notifyUnreachable: Bool {
+        didSet {
+            UserDefaults.standard.set(notifyUnreachable, forKey: "notifyUnreachable")
+            if notifyUnreachable { Self.requestNotificationAuthorization() }
+        }
+    }
+    /// Minutes de silence réseau tolérées avant l'alerte « injoignable ».
+    @Published var unreachableMinutes: Double {
+        didSet {
+            UserDefaults.standard.set(unreachableMinutes, forKey: "unreachableMinutes")
+            watchdog.unreachableAfter = unreachableMinutes * 60
+        }
+    }
+    @Published var notifyNoProduction: Bool {
+        didSet {
+            UserDefaults.standard.set(notifyNoProduction, forKey: "notifyNoProduction")
+            if notifyNoProduction { Self.requestNotificationAuthorization() }
+        }
+    }
+    /// Vrai quand l'appareil est injoignable au-delà du seuil — la barre de
+    /// menu passe en ⚠️ (voir MenuBarLabel).
+    @Published var offlineAlert = false
     @Published var appearance: AppearanceMode {
         didSet {
             UserDefaults.standard.set(appearance.rawValue, forKey: "appearanceMode")
@@ -154,6 +178,8 @@ final class Monitor: ObservableObject {
     private var fullBatteryNotified = false
     private var lastGridDrawNotify: Date = .distantPast
     private var recordNotifiedDay = ""
+    /// Détection de panne (injoignable / production nulle en plein jour).
+    private var watchdog = OutageWatchdog()
 
     init() {
         let config = URLSessionConfiguration.ephemeral
@@ -181,6 +207,10 @@ final class Monitor: ObservableObject {
         notifyFullBattery = defaults.bool(forKey: "notifyFullBattery")
         notifyGridDraw = defaults.bool(forKey: "notifyGridDraw")
         notifyDailyRecord = defaults.bool(forKey: "notifyDailyRecord")
+        notifyUnreachable = defaults.object(forKey: "notifyUnreachable") as? Bool ?? true
+        let minutes = defaults.double(forKey: "unreachableMinutes")
+        unreachableMinutes = minutes >= 5 ? minutes : 10
+        notifyNoProduction = defaults.object(forKey: "notifyNoProduction") as? Bool ?? true
 
         energyDay = Self.dayKey(.now)
         accumulator = DailyAccumulator(
@@ -198,6 +228,7 @@ final class Monitor: ObservableObject {
         gridTodayWh = accumulator.gridWh
         pruneAuxKeys()
 
+        watchdog.unreachableAfter = unreachableMinutes * 60
         if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
         appearance.apply()
         reloadDailyEnergy()
@@ -256,6 +287,7 @@ final class Monitor: ObservableObject {
             accumulateEnergy(fresh)
             checkLowSoc(fresh)
             checkExtraNotifications(fresh)
+            checkOutage(fresh)
             publishWidgetSnapshot(fresh)
             await refreshHistoryFromServer()
         } catch {
@@ -265,6 +297,40 @@ final class Monitor: ObservableObject {
             lastError = error.localizedDescription
             accumulator.resetSampleClock()
             localNetworkDenied = Self.looksLikeLocalNetworkDenial(error)
+            if let event = watchdog.pollFailed(at: .now), notifyUnreachable,
+               case .unreachable(let since) = event {
+                let minutes = Int(Date.now.timeIntervalSince(since) / 60)
+                notify(id: "unreachable",
+                       title: String(localized: "SolarFlow injoignable"),
+                       body: String(localized: "Aucune réponse de l'appareil depuis \(minutes) min — vérifier la batterie et son réseau."))
+            }
+            offlineAlert = watchdog.isOffline(at: .now)
+        }
+    }
+
+    // MARK: - Alertes de panne
+
+    /// Élévation solaire actuelle si la position est configurée (module Soleil),
+    /// sinon -90 (détection d'anomalie désactivée).
+    private var currentSunElevation: Double {
+        let defaults = UserDefaults.standard
+        let latitude = defaults.double(forKey: "sunLatitude")
+        let longitude = defaults.double(forKey: "sunLongitude")
+        guard latitude != 0 || longitude != 0 else { return -90 }
+        return SunCalc.compute(latitude: latitude, longitude: longitude).elevation
+    }
+
+    private func checkOutage(_ state: DeviceState) {
+        let event = watchdog.deviceResponded(solarW: state.solarInputPower,
+                                             homeW: state.outputHomePower,
+                                             elevation: currentSunElevation,
+                                             at: .now)
+        offlineAlert = false
+        if let event, notifyNoProduction, case .productionAnomaly(let since) = event {
+            let minutes = Int(Date.now.timeIntervalSince(since) / 60)
+            notify(id: "production-anomaly",
+                   title: String(localized: "Production solaire anormale"),
+                   body: String(localized: "Le SolarFlow ne produit ni n'injecte rien depuis \(minutes) min alors que le soleil est haut — vérifier l'appareil (défaut, batterie pleine sans exutoire…)."))
         }
     }
 
