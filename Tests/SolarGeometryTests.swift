@@ -155,6 +155,23 @@ final class SolarGeometryTests: XCTestCase {
         XCTAssertEqual(PanelArrayStore.load(from: defaults), arrays)
     }
 
+    /// Les curseurs de la fenêtre Soleil écrivent dans le stockage à chaque cran
+    /// et relisent la valeur au rendu suivant : si l'aller-retour JSON altérait
+    /// ne serait-ce qu'un bit, la poignée sauterait ou refuserait de se poser.
+    func testStoreRoundTripsEverySliderStepExactly() {
+        for azimuthStep in 0...72 {
+            for tiltStep in [0, 1, 27, 28, 45, 89, 90] {
+                let array = PanelArray(name: "Toit", peakWatts: 900,
+                                       azimuth: Double(azimuthStep) * 5,
+                                       tilt: Double(tiltStep))
+                let decoded = PanelArrayStore.decode(PanelArrayStore.encode([array]))
+                XCTAssertEqual(decoded, [array])
+                XCTAssertEqual(decoded.first?.azimuth, array.azimuth)
+                XCTAssertEqual(decoded.first?.tilt, array.tilt)
+            }
+        }
+    }
+
     func testStorePrefersArraysOverLegacyKey() {
         let defaults = UserDefaults(suiteName: "SolarGeometryTests.priority")!
         defaults.removePersistentDomain(forName: "SolarGeometryTests.priority")
