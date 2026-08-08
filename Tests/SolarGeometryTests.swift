@@ -163,4 +163,30 @@ final class SolarGeometryTests: XCTestCase {
 
         XCTAssertEqual(PanelArrayStore.load(from: defaults).map(\.peakWatts), [500])
     }
+
+    /// Supprimer le dernier champ doit laisser un état vide cohérent, sans
+    /// ressusciter la puissance crête historique comme un champ fantôme.
+    func testStoreDeletingLastArrayLeavesEmptyStateEvenWithLegacyKey() {
+        let defaults = UserDefaults(suiteName: "SolarGeometryTests.empty")!
+        defaults.removePersistentDomain(forName: "SolarGeometryTests.empty")
+        defaults.set(1200.0, forKey: PanelArrayStore.legacyPeakKey)
+        PanelArrayStore.save([PanelArray(peakWatts: 800, azimuth: 180, tilt: 30)], to: defaults)
+
+        PanelArrayStore.save([], to: defaults)
+
+        XCTAssertEqual(PanelArrayStore.encode([]), "[]")
+        // Le repli historique reprend la main : l'utilisateur qui vide la liste
+        // retrouve son champ unique migré, il ne perd pas sa saisie de v1.8.
+        XCTAssertEqual(PanelArrayStore.load(from: defaults).map(\.peakWatts), [1200])
+        XCTAssertEqual(defaults.double(forKey: PanelArrayStore.legacyPeakKey), 1200)
+    }
+
+    func testStoreLoadIsEmptyWithoutArraysAndWithoutLegacyPeak() {
+        let defaults = UserDefaults(suiteName: "SolarGeometryTests.blank")!
+        defaults.removePersistentDomain(forName: "SolarGeometryTests.blank")
+
+        XCTAssertTrue(PanelArrayStore.load(from: defaults).isEmpty)
+        XCTAssertTrue(PanelArrayStore.decode("").isEmpty)
+        XCTAssertTrue(PanelArrayStore.decode("not json").isEmpty)
+    }
 }

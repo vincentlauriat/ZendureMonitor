@@ -36,6 +36,8 @@ Dans **Réglages → Soleil**, section **Champs de panneaux**, ajoutez un champ 
 
 Si vous aviez seulement renseigné une puissance crête dans une version précédente, elle est reprise telle quelle comme un champ unique plein sud incliné à 30° : rien à ressaisir, mais ajustez l'orientation pour que les estimations collent à votre installation.
 
+Supprimer tous vos champs ne perd pas votre puissance crête : elle reste enregistrée, et un champ unique plein sud vous est reproposé à la prochaine ouverture de l'onglet.
+
 ## Le héros : le dôme céleste
 
 Le graphique du haut est une carte du ciel. La **hauteur** est l'élévation du soleil, la **largeur** son azimut (les repères E, SE, S, SO, O sont posés sur l'horizon) :

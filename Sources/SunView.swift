@@ -49,9 +49,10 @@ struct SunContent: View {
                 if configured {
                     let track = SunCalc.track(on: now, latitude: latitude, longitude: longitude)
                     let twilight = SunCalc.twilight(on: now, latitude: latitude, longitude: longitude)
-                    heroCard(sun, track: track, now: now)
+                    let solstices = solsticeTracks(now: now)
+                    heroCard(sun, track: track, solstices: solstices, now: now)
                     HStack(alignment: .top, spacing: 14) {
-                        compassCard(sun, track: track, now: now)
+                        compassCard(sun, track: track, solstices: solstices, now: now)
                         orientationsCard(sun, track: track)
                     }
                     HStack(alignment: .top, spacing: 14) {
@@ -76,13 +77,14 @@ struct SunContent: View {
 
     // MARK: - Héros : dôme céleste
 
-    private func heroCard(_ sun: SunCalc.Ephemeris, track: [SunCalc.Position], now: Date) -> some View {
+    private func heroCard(_ sun: SunCalc.Ephemeris, track: [SunCalc.Position],
+                          solstices: [SkyDomeView.SolsticeTrack], now: Date) -> some View {
         MetricCard(title: "Le soleil et vos orientations", systemImage: "sun.max.fill") {
             VStack(alignment: .leading, spacing: 10) {
                 statStrip(sun, now: now)
                 SkyDomeView(sun: sun,
                             todayTrack: track,
-                            solsticeTracks: solsticeTracks(now: now),
+                            solsticeTracks: solstices,
                             arrays: arrays,
                             curve: monitor.todayCurve,
                             peakW: max(monitor.peakTodayW, installedPeak),
@@ -127,11 +129,12 @@ struct SunContent: View {
 
     // MARK: - Compas solaire
 
-    private func compassCard(_ sun: SunCalc.Ephemeris, track: [SunCalc.Position], now: Date) -> some View {
+    private func compassCard(_ sun: SunCalc.Ephemeris, track: [SunCalc.Position],
+                             solstices: [SkyDomeView.SolsticeTrack], now: Date) -> some View {
         MetricCard(title: "Compas solaire", systemImage: "location.circle") {
             VStack(spacing: 8) {
                 SunCompassView(sun: sun, todayTrack: track,
-                               solsticeTracks: solsticeTracks(now: now),
+                               solsticeTracks: solstices,
                                arrays: arrays, now: now)
                     .frame(width: 250, height: 250)
                 Text("Vu du dessus : centre = zénith, cercle = horizon. Les boucles marquent 25° et 50° d'écart d'incidence autour de chaque champ.")

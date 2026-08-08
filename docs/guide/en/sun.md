@@ -36,6 +36,8 @@ In **Settings → Sun**, **Panel arrays** section, add one array per roof orient
 
 If you had only entered a peak power in an earlier version, it is carried over as a single array facing due south at a 30° tilt: nothing to retype, but do adjust the orientation so the estimates match your actual installation.
 
+Deleting every array does not lose your peak power: it stays stored, and a single due-south array is offered again the next time you open the tab.
+
 ## The hero: the sky dome
 
 The top chart is a map of the sky. **Height** is the sun's elevation, **width** its azimuth (the E, SE, S, SW, W marks sit on the horizon):

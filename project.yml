@@ -74,6 +74,9 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.lauriat.ZendureMonitorTests
+        # Un bundle de test doit être signé, et la signature exige un Info.plist :
+        # sans cette clé, `xcodebuild test` échoue avant même de lancer les tests.
+        GENERATE_INFOPLIST_FILE: "YES"
 
   # L'extension widget est obligatoirement sandboxée (contrainte macOS) alors
   # que l'app ne l'est pas : elle ne parle pas au SolarFlow elle-même, elle
