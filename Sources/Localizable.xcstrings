@@ -34,6 +34,33 @@
     "Aucune réponse de l'appareil depuis %lld min — vérifier la batterie et son réseau." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No response from the device for %lld min — check the battery and its network." } } }
     },
+    "Azimut du champ : 0° = nord, 90° = est, 180° = plein sud, 270° = ouest." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Array azimuth: 0° = north, 90° = east, 180° = due south, 270° = west." } } }
+    },
+    "Ciel clair : direct pondéré par l'incidence et l'atmosphère, plus le diffus. Sans météo ni ombrage." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear sky: direct weighted by incidence and atmosphere, plus diffuse. No weather or shading." } } }
+    },
+    "Hauteur = élévation, largeur = azimut. Trait plein : la course du jour, heure par heure — la portion vive est déjà parcourue. Pointillés : les solstices, bornes de l'année. Zone jaune : production mesurée, posée là où était le soleil à cet instant. Losanges : la direction que vise chaque champ de panneaux, avec l'écart d'incidence actuel — quand le soleil l'atteint, ce champ est à son maximum." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Height = elevation, width = azimuth. Solid line: today's path, hour by hour — the bright portion is already travelled. Dotted: the solstices, the year's bounds. Yellow area: measured production, placed where the sun stood at that moment. Diamonds: the direction each panel array faces, with the current incidence gap — when the sun reaches it, that array is at its maximum." } } }
+    },
+    "Hauteur = élévation, largeur = azimut. Trait plein : la course du jour. Pointillés : les solstices. Zone jaune : production mesurée. Losanges : la direction visée par chaque champ." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Height = elevation, width = azimuth. Solid line: today's path. Dotted: the solstices. Yellow area: measured production. Diamonds: the direction each array faces." } } }
+    },
+    "Heure dorée : soleil sous 6° d'élévation." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Golden hour: sun below 6° of elevation." } } }
+    },
+    "Inclinaison du champ : 0° à plat, 30° pour une toiture courante, 90° en façade." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Array tilt: 0° flat, 30° for a typical roof, 90° for a wall." } } }
+    },
+    "Source : Open-Meteo, rafraîchie toutes les 30 min." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Source: Open-Meteo, refreshed every 30 min." } } }
+    },
+    "Vu du dessus : centre = zénith, cercle = horizon." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Seen from above: centre = zenith, circle = horizon." } } }
+    },
+    "Vu du dessus : centre = zénith, cercle = horizon. Les boucles marquent 25° et 50° d'écart d'incidence autour de chaque champ — plus le soleil est près du centre d'une boucle, plus ce champ capte." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Seen from above: centre = zenith, circle = horizon. The loops mark 25° and 50° of incidence gap around each array — the closer the sun is to a loop's centre, the more that array captures." } } }
+    },
     "aujourd'hui" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "today" } } }
     },
@@ -223,9 +250,6 @@
     "Renseignez votre position (latitude/longitude) dans Réglages → Général pour afficher les éphémérides du soleil." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Set your position (latitude/longitude) in Settings → General to display sun ephemerides." } } }
     },
-    "Position (module Soleil)" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position (Sun module)" } } }
-    },
     "Latitude" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Latitude" } } }
     },
@@ -313,9 +337,6 @@
     "Sert aux éphémérides de la fenêtre Soleil (lever, coucher, élévation). Jamais transmise." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Used for the Sun window ephemerides (sunrise, sunset, elevation). Never transmitted." } } }
     },
-    "Active l'estimation du productible ciel clair et du rendement dans la fenêtre Soleil." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Enables the clear-sky output and efficiency estimates in the Sun window." } } }
-    },
     "Pic : %@" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak: %@" } } }
     },
@@ -379,35 +400,14 @@
     "Zendure Monitor — Soleil" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Monitor — Sun" } } }
     },
-    "Course du soleil et production" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sun path and production" } } }
-    },
-    "Arc pointillé : trajectoire du soleil entre lever et coucher. Zone jaune : production mesurée aujourd'hui (max par tranche de 5 min)." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Dashed arc: sun path between sunrise and sunset. Yellow area: today's measured production (max per 5-min slot)." } } }
-    },
     "Productible théorique" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Theoretical output" } } }
-    },
-    "Théorique ciel clair (maintenant)" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear-sky theoretical (now)" } } }
     },
     "Production mesurée" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Measured production" } } }
     },
     "Rendement estimé" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Estimated efficiency" } } }
-    },
-    "Estimation indicative : puissance crête × sin(élévation) × 0,9 — sans météo ni orientation des panneaux." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Rough estimate: peak power × sin(elevation) × 0.9 — no weather, no panel orientation." } } }
-    },
-    "Renseignez la puissance crête de vos panneaux (Wc) dans Réglages → Général pour estimer le productible ciel clair et le rendement." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Set your panels' peak power (Wp) in Settings → General to estimate the clear-sky output and efficiency." } } }
-    },
-    "Puissance crête (Wc)" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Peak power (Wp)" } } }
-    },
-    "Position : sert aux éphémérides de la fenêtre Soleil, jamais transmise. Puissance crête : active l'estimation du productible ciel clair." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position: used for the Sun window ephemerides, never transmitted. Peak power: enables the clear-sky output estimate." } } }
     },
     "Position introuvable — autorisez Zendure Monitor dans Réglages → Confidentialité et sécurité → Service de localisation, ou saisissez les coordonnées manuellement." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Position unavailable — allow Zendure Monitor in System Settings → Privacy & Security → Location Services, or enter the coordinates manually." } } }
@@ -597,6 +597,273 @@
     },
     "192.168.1.xx ou Zendure-….local" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "192.168.1.xx or Zendure-….local" } } }
+    },
+    "%.1f × la hauteur" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%.1f × the height" } } }
+    },
+    "%d %% du ciel clair" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%d%% of clear sky" } } }
+    },
+    "%d j" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%d d" } } }
+    },
+    "Ajouter un champ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add an array" } } }
+    },
+    "Aube astronomique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Astronomical dawn" } } }
+    },
+    "Aube civile" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Civil dawn" } } }
+    },
+    "Aube nautique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Nautical dawn" } } }
+    },
+    "Azimut %lld° — %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Azimuth %lld° — %@" } } }
+    },
+    "Azimut : 90° = est, 180° = plein sud, 270° = ouest. Inclinaison : 0° à plat, 30° pour une toiture courante." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Azimuth: 90° = east, 180° = due south, 270° = west. Tilt: 0° flat, 30° for a typical roof." } } }
+    },
+    "Champ %lld" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Array %lld" } } }
+    },
+    "Champs de panneaux" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Panel arrays" } } }
+    },
+    "Ciel clair maintenant" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear sky now" } } }
+    },
+    "Compas solaire" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Solar compass" } } }
+    },
+    "Coucher dans" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sunset in" } } }
+    },
+    "Crépuscule astronomique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Astronomical dusk" } } }
+    },
+    "Crépuscule civil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Civil dusk" } } }
+    },
+    "Crépuscule nautique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Nautical dusk" } } }
+    },
+    "Depuis hier" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Since yesterday" } } }
+    },
+    "Décrivez vos champs de panneaux dans Réglages → Soleil (puissance crête, azimut, inclinaison) pour voir l'incidence du soleil sur chacun, son productible et sa meilleure heure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Describe your panel arrays in Settings → Sun (peak power, azimuth, tilt) to see the sun's incidence on each of them, its output and its best hour." } } }
+    },
+    "E" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "E" } } }
+    },
+    "Est" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "East" } } }
+    },
+    "Facteur nuages" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cloud factor" } } }
+    },
+    "Heure dorée : soleil sous 6° d'élévation. Aube civile −6°, nautique −12°, astronomique −18°." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Golden hour: sun below 6° of elevation. Civil dawn −6°, nautical −12°, astronomical −18°." } } }
+    },
+    "Heure dorée du matin" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Morning golden hour" } } }
+    },
+    "Heure dorée du soir" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Evening golden hour" } } }
+    },
+    "Inclinaison %lld°" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tilt %lld°" } } }
+    },
+    "Le soleil et vos orientations" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The sun and your orientations" } } }
+    },
+    "Lever dans" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sunrise in" } } }
+    },
+    "Longueur d'ombre" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Shadow length" } } }
+    },
+    "Lumière et crépuscules" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Light and twilights" } } }
+    },
+    "Masse d'air" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Air mass" } } }
+    },
+    "Modèle ciel clair : 85 % de direct, pondéré par l'incidence sur chaque champ et par la traversée d'atmosphère, 15 % de diffus selon la part de ciel vue, moins 10 % de pertes onduleur et câblage. Sans météo ni ombrage." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear-sky model: 85% direct, weighted by the incidence on each array and by the atmospheric path, 15% diffuse according to the fraction of sky seen, minus 10% inverter and wiring losses. No weather, no shading." } } }
+    },
+    "N" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "N" } } }
+    },
+    "NE" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "NE" } } }
+    },
+    "NO" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "NW" } } }
+    },
+    "Nom" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } } }
+    },
+    "Nord" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "North" } } }
+    },
+    "Nord-Est" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "North-East" } } }
+    },
+    "Nord-Ouest" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "North-West" } } }
+    },
+    "O" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "W" } } }
+    },
+    "Ouest" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "West" } } }
+    },
+    "Part du potentiel du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Share of today's potential" } } }
+    },
+    "Puissance crête installée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Installed peak power" } } }
+    },
+    "Renseignez au moins un champ de panneaux dans Réglages → Soleil pour estimer le productible et le rendement." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add at least one panel array in Settings → Sun to estimate the output and the yield." } } }
+    },
+    "S" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "S" } } }
+    },
+    "SE" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SE" } } }
+    },
+    "SO" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SW" } } }
+    },
+    "Solstice d'hiver" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Winter solstice" } } }
+    },
+    "Solstice d'été" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Summer solstice" } } }
+    },
+    "Source : Open-Meteo, rafraîchie toutes les 30 min. Atténuation nuageuse de Kasten–Czeplak." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Source: Open-Meteo, refreshed every 30 min. Kasten–Czeplak cloud attenuation." } } }
+    },
+    "Sud" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "South" } } }
+    },
+    "Sud-Est" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "South-East" } } }
+    },
+    "Sud-Ouest" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "South-West" } } }
+    },
+    "Supprimer ce champ" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete this array" } } }
+    },
+    "Total : %@ crête" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Total: %@ peak" } } }
+    },
+    "Total ciel clair maintenant" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear-sky total now" } } }
+    },
+    "Un champ par orientation de toiture. Azimut : 0° = nord, 90° = est, 180° = plein sud, 270° = ouest. Inclinaison : 0° à plat, 30° pour une toiture courante, 90° en façade. La fenêtre Soleil en déduit l'incidence du soleil sur chaque champ, son productible ciel clair et sa meilleure heure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "One array per roof orientation. Azimuth: 0° = north, 90° = east, 180° = due south, 270° = west. Tilt: 0° flat, 30° for a typical roof, 90° for a wall. The Sun window derives the sun's incidence on each array, its clear-sky output and its best hour." } } }
+    },
+    "Wc" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Wp" } } }
+    },
+    "crête" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "peak" } } }
+    },
+    "dans %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "in %@" } } }
+    },
+    "il y a %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ ago" } } }
+    },
+    "incidence %lld°" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "incidence %lld°" } } }
+    },
+    "max %.0f°" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "max %.0f°" } } }
+    },
+    "meilleure heure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "best hour" } } }
+    },
+    "potentiel du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "potential for the day" } } }
+    },
+    "sous l'horizon" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "below the horizon" } } }
+    },
+    "Élévation actuelle" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Current elevation" } } }
+    },
+    "Énergie ciel clair du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear-sky energy today" } } }
+    },
+    "Énergie mesurée du jour" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Measured energy today" } } }
+    },
+    "Équinoxe d'automne" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Autumn equinox" } } }
+    },
+    "Équinoxe de printemps" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Spring equinox" } } }
+    },
+    "%lld °C" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld °C" } } }
+    },
+    "Brouillard" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fog" } } }
+    },
+    "Bruine" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Drizzle" } } }
+    },
+    "Chargement de la météo…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Loading weather…" } } }
+    },
+    "Ciel clair" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear sky" } } }
+    },
+    "Couvert" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Overcast" } } }
+    },
+    "Couverture nuageuse" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cloud cover" } } }
+    },
+    "Ensoleillement prévu" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Forecast sunshine" } } }
+    },
+    "Météo indisponible : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Weather unavailable: %@" } } }
+    },
+    "Météo locale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Local weather" } } }
+    },
+    "Neige" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Snow" } } }
+    },
+    "Nuageux" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cloudy" } } }
+    },
+    "Orage" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Thunderstorm" } } }
+    },
+    "Partiellement nuageux" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Partly cloudy" } } }
+    },
+    "Pluie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Rain" } } }
+    },
+    "Productible ajusté nuages" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cloud-adjusted output" } } }
+    },
+    "Production" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Production" } } }
+    },
+    "Éphémérides" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ephemerides" } } }
     }
   },
   "version" : "1.0"

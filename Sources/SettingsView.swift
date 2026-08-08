@@ -153,10 +153,11 @@ private struct DisplaySettingsTab: View {
 
 // MARK: - Soleil
 
-private struct SunSettingsTab: View {
+/// Interne (et non `private` comme les autres onglets) pour que le harnais de
+/// capture du guide puisse la rendre hors de l'app.
+struct SunSettingsTab: View {
     @AppStorage("sunLatitude") private var sunLatitude: Double = 0
     @AppStorage("sunLongitude") private var sunLongitude: Double = 0
-    @AppStorage("sunPeakWatts") private var sunPeakWatts: Double = 0
 
     var body: some View {
         Form {
@@ -168,12 +169,7 @@ private struct SunSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("Panneaux") {
-                TextField("Puissance crête (Wc)", value: $sunPeakWatts, format: .number)
-                Text("Active l'estimation du productible ciel clair et du rendement dans la fenêtre Soleil.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            PanelArraysSection()
         }
         .formStyle(.grouped)
     }
