@@ -12,7 +12,7 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
-Next up: the **Sun window v3** — describe each of your panel arrays (peak power, azimuth, tilt) and the window shows an animated **sky dome** (the sun's real path over the day, both solstice arcs, today's measured production placed where the sun stood, and each array's aiming direction with its live incidence gap), a **solar compass** with true iso-incidence loops, a per-array breakdown (clear-sky output, incidence, best hour, potential for the day) and richer ephemerides (twilights, golden hours, day-length delta to the second, next solstice or equinox).
+On `main`, awaiting a release: the **Sun window v3** — describe each of your panel arrays (peak power, azimuth, tilt) and the window shows an animated **sky dome** (the sun's real path over the day, both solstice arcs, today's measured production placed where the sun stood, and each array's aiming direction with its live incidence gap), a **solar compass** with true iso-incidence loops, a per-array breakdown (clear-sky output, incidence, best hour, potential for the day) and richer ephemerides (twilights, golden hours, day-length delta to the second, next solstice or equinox). Azimuth and tilt are **adjustable straight from the window** with two sliders per array — the dome, the compass and the output follow the gesture — and the whole thing fits **on one screen, no scrolling**.
 
 New in 1.7: a **large widget** (the 14-day production histogram right on your desktop), **local weather in the Sun window** (Open-Meteo cloud cover and sunshine forecast, with a cloud-adjusted production estimate using the Kasten–Czeplak model), and a **redesigned Sun window** — hero chart plus three compact columns (ephemeris, weather, yield), no scrolling.
 
@@ -36,7 +36,7 @@ Options: choose what the menu bar shows (solar W, battery %, home W — or icon 
 
 ![Dashboard](docs/dashboard.png)
 
-**Sun window** — an animated sky dome (the sun's real path, the solstice arcs, today's production and where each panel array is aimed), a solar compass, a per-array breakdown, local ephemerides (NOAA algorithm, nothing leaves the Mac), the clear-sky theoretical output and the local weather (Open-Meteo) with a cloud-adjusted forecast:
+**Sun window** — an animated sky dome (the sun's real path, the solstice arcs, today's production and where each panel array is aimed), a solar compass, a per-array breakdown with **azimuth and tilt sliders** that re-aim an array live, local ephemerides (NOAA algorithm, nothing leaves the Mac), the clear-sky theoretical output and the local weather (Open-Meteo) with a cloud-adjusted forecast — everything on one screen:
 
 ![Sun window](docs/sun.png)
 
@@ -130,13 +130,16 @@ Sources/
   Discovery.swift           Bonjour browser (_zendure._tcp + _http._tcp) resolving hostnames
   MenuView.swift            dropdown panel (header with icon actions, cards, period selector)
   DashboardView.swift       dashboard window (flow diagram + full indicator cards)
-  SunView.swift             Sun window (ephemerides, sun path × production, theoretical output)
+  SunView.swift             Sun window (sky dome, solar compass, per-array orientation with
+                            live azimuth/tilt sliders, ephemerides, twilights, yield, weather)
   SettingsView.swift        tabs: device, display, sun, notifications, control, remote, general
   LocationFetcher.swift     one-shot CoreLocation fix to prefill the sun position
   PermissionsStatus.swift   upfront permissions check (local network, location, notifications)
-  Shared/                   Format, SunCalc (NOAA), widget snapshot — also compiled into tests
+  Shared/                   Format, SunCalc (NOAA ephemerides, twilights, solstices),
+                            SolarGeometry (panel arrays, incidence, clear-sky output),
+                            widget snapshot — also compiled into tests
   Updater.swift             Sparkle SPUStandardUpdaterController wiring
-Tests/                      unit tests (parser, SunCalc, Format) — run in CI on every PR
+Tests/                      unit tests (parser, SunCalc, SolarGeometry, Format) — CI on every PR
 ```
 
 Design choices:
@@ -197,7 +200,7 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.6 — daily solar split (direct/stored + grid total) in panel & dashboard, offline resilience (stale values kept & dimmed), sticky VPN fallback, local-midnight day rollover, colored header actions, EnergyMath unit tests
 - [x] v1.7 — large widget (14-day histogram), weather in the Sun window (Open-Meteo, cloud-adjusted forecast), redesigned Sun window, extracted & tested DailyAccumulator
 - [x] v1.8 — outage alerts: device-unreachable notification, zero-production-in-daylight notification, ⚠️ menu bar offline state (tested OutageWatchdog)
-- [ ] v1.9 — Sun window v3 (per-array orientations, animated sky dome, solar compass, twilights & seasons — done on `feat/sun-panel-orientations`), zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents)
+- [ ] v1.9 — **Sun window v3 merged on `main`** (per-array orientations with live azimuth/tilt sliders, animated sky dome, solar compass, twilights & seasons, one-screen layout — not released yet), zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents)
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements

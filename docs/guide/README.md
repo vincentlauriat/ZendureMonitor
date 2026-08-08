@@ -10,7 +10,7 @@ A macOS menu bar app showing the live solar production of a **Zendure SolarFlow*
 2. [Premiers pas](fr/demarrage.md) — trouver le SolarFlow, autorisation réseau local, rafraîchissement
 3. [Le panneau](fr/panneau.md) — cartes, graphiques, options de la barre de menu
 4. [Le tableau de bord](fr/tableau-de-bord.md) — schéma de flux animé et tous les indicateurs
-5. [La fenêtre Soleil](fr/soleil.md) — éphémérides, productible théorique, météo locale
+5. [La fenêtre Soleil](fr/soleil.md) — dôme céleste, compas solaire, orientation des champs, éphémérides, productible, météo
 6. [Les widgets](fr/widgets.md) — trois tailles, histogramme 14 jours
 7. [Contrôle de la batterie](fr/controle.md) — mode AC, limites de charge et de sortie
 8. [Alertes et économies](fr/alertes.md) — notifications, prix du kWh, CO₂
@@ -23,7 +23,7 @@ A macOS menu bar app showing the live solar production of a **Zendure SolarFlow*
 2. [Getting started](en/getting-started.md) — finding the SolarFlow, local network permission, refresh
 3. [The panel](en/panel.md) — cards, charts, menu bar options
 4. [The dashboard](en/dashboard.md) — animated energy-flow diagram and every indicator
-5. [The Sun window](en/sun.md) — ephemerides, theoretical output, local weather
+5. [The Sun window](en/sun.md) — sky dome, solar compass, array orientation, ephemerides, theoretical output, weather
 6. [Widgets](en/widgets.md) — three sizes, 14-day histogram
 7. [Battery control](en/control.md) — AC mode, charge and output limits
 8. [Alerts and savings](en/alerts.md) — notifications, kWh price, CO₂
