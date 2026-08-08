@@ -28,7 +28,9 @@ struct ZendureMonitorApp: App {
             SunView()
                 .environmentObject(monitor)
         }
-        .defaultSize(width: 900, height: 780)
+        // Dimensionnée pour que la fenêtre tienne en entier sans défilement sur
+        // un portable 13" (1710×1026 points utiles).
+        .defaultSize(width: 1400, height: 980)
     }
 }
 

@@ -6,11 +6,13 @@ title: The Sun window
 
 # The Sun window
 
-Open it from the **orange sun** icon in the panel header. It gathers the sun's real path, the orientation of each of your panel arrays, today's production, the ephemerides, the light, the theoretical output and the local weather.
+Open it from the **orange sun** icon in the panel header. It gathers the sun's real path, the orientation of each of your panel arrays, today's production, the ephemerides, the light, the theoretical output and the local weather — **all on one screen, with no scrolling**.
 
 ![Sun window](../images/sun-light.png)
 
-*The Sun window: the sky dome as hero, then the solar compass, the per-array detail, the ephemerides, the light, the yield and the weather.*
+*The Sun window: the stat strip, the sky dome and the solar compass, then the per-array detail, the ephemerides, the yield, the light and the weather.*
+
+The captions under each card are deliberately short: **hover them** for the full explanation in a tooltip.
 
 ## Setting your position
 
@@ -37,6 +39,10 @@ In **Settings → Sun**, **Panel arrays** section, add one array per roof orient
 If you had only entered a peak power in an earlier version, it is carried over as a single array facing due south at a 30° tilt: nothing to retype, but do adjust the orientation so the estimates match your actual installation.
 
 Deleting every array does not lose your peak power: it stays stored, and a single due-south array is offered again the next time you open the tab.
+
+### Adjusting orientation from the Sun window
+
+The array's name and peak power are entered in the settings, but **azimuth and tilt can also be adjusted straight from the "Panel arrays" card in the Sun window**: two sliders per array, the first for azimuth, the second for tilt. The dome, the compass, the incidence and the output all follow the gesture — it is the fastest way to find the orientation that really matches your roof. Values are saved immediately, so they show up in the settings too.
 
 ## The hero: the sky dome
 

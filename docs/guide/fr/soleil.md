@@ -6,11 +6,13 @@ title: La fenêtre Soleil
 
 # La fenêtre Soleil
 
-Ouvrez-la depuis l'icône **soleil orange** de l'en-tête du panneau. Elle réunit la course réelle du soleil, l'orientation de chacun de vos champs de panneaux, la production du jour, les éphémérides, la lumière, le productible théorique et la météo locale.
+Ouvrez-la depuis l'icône **soleil orange** de l'en-tête du panneau. Elle réunit la course réelle du soleil, l'orientation de chacun de vos champs de panneaux, la production du jour, les éphémérides, la lumière, le productible théorique et la météo locale — **le tout sur un seul écran, sans défilement**.
 
 ![Fenêtre Soleil](../images/sun-light.png)
 
-*La fenêtre Soleil : le dôme céleste en héros, puis le compas solaire, le détail par champ de panneaux, les éphémérides, la lumière, le productible et la météo.*
+*La fenêtre Soleil : le bandeau d'indicateurs, le dôme céleste et le compas solaire, puis le détail par champ de panneaux, les éphémérides, le productible, la lumière et la météo.*
+
+Les légendes sous chaque carte sont volontairement courtes : **survolez-les** pour obtenir l'explication complète en infobulle.
 
 ## Configurer votre position
 
@@ -37,6 +39,10 @@ Dans **Réglages → Soleil**, section **Champs de panneaux**, ajoutez un champ 
 Si vous aviez seulement renseigné une puissance crête dans une version précédente, elle est reprise telle quelle comme un champ unique plein sud incliné à 30° : rien à ressaisir, mais ajustez l'orientation pour que les estimations collent à votre installation.
 
 Supprimer tous vos champs ne perd pas votre puissance crête : elle reste enregistrée, et un champ unique plein sud vous est reproposé à la prochaine ouverture de l'onglet.
+
+### Régler l'orientation depuis la fenêtre Soleil
+
+Le nom du champ et sa puissance crête se saisissent dans les réglages, mais **l'azimut et l'inclinaison se règlent aussi directement dans la carte « Champs de panneaux » de la fenêtre Soleil** : deux curseurs par champ, le premier pour l'azimut, le second pour l'inclinaison. Le dôme, le compas, l'incidence et le productible suivent le geste — c'est la façon la plus rapide de trouver l'orientation qui correspond vraiment à votre toiture. Les valeurs sont enregistrées immédiatement, elles se retrouvent donc dans les réglages.
 
 ## Le héros : le dôme céleste
 

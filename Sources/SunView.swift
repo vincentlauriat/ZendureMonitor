@@ -7,11 +7,15 @@ import SwiftUI
 /// tableau de bord.
 struct SunView: View {
     var body: some View {
+        // Le contenu est dimensionné pour tenir en entier à la taille par
+        // défaut : le ScrollView ne défile donc jamais dans ce cas. Il reste là
+        // comme filet — beaucoup de champs de panneaux, texte agrandi par
+        // l'accessibilité, petite fenêtre — pour dégrader au lieu de rogner.
         ScrollView {
             SunContent()
         }
-        .frame(minWidth: 820, idealWidth: 900, maxWidth: .infinity,
-               minHeight: 560, idealHeight: 780, maxHeight: .infinity)
+        .frame(minWidth: 1100, idealWidth: 1400, maxWidth: .infinity,
+               minHeight: 620, idealHeight: 940, maxHeight: .infinity)
         .navigationTitle(Text("Zendure Monitor — Soleil"))
         .onAppear { WindowPolicy.retain() }
         .onDisappear { WindowPolicy.release() }
@@ -41,34 +45,64 @@ struct SunContent: View {
 
     private var installedPeak: Double { arrays.reduce(0) { $0 + $1.peakWatts } }
 
+    /// Fixe la liste migrée dans le stockage dès l'ouverture. Sans cela, `arrays`
+    /// reconstruit le champ hérité à chaque lecture — donc avec un nouvel UUID —
+    /// et le premier réglage d'orientation ne retrouverait pas sa ligne.
+    private func materializeLegacyArray() {
+        guard PanelArrayStore.decode(arraysJSON).isEmpty, legacyPeakWatts > 0 else { return }
+        arraysJSON = PanelArrayStore.encode([PanelArray(peakWatts: legacyPeakWatts,
+                                                       azimuth: 180, tilt: 30)])
+    }
+
+    /// Liaison par identité vers un champ : régler l'azimut ou l'inclinaison
+    /// depuis cette fenêtre écrit directement dans le stockage partagé, donc le
+    /// dôme et le compas suivent le geste.
+    private func binding(for id: UUID) -> Binding<PanelArray> {
+        Binding(
+            get: { arrays.first { $0.id == id } ?? PanelArray(peakWatts: 0) },
+            set: { updated in
+                var list = arrays
+                guard let index = list.firstIndex(where: { $0.id == id }) else { return }
+                list[index] = updated
+                arraysJSON = PanelArrayStore.encode(list)
+            }
+        )
+    }
+
     var body: some View {
         TimelineView(.periodic(from: .now, by: 60)) { timeline in
             let now = timeline.date
             let sun = SunCalc.compute(at: now, latitude: latitude, longitude: longitude)
-            VStack(spacing: 14) {
+            VStack(spacing: 12) {
                 if configured {
                     let track = SunCalc.track(on: now, latitude: latitude, longitude: longitude)
                     let twilight = SunCalc.twilight(on: now, latitude: latitude, longitude: longitude)
                     let solstices = solsticeTracks(now: now)
-                    heroCard(sun, track: track, solstices: solstices, now: now)
-                    HStack(alignment: .top, spacing: 14) {
+                    statStrip(sun, now: now)
+                    HStack(alignment: .top, spacing: 12) {
+                        heroCard(sun, track: track, solstices: solstices, now: now)
                         compassCard(sun, track: track, solstices: solstices, now: now)
+                    }
+                    HStack(alignment: .top, spacing: 12) {
                         orientationsCard(sun, track: track)
-                    }
-                    HStack(alignment: .top, spacing: 14) {
-                        ephemeridesCard(sun, now: now)
-                        lightCard(sun, twilight: twilight)
-                    }
-                    HStack(alignment: .top, spacing: 14) {
-                        yieldCard(sun, track: track)
-                        weatherCard(sun)
+                        VStack(spacing: 12) {
+                            ephemeridesCard(sun, now: now)
+                            yieldCard(sun, track: track)
+                        }
+                        VStack(spacing: 12) {
+                            lightCard(sun, twilight: twilight)
+                            weatherCard(sun)
+                        }
                     }
                 } else {
                     SunCard()
                 }
             }
             .padding(16)
-            .onAppear { weatherService.refresh(latitude: latitude, longitude: longitude) }
+            .onAppear {
+                materializeLegacyArray()
+                weatherService.refresh(latitude: latitude, longitude: longitude)
+            }
             .onChange(of: timeline.date) {
                 weatherService.refresh(latitude: latitude, longitude: longitude)
             }
@@ -80,8 +114,7 @@ struct SunContent: View {
     private func heroCard(_ sun: SunCalc.Ephemeris, track: [SunCalc.Position],
                           solstices: [SkyDomeView.SolsticeTrack], now: Date) -> some View {
         MetricCard(title: "Le soleil et vos orientations", systemImage: "sun.max.fill") {
-            VStack(alignment: .leading, spacing: 10) {
-                statStrip(sun, now: now)
+            VStack(alignment: .leading, spacing: 8) {
                 SkyDomeView(sun: sun,
                             todayTrack: track,
                             solsticeTracks: solstices,
@@ -89,11 +122,12 @@ struct SunContent: View {
                             curve: monitor.todayCurve,
                             peakW: max(monitor.peakTodayW, installedPeak),
                             now: now)
-                    .frame(height: 252)
-                Text("Hauteur = élévation, largeur = azimut. Trait plein : la course du jour, heure par heure. Pointillés : les solstices, bornes de l'année. Zone jaune : production mesurée, posée là où était le soleil à cet instant. Losanges : la direction que vise chaque champ de panneaux, avec l'écart d'incidence actuel — quand le soleil l'atteint, ce champ est à son maximum.")
+                    .frame(minHeight: 220, idealHeight: 300, maxHeight: .infinity)
+                Text("Hauteur = élévation, largeur = azimut. Trait plein : la course du jour. Pointillés : les solstices. Zone jaune : production mesurée. Losanges : la direction visée par chaque champ.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
+                    .help(Text("Hauteur = élévation, largeur = azimut. Trait plein : la course du jour, heure par heure — la portion vive est déjà parcourue. Pointillés : les solstices, bornes de l'année. Zone jaune : production mesurée, posée là où était le soleil à cet instant. Losanges : la direction que vise chaque champ de panneaux, avec l'écart d'incidence actuel — quand le soleil l'atteint, ce champ est à son maximum."))
             }
         }
     }
@@ -133,15 +167,20 @@ struct SunContent: View {
                              solstices: [SkyDomeView.SolsticeTrack], now: Date) -> some View {
         MetricCard(title: "Compas solaire", systemImage: "location.circle") {
             VStack(spacing: 8) {
+                // Suit la hauteur du dôme voisin plutôt que de laisser un vide
+                // sous la carte, tout en restant carré.
                 SunCompassView(sun: sun, todayTrack: track,
                                solsticeTracks: solstices,
                                arrays: arrays, now: now)
-                    .frame(width: 250, height: 250)
-                Text("Vu du dessus : centre = zénith, cercle = horizon. Les boucles marquent 25° et 50° d'écart d'incidence autour de chaque champ.")
+                    .aspectRatio(1, contentMode: .fit)
+                    .frame(minWidth: 210, minHeight: 210)
+                    .frame(maxHeight: .infinity)
+                Text("Vu du dessus : centre = zénith, cercle = horizon.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(2)
+                    .help(Text("Vu du dessus : centre = zénith, cercle = horizon. Les boucles marquent 25° et 50° d'écart d'incidence autour de chaque champ — plus le soleil est près du centre d'une boucle, plus ce champ capte."))
             }
             .frame(maxWidth: .infinity)
         }
@@ -171,7 +210,7 @@ struct SunContent: View {
                 VStack(spacing: 10) {
                     ForEach(Array(arrays.enumerated()), id: \.element.id) { index, array in
                         if index > 0 { Divider() }
-                        PanelArrayRow(array: array, index: index, sun: sun,
+                        PanelArrayRow(array: binding(for: array.id), index: index, sun: sun,
                                       best: SolarGeometry.bestMoment(for: array, track: track),
                                       dailyWh: SolarGeometry.clearSkyEnergyWh(for: [array], track: track))
                     }
@@ -240,10 +279,11 @@ struct SunContent: View {
                     LegendRow(color: .indigo.opacity(0.6), label: "Crépuscule astronomique",
                               value: time(twilight.astronomicalDusk))
                 }
-                Text("Heure dorée : soleil sous 6° d'élévation. Aube civile −6°, nautique −12°, astronomique −18°.")
+                Text("Heure dorée : soleil sous 6° d'élévation.")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+                    .lineLimit(1)
+                    .help(Text("Heure dorée : soleil sous 6° d'élévation. Aube civile −6°, nautique −12°, astronomique −18°."))
             }
         }
         .frame(maxWidth: .infinity)
@@ -291,10 +331,11 @@ struct SunContent: View {
                                       value: String(format: String(localized: "%.1f × la hauteur"), shadow))
                         }
                     }
-                    Text("Modèle ciel clair : 85 % de direct, pondéré par l'incidence sur chaque champ et par la traversée d'atmosphère, 15 % de diffus selon la part de ciel vue, moins 10 % de pertes onduleur et câblage. Sans météo ni ombrage.")
+                    Text("Ciel clair : direct pondéré par l'incidence et l'atmosphère, plus le diffus. Sans météo ni ombrage.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(2)
+                        .help(Text("Modèle ciel clair : 85 % de direct, pondéré par l'incidence sur chaque champ et par la traversée d'atmosphère, 15 % de diffus selon la part de ciel vue, moins 10 % de pertes onduleur et câblage. Sans météo ni ombrage."))
                 }
             }
         }
@@ -335,10 +376,11 @@ struct SunContent: View {
                                       value: Format.watts(clearSky * EnergyMath.cloudFactor(coverPercent: weather.cloudCover)))
                         }
                     }
-                    Text("Source : Open-Meteo, rafraîchie toutes les 30 min. Atténuation nuageuse de Kasten–Czeplak.")
+                    Text("Source : Open-Meteo, rafraîchie toutes les 30 min.")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
+                        .help(Text("Source : Open-Meteo, rafraîchie toutes les 30 min. Atténuation nuageuse de Kasten–Czeplak."))
                 }
             } else if let error = weatherService.lastError {
                 Text("Météo indisponible : \(error)")
@@ -463,7 +505,7 @@ private struct SunStatTile: View {
 /// Un champ : orientation, incidence courante, productible ciel clair, part de
 /// l'irradiance crête captée, meilleure heure et énergie potentielle du jour.
 private struct PanelArrayRow: View {
-    var array: PanelArray
+    @Binding var array: PanelArray
     var index: Int
     var sun: SunCalc.Ephemeris
     var best: (date: Date, watts: Double)?
@@ -491,8 +533,10 @@ private struct PanelArrayRow: View {
                     Text(array.name.isEmpty ? String(localized: "Champ \(index + 1)") : array.name)
                         .font(.callout.weight(.medium))
                         .lineLimit(1)
-                    Text(verbatim: "\(Cardinal.label(azimuth: array.azimuth)) · \(Int(array.azimuth.rounded()))° · \(Int(array.tilt.rounded()))° "
-                         + String(localized: "d'inclinaison") + " · \(Format.watts(array.peakWatts))")
+                    // Les degrés sont lus sur les curseurs juste en dessous : ici
+                    // le point cardinal, plus parlant, et la puissance crête.
+                    Text(verbatim: Cardinal.label(azimuth: array.azimuth) + " · "
+                         + Format.watts(array.peakWatts) + " " + String(localized: "crête"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -521,6 +565,16 @@ private struct PanelArrayRow: View {
                 .animation(.easeInOut(duration: 0.6), value: factor)
             }
             .frame(height: 5)
+            // Réglage direct depuis cette fenêtre : le dôme, le compas et le
+            // productible suivent le geste, sans passer par les réglages.
+            HStack(spacing: 12) {
+                AngleSlider(symbol: "location.north.line.fill", value: $array.azimuth,
+                            range: 0...360, step: 5, tint: color,
+                            hint: "Azimut du champ : 0° = nord, 90° = est, 180° = plein sud, 270° = ouest.")
+                AngleSlider(symbol: "angle", value: $array.tilt,
+                            range: 0...90, step: 1, tint: color,
+                            hint: "Inclinaison du champ : 0° à plat, 30° pour une toiture courante, 90° en façade.")
+            }
             HStack(spacing: 8) {
                 if let best {
                     Text(verbatim: String(localized: "meilleure heure") + " " + best.date.formatted(date: .omitted, time: .shortened)
@@ -534,5 +588,35 @@ private struct PanelArrayRow: View {
             .font(.caption2.monospacedDigit())
             .foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Curseur d'angle compact : un symbole, la piste, la valeur en degrés. Le
+/// symbole plutôt qu'un libellé écrit laisse la piste assez large pour être
+/// réglable, et deux curseurs tiennent alors sur une seule ligne — la carte ne
+/// grossit donc que d'une ligne par champ ajouté.
+private struct AngleSlider: View {
+    var symbol: String
+    @Binding var value: Double
+    var range: ClosedRange<Double>
+    var step: Double
+    var tint: Color
+    var hint: LocalizedStringKey
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: symbol)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .frame(width: 12)
+            Slider(value: $value, in: range, step: step)
+                .controlSize(.mini)
+                .tint(tint)
+            Text(verbatim: "\(Int(value.rounded()))°")
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(width: 30, alignment: .trailing)
+        }
+        .help(Text(hint))
     }
 }

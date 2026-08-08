@@ -34,6 +34,33 @@
     "Aucune réponse de l'appareil depuis %lld min — vérifier la batterie et son réseau." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No response from the device for %lld min — check the battery and its network." } } }
     },
+    "Azimut du champ : 0° = nord, 90° = est, 180° = plein sud, 270° = ouest." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Array azimuth: 0° = north, 90° = east, 180° = due south, 270° = west." } } }
+    },
+    "Ciel clair : direct pondéré par l'incidence et l'atmosphère, plus le diffus. Sans météo ni ombrage." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear sky: direct weighted by incidence and atmosphere, plus diffuse. No weather or shading." } } }
+    },
+    "Hauteur = élévation, largeur = azimut. Trait plein : la course du jour, heure par heure — la portion vive est déjà parcourue. Pointillés : les solstices, bornes de l'année. Zone jaune : production mesurée, posée là où était le soleil à cet instant. Losanges : la direction que vise chaque champ de panneaux, avec l'écart d'incidence actuel — quand le soleil l'atteint, ce champ est à son maximum." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Height = elevation, width = azimuth. Solid line: today's path, hour by hour — the bright portion is already travelled. Dotted: the solstices, the year's bounds. Yellow area: measured production, placed where the sun stood at that moment. Diamonds: the direction each panel array faces, with the current incidence gap — when the sun reaches it, that array is at its maximum." } } }
+    },
+    "Hauteur = élévation, largeur = azimut. Trait plein : la course du jour. Pointillés : les solstices. Zone jaune : production mesurée. Losanges : la direction visée par chaque champ." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Height = elevation, width = azimuth. Solid line: today's path. Dotted: the solstices. Yellow area: measured production. Diamonds: the direction each array faces." } } }
+    },
+    "Heure dorée : soleil sous 6° d'élévation." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Golden hour: sun below 6° of elevation." } } }
+    },
+    "Inclinaison du champ : 0° à plat, 30° pour une toiture courante, 90° en façade." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Array tilt: 0° flat, 30° for a typical roof, 90° for a wall." } } }
+    },
+    "Source : Open-Meteo, rafraîchie toutes les 30 min." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Source: Open-Meteo, refreshed every 30 min." } } }
+    },
+    "Vu du dessus : centre = zénith, cercle = horizon." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Seen from above: centre = zenith, circle = horizon." } } }
+    },
+    "Vu du dessus : centre = zénith, cercle = horizon. Les boucles marquent 25° et 50° d'écart d'incidence autour de chaque champ — plus le soleil est près du centre d'une boucle, plus ce champ capte." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Seen from above: centre = zenith, circle = horizon. The loops mark 25° and 50° of incidence gap around each array — the closer the sun is to a loop's centre, the more that array captures." } } }
+    },
     "aujourd'hui" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "today" } } }
     },
@@ -637,9 +664,6 @@
     "Facteur nuages" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Cloud factor" } } }
     },
-    "Hauteur = élévation, largeur = azimut. Trait plein : la course du jour, heure par heure. Pointillés : les solstices, bornes de l'année. Zone jaune : production mesurée, posée là où était le soleil à cet instant. Losanges : la direction que vise chaque champ de panneaux, avec l'écart d'incidence actuel — quand le soleil l'atteint, ce champ est à son maximum." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Height = elevation, width = azimuth. Solid line: today's path, hour by hour. Dotted: the solstices, the year's bounds. Yellow area: measured production, placed where the sun stood at that moment. Diamonds: the direction each panel array faces, with the current incidence gap — when the sun reaches it, that array is at its maximum." } } }
-    },
     "Heure dorée : soleil sous 6° d'élévation. Aube civile −6°, nautique −12°, astronomique −18°." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Golden hour: sun below 6° of elevation. Civil dawn −6°, nautical −12°, astronomical −18°." } } }
     },
@@ -745,17 +769,11 @@
     "Un champ par orientation de toiture. Azimut : 0° = nord, 90° = est, 180° = plein sud, 270° = ouest. Inclinaison : 0° à plat, 30° pour une toiture courante, 90° en façade. La fenêtre Soleil en déduit l'incidence du soleil sur chaque champ, son productible ciel clair et sa meilleure heure." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "One array per roof orientation. Azimuth: 0° = north, 90° = east, 180° = due south, 270° = west. Tilt: 0° flat, 30° for a typical roof, 90° for a wall. The Sun window derives the sun's incidence on each array, its clear-sky output and its best hour." } } }
     },
-    "Vu du dessus : centre = zénith, cercle = horizon. Les boucles marquent 25° et 50° d'écart d'incidence autour de chaque champ." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Seen from above: centre = zenith, circle = horizon. The loops mark 25° and 50° of incidence gap around each array." } } }
-    },
     "Wc" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Wp" } } }
     },
     "crête" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "peak" } } }
-    },
-    "d'inclinaison" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "tilt" } } }
     },
     "dans %@" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "in %@" } } }
