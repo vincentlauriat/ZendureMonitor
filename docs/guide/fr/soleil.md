@@ -6,11 +6,11 @@ title: La fenêtre Soleil
 
 # La fenêtre Soleil
 
-Ouvrez-la depuis l'icône **soleil orange** de l'en-tête du panneau. Elle réunit, sans défilement, la course du soleil, la production du jour, les éphémérides, le productible théorique et la météo locale.
+Ouvrez-la depuis l'icône **soleil orange** de l'en-tête du panneau. Elle réunit la course réelle du soleil, l'orientation de chacun de vos champs de panneaux, la production du jour, les éphémérides, la lumière, le productible théorique et la météo locale.
 
 ![Fenêtre Soleil](../images/sun-light.png)
 
-*La fenêtre Soleil : le graphique héros en haut, puis trois colonnes — éphémérides, productible, météo.*
+*La fenêtre Soleil : le dôme céleste en héros, puis le compas solaire, le détail par champ de panneaux, les éphémérides, la lumière, le productible et la météo.*
 
 ## Configurer votre position
 
@@ -21,35 +21,69 @@ La fenêtre a besoin de votre latitude et longitude : **Réglages → Soleil**, 
 
 ![Onglet Soleil des réglages](../images/settings-sun.png)
 
-*L'onglet Soleil : position et puissance crête des panneaux.*
+*L'onglet Soleil : position, puis un champ de panneaux par orientation.*
 
 Les éphémérides sont calculées **localement sur le Mac** (algorithme NOAA) : votre position ne quitte pas la machine pour ce calcul. Seule exception : si la carte météo est utilisée, les coordonnées (arrondies à 4 décimales) sont envoyées au service Open-Meteo pour obtenir la prévision.
 
-## Le graphique héros : course du soleil × production
+## Décrire vos champs de panneaux
 
-- L'**arc pointillé** représente la trajectoire du soleil entre le lever et le coucher, avec l'icône ☀️ à sa position actuelle.
-- La **zone jaune** est la production mesurée aujourd'hui (le maximum de chaque tranche de 5 minutes), sur le même axe temporel.
+Dans **Réglages → Soleil**, section **Champs de panneaux**, ajoutez un champ par orientation de toiture. Pour chacun :
 
-D'un regard, vous voyez si la production suit la course du soleil ou si des nuages (ou des ombres) la creusent.
+- un **nom** libre (« Toit sud-est », « Façade ouest »…) ;
+- la **puissance crête** en Wc ;
+- l'**azimut** : 0° = nord, 90° = est, 180° = plein sud, 270° = ouest — le curseur affiche le libellé cardinal correspondant ;
+- l'**inclinaison** : 0° à plat, 30° pour une toiture courante, 90° en façade.
 
-## Colonne Éphémérides
+Si vous aviez seulement renseigné une puissance crête dans une version précédente, elle est reprise telle quelle comme un champ unique plein sud incliné à 30° : rien à ressaisir, mais ajustez l'orientation pour que les estimations collent à votre installation.
 
-Lever, coucher, **midi solaire**, durée du jour, **élévation** actuelle (et maximale du jour) et **azimut** du soleil.
+## Le héros : le dôme céleste
 
-## Colonne Productible théorique
+Le graphique du haut est une carte du ciel. La **hauteur** est l'élévation du soleil, la **largeur** son azimut (les repères E, SE, S, SO, O sont posés sur l'horizon) :
 
-Renseignez la **puissance crête** de vos panneaux (Wc) dans **Réglages → Soleil**, section Panneaux. La carte affiche alors :
+- le **trait plein** est la course du soleil aujourd'hui, avec un point par heure ; la portion déjà parcourue est vive, le reste du jour atténué ;
+- les **pointillés** sont les courses des deux solstices — les bornes que le soleil ne franchit jamais chez vous ;
+- la **zone jaune** est la production mesurée du jour, posée à l'endroit du ciel où se trouvait le soleil à cet instant ;
+- les **losanges colorés** sont les directions que visent vos champs de panneaux, avec l'écart d'incidence du moment. Quand le soleil rejoint un losange, ce champ travaille à son maximum et son marqueur s'illumine ;
+- le **ciel** change de couleur avec la hauteur du soleil : nuit étoilée, crépuscule, heure dorée, plein jour.
 
-- **Théorique ciel clair** — puissance crête × sin(élévation) × 0,9, un modèle simple sans météo ni orientation des panneaux ;
-- **Production mesurée** — la puissance réelle du moment ;
-- **Rendement estimé** — le rapport des deux, en pourcentage.
+## Le compas solaire
 
-## Colonne Météo locale
+Le même ciel, vu du dessus : le **centre est le zénith**, le **cercle extérieur l'horizon**, le nord en haut. On y lit la course du jour et celles des solstices, et surtout, autour de la direction visée par chaque champ, les **boucles d'iso-incidence à 25° et 50°** : la zone de ciel dans laquelle ce champ produit près de son optimum. Le soleil s'y déplace au fil de la journée.
+
+## Champs de panneaux
+
+Une ligne par champ, avec sa couleur :
+
+- le **productible ciel clair** du champ à l'instant présent ;
+- l'**incidence** du soleil sur ce champ, en degrés (0° = pile dans l'axe) ;
+- une **barre** qui donne la part de l'irradiance crête réellement captée ;
+- la **meilleure heure** du jour pour ce champ, et le **potentiel du jour** en kWh.
+
+En pied de carte : le total ciel clair, la production mesurée et la puissance crête installée.
+
+## Éphémérides
+
+Lever, coucher, **midi solaire** (avec le temps restant), durée du jour, **écart de durée du jour depuis hier** à la seconde, élévation actuelle et maximale, et le **prochain solstice ou équinoxe** avec son compte à rebours.
+
+## Lumière et crépuscules
+
+Les **aubes** et **crépuscules** civil (−6°), nautique (−12°) et astronomique (−18°), et les deux **heures dorées** — les plages où le soleil est sous 6° d'élévation.
+
+## Productible théorique
+
+- **Ciel clair maintenant** — la somme du productible de tous vos champs ;
+- **Production mesurée** et **rendement estimé** ;
+- **Énergie ciel clair du jour** contre **énergie mesurée du jour**, et la **part du potentiel** atteinte ;
+- **Masse d'air** traversée et **longueur d'ombre** d'un objet d'une unité de haut.
+
+Le modèle : 85 % de rayonnement direct, pondéré par l'incidence sur chaque champ et par la traversée d'atmosphère (loi de Meinel), 15 % de diffus selon la part de ciel vue par le panneau, moins 10 % de pertes onduleur et câblage. Il ne connaît ni la météo ni vos ombrages.
+
+## Météo locale
 
 La météo vient d'**Open-Meteo** (service gratuit, sans compte ni clé d'API), rafraîchie au plus toutes les 30 minutes :
 
 - conditions actuelles (ciel clair, nuageux, pluie…) et température ;
-- **couverture nuageuse** en pourcentage ;
+- **couverture nuageuse** en pourcentage et **facteur nuages** appliqué ;
 - **ensoleillement prévu** aujourd'hui ;
 - **productible ajusté nuages** — le théorique ciel clair atténué par la couverture nuageuse (formule de Kasten–Czeplak : facteur 1 − 0,75 × C^3,4, soit au minimum 25 % du théorique sous un ciel entièrement couvert).
 

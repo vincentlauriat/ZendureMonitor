@@ -28,7 +28,7 @@ struct ZendureMonitorApp: App {
             SunView()
                 .environmentObject(monitor)
         }
-        .defaultSize(width: 540, height: 680)
+        .defaultSize(width: 900, height: 780)
     }
 }
 

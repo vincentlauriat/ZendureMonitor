@@ -66,6 +66,7 @@ targets:
       - path: Tests
       - path: Sources/DeviceState.swift
       - path: Sources/Shared/SunCalc.swift
+      - path: Sources/Shared/SolarGeometry.swift
       - path: Sources/Shared/Format.swift
       - path: Sources/Shared/EnergyMath.swift
       - path: Sources/Shared/DailyAccumulator.swift
