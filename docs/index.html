@@ -237,22 +237,42 @@
 </section>
 
 <section class="wrap">
-  <h2><span class="em">Local-first</span></h2>
-  <p class="lead">Recent Zendure firmwares embed a plain HTTP server on the device itself — the
-  <a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API. By default, Zendure Monitor
-  talks to that and to nothing else.</p>
-  <div class="panel">
+  <h2>Three <span class="em">connection paths</span> — your choice</h2>
+  <p class="lead">Local-first by design, but never stuck: the app can reach your battery three
+  different ways, and the bottom of the panel always tells you which one is in use, with a
+  green/orange status dot.</p>
+  <div class="grid">
+    <div class="card">
+      <h3>🏠 Local — primary host</h3>
+      <p>The default and the recommendation. Recent Zendure firmwares embed a plain HTTP server
+      on the device itself — the <a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API.
+      One <code>GET /properties/report</code> on your LAN every few seconds, found over Bonjour
+      or by IP. No account, no broker, no credentials, nothing leaves your network.</p>
+    </div>
+    <div class="card">
+      <h3>🔒 Local — fallback host (VPN)</h3>
+      <p>Away from home? Set a second address — the same battery reached through a Tailscale or
+      WireGuard tunnel. The app polls the primary host first and switches over automatically when
+      it doesn't answer, then keeps checking the primary to switch back. Same local API, same
+      data, still nothing shared with anyone.</p>
+    </div>
+    <div class="card">
+      <h3>☁️ Zendure Cloud</h3>
+      <p>New in 1.10, and optional. When the local API isn't reachable at all, switch the data
+      source to Zendure's servers: paste the mobile app's <em>Authorization Cloud Key</em> (kept
+      in the macOS Keychain) and the reports arrive in real time over MQTT, from anywhere —
+      no VPN. Read-only by design: battery control stays local-only.</p>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:24px">
     <ul>
-      <li><strong>One HTTP call on your LAN.</strong> The app polls <code>GET /properties/report</code> on the battery and gets everything back in a single JSON document.</li>
-      <li><strong>No Zendure cloud account.</strong> Nothing goes to Zendure's servers; the app never signs in anywhere.</li>
-      <li><strong>No MQTT broker, no credentials.</strong> Nothing to host, nothing to configure, no token or password to store.</li>
-      <li><strong>Bonjour discovery.</strong> The app finds the device on your network by itself — or you can simply type its IP address.</li>
-      <li><strong>Optional fallback host for VPN access.</strong> Set a second address — your battery reached through a Tailscale or WireGuard tunnel — and the app polls the local one first, switching over automatically when it doesn't answer.</li>
-      <li><strong>Optional Cloud mode (1.10), your choice.</strong> If you prefer, the app can read the same data through Zendure's servers in real time (MQTT), using the Authorization Cloud Key from the mobile app — stored in the macOS Keychain, read-only, and off by default. The menu panel always shows which path is in use.</li>
+      <li><strong>In the default local mode, nothing goes to Zendure's servers.</strong> The app never signs in anywhere, has nothing to host and no token to store.</li>
+      <li><strong>Bonjour discovery.</strong> The app finds the device (and the Smart CT meter) on your network by itself — or you can simply type an IP address.</li>
+      <li><strong>The Smart CT is always read locally.</strong> Zendure's cloud does not relay the meter's readings, so the real grid draw and total consumption appear whenever your Mac is on the home LAN — in either mode.</li>
     </ul>
     <p class="warn"><strong>⚠️ A word on remote access:</strong> the zenSDK API has no authentication
     whatsoever. Never port-forward the device's port 80 to the internet — use a VPN into your home
-    network and point the fallback host at that. The
+    network and point the fallback host at that, or use the Cloud mode. The
     <a href="https://github.com/vincentlauriat/ZendureMonitor#remote-access-away-from-home">README</a>
     walks through the Tailscale setup.</p>
   </div>
