@@ -864,6 +864,105 @@
     },
     "Éphémérides" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ephemerides" } } }
+    },
+    "API locale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Local API" } } }
+    },
+    "Cloud Zendure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Cloud" } } }
+    },
+    "Source des données" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Data source" } } }
+    },
+    "Source" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Source" } } }
+    },
+    "Lecture directe sur le SolarFlow via le réseau local — recommandé : plus rapide et sans dépendre d'Internet." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reads the SolarFlow directly over the local network — recommended: faster and independent of the Internet." } } }
+    },
+    "Données via les serveurs Zendure (MQTT temps réel) — utile quand l'API locale de l'appareil est inaccessible. Lecture seule." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Data through Zendure's servers (real-time MQTT) — useful when the device's local API is unreachable. Read-only." } } }
+    },
+    "Authorization Cloud Key" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Authorization Cloud Key" } } }
+    },
+    "Coller le jeton copié depuis l'app Zendure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Paste the token copied from the Zendure app" } } }
+    },
+    "Tester la clé" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Test the key" } } }
+    },
+    "Enregistrer et connecter" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Save and connect" } } }
+    },
+    "Appareil suivi" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Monitored device" } } }
+    },
+    "Dans l'app Zendure : Profil → « Authorization Cloud Key » (selon la version : Réglages → Développeur), avec le compte principal — un compte partagé renvoie une liste vide. La clé est conservée dans le trousseau macOS et ne sert qu'à obtenir les identifiants MQTT auprès de Zendure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "In the Zendure app: Profile → “Authorization Cloud Key” (depending on the version: Settings → Developer), using the main account — a shared account returns an empty list. The key is kept in the macOS Keychain and is only used to obtain the MQTT credentials from Zendure." } } }
+    },
+    "Aucune clé enregistrée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No key saved" } } }
+    },
+    "Connexion au compte Zendure…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to the Zendure account…" } } }
+    },
+    "Connexion au flux temps réel…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to the real-time feed…" } } }
+    },
+    "Connecté — données en temps réel" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected — real-time data" } } }
+    },
+    "Clé valide — %lld appareil(s) : " : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Valid key — %lld device(s): " } } }
+    },
+    "Le contrôle n'est disponible qu'en mode API locale — le mode Cloud est en lecture seule." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Control is only available in Local API mode — Cloud mode is read-only." } } }
+    },
+    "L'hôte de secours ne s'applique qu'au mode API locale — en mode Cloud, l'accès distant est déjà assuré par les serveurs Zendure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The fallback host only applies to Local API mode — in Cloud mode, remote access is already provided by Zendure's servers." } } }
+    },
+    "Aucune Cloud Key enregistrée — ouvrez les Réglages." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No Cloud Key saved — open Settings." } } }
+    },
+    "En attente des premières données du cloud Zendure…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for the first data from the Zendure cloud…" } } }
+    },
+    "Plus de données du cloud Zendure depuis 3 minutes." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No data from the Zendure cloud for 3 minutes." } } }
+    },
+    "Le contrôle n'est pas disponible en mode Cloud (lecture seule)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Control is not available in Cloud mode (read-only)." } } }
+    },
+    "Le jeton n'est pas du base64 valide." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The token is not valid base64." } } }
+    },
+    "Le jeton décodé n'a pas la forme attendue (URL.appKey)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The decoded token does not have the expected shape (URL.appKey)." } } }
+    },
+    "Le serveur Zendure a répondu HTTP %lld." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The Zendure server answered HTTP %lld." } } }
+    },
+    "L'API Zendure a refusé la requête (code %@%@)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The Zendure API rejected the request (code %@%@)." } } }
+    },
+    "Aucun appareil sur ce compte — le jeton doit venir du compte principal Zendure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No device on this account — the token must come from the main Zendure account." } } }
+    },
+    "Réponse sans identifiants MQTT — temps réel indisponible." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Response without MQTT credentials — real-time unavailable." } } }
+    },
+    "Réponse illisible du serveur Zendure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unreadable response from the Zendure server." } } }
+    },
+    "Cloud Key invalide : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Invalid Cloud Key: %@" } } }
+    },
+    "Connexion MQTT perdue%@ — reconnexion dans 15 s…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MQTT connection lost%@ — reconnecting in 15 s…" } } }
+    },
+    "connexion fermée par le serveur" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "connection closed by the server" } } }
     }
   },
   "version" : "1.0"
