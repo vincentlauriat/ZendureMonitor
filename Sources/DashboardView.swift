@@ -31,7 +31,11 @@ struct DashboardContent: View {
                 VStack(spacing: 14) {
                     MetricCard(title: "Flux d'énergie", systemImage: "arrow.triangle.swap") {
                         EnergyFlowView(state: state)
-                            .frame(height: 300)
+                            .frame(height: 310)
+                        Text("Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est mesuré par personne : il faudrait un compteur en tableau (Zendure Smart CT) — la consommation totale de la maison est donc inconnue.")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
                     HStack(alignment: .top, spacing: 14) {

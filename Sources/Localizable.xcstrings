@@ -963,6 +963,15 @@
     },
     "connexion fermée par le serveur" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "connection closed by the server" } } }
+    },
+    "non mesuré" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "not measured" } } }
+    },
+    "+ réseau : non mesuré" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "+ grid: not measured" } } }
+    },
+    "Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est mesuré par personne : il faudrait un compteur en tableau (Zendure Smart CT) — la consommation totale de la maison est donc inconnue." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows measured by the SolarFlow. What the home draws directly from the public grid (grey arc) is measured by nothing: it would take a meter in the electrical panel (Zendure Smart CT) — so the home's total consumption is unknown." } } }
     }
   },
   "version" : "1.0"
