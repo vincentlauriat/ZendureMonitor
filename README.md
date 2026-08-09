@@ -12,7 +12,7 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
-On `main`, awaiting a release: the **Sun window v3** — describe each of your panel arrays (peak power, azimuth, tilt) and the window shows an animated **sky dome** (the sun's real path over the day, both solstice arcs, today's measured production placed where the sun stood, and each array's aiming direction with its live incidence gap), a **solar compass** with true iso-incidence loops, a per-array breakdown (clear-sky output, incidence, best hour, potential for the day) and richer ephemerides (twilights, golden hours, day-length delta to the second, next solstice or equinox). Azimuth and tilt are **adjustable straight from the window** with two sliders per array — the dome, the compass and the output follow the gesture — and the whole thing fits **on one screen, no scrolling**.
+New in 1.9: the **Sun window v3** — describe each of your panel arrays (peak power, azimuth, tilt) and the window shows an animated **sky dome** (the sun's real path over the day, both solstice arcs, today's measured production placed where the sun stood, and each array's aiming direction with its live incidence gap), a **solar compass** with true iso-incidence loops, a per-array breakdown (clear-sky output, incidence, best hour, potential for the day) and richer ephemerides (twilights, golden hours, day-length delta to the second, next solstice or equinox). Azimuth and tilt are **adjustable straight from the window** with two sliders per array — the dome, the compass and the output follow the gesture — and the whole thing fits **on one screen, no scrolling**.
 
 New in 1.7: a **large widget** (the 14-day production histogram right on your desktop), **local weather in the Sun window** (Open-Meteo cloud cover and sunshine forecast, with a cloud-adjusted production estimate using the Kasten–Czeplak model), and a **redesigned Sun window** — hero chart plus three compact columns (ephemeris, weather, yield), no scrolling.
 
@@ -200,7 +200,8 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.6 — daily solar split (direct/stored + grid total) in panel & dashboard, offline resilience (stale values kept & dimmed), sticky VPN fallback, local-midnight day rollover, colored header actions, EnergyMath unit tests
 - [x] v1.7 — large widget (14-day histogram), weather in the Sun window (Open-Meteo, cloud-adjusted forecast), redesigned Sun window, extracted & tested DailyAccumulator
 - [x] v1.8 — outage alerts: device-unreachable notification, zero-production-in-daylight notification, ⚠️ menu bar offline state (tested OutageWatchdog)
-- [ ] v1.9 — **Sun window v3 merged on `main`** (per-array orientations with live azimuth/tilt sliders, animated sky dome, solar compass, twilights & seasons, one-screen layout — not released yet), zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents)
+- [x] v1.9 — Sun window v3: per-array orientations with live azimuth/tilt sliders, animated sky dome, solar compass with iso-incidence loops, twilights & seasons, atmospheric transmittance in the yield model, one-screen layout (tested SolarGeometry)
+- [ ] v1.10 — zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents)
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements
