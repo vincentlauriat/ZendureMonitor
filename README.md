@@ -12,6 +12,8 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
+New in 1.10.3: a **Home consumption card** in the menu bar panel — with a Smart CT configured it shows the house's total draw (grid + SolarFlow output, the SolarFlow's own AC charging deducted) with a per-source breakdown; without a CT it shows the measurable part only.
+
 New in 1.10: an optional **Zendure Cloud mode** (real-time MQTT through Zendure's servers, configured with the app's *Authorization Cloud Key* stored in the Keychain — read-only, and the local API remains the default), **Smart CT support** (the SmartMeter3CT is polled on the LAN, giving the flow diagram the home's real grid draw and total consumption), a **redesigned energy-flow diagram** (aligned diamond layout, per-pack SOC chips, an explicit grid→home arc that is measured with the CT and honestly marked "not measured" without it), a **connection footer** in the panel (local primary / local fallback / cloud), and reorganized Settings with a **Network** tab.
 
 New in 1.9: the **Sun window v3** — describe each of your panel arrays (peak power, azimuth, tilt) and the window shows an animated **sky dome** (the sun's real path over the day, both solstice arcs, today's measured production placed where the sun stood, and each array's aiming direction with its live incidence gap), a **solar compass** with true iso-incidence loops, a per-array breakdown (clear-sky output, incidence, best hour, potential for the day) and richer ephemerides (twilights, golden hours, day-length delta to the second, next solstice or equinox). Azimuth and tilt are **adjustable straight from the window** with two sliders per array — the dome, the compass and the output follow the gesture — and the whole thing fits **on one screen, no scrolling**.
@@ -216,6 +218,7 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.8 — outage alerts: device-unreachable notification, zero-production-in-daylight notification, ⚠️ menu bar offline state (tested OutageWatchdog)
 - [x] v1.9 — Sun window v3: per-array orientations with live azimuth/tilt sliders, animated sky dome, solar compass with iso-incidence loops, twilights & seasons, atmospheric transmittance in the yield model, one-screen layout (tested SolarGeometry)
 - [x] v1.10 — optional Zendure Cloud mode (Cloud Key → signed deviceList → real-time MQTT, Keychain, read-only), Smart CT support (real grid draw + home total consumption on the LAN), redesigned energy-flow diagram (aligned diamond, measured grid→home arc, per-pack chips), connection footer, Network settings tab (tested Cloud layer + Smart CT parser)
+- [x] v1.10.3 — home consumption card in the menu bar panel (total = measured grid draw + SolarFlow output, per-source breakdown, honest fallback without a Smart CT)
 - [ ] v1.11 — zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents), grid-draw daily history from the Smart CT
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
