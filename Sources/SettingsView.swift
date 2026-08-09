@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// Fenêtre de réglages en onglets (style Réglages Système) :
-/// Appareil / Affichage / Général / Notifications / Distant.
+/// Appareil / Affichage / Soleil / Notifications / Contrôle / Réseau / Général.
+/// L'onglet Appareil ne porte que la source de données ; les équipements
+/// annexes (Smart CT, hôte de secours, collecteur) vivent dans Réseau.
 struct SettingsView: View {
     @EnvironmentObject var monitor: Monitor
 
@@ -17,8 +19,8 @@ struct SettingsView: View {
                 .tabItem { Label("Notifications", systemImage: "bell.badge") }
             ControlSettingsTab()
                 .tabItem { Label("Contrôle", systemImage: "slider.horizontal.3") }
-            RemoteSettingsTab()
-                .tabItem { Label("Distant", systemImage: "network") }
+            NetworkSettingsTab()
+                .tabItem { Label("Réseau", systemImage: "network") }
             GeneralSettingsTab()
                 .tabItem { Label("Général", systemImage: "gearshape") }
         }
@@ -100,7 +102,6 @@ private struct DeviceSettingsTab: View {
                 }
             }
             }
-            SmartCTSection()
             Section("Rafraîchissement") {
                 Slider(value: $monitor.pollInterval, in: 2...60, step: 1) {
                     Text("Rafraîchissement")
@@ -188,7 +189,7 @@ private struct SmartCTSection: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
 
-            Text("Le Smart CT mesure au tableau ce que la maison soutire du réseau public : le schéma de flux affiche alors le vrai flux Réseau → Maison et la consommation totale. Interrogé en local (le cloud Zendure ne relaie pas ces mesures) — hors de la maison, l'arc repasse en « non mesuré ».")
+            Text("Compteur au tableau électrique : mesure le soutirage réseau réel de la maison, affiché dans le schéma de flux. Interrogé en local uniquement (le cloud ne relaie pas ses mesures).")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -259,7 +260,7 @@ private struct CloudSettingsSection: View {
                 LabeledContent("Appareil", value: device.displayName)
             }
 
-            Text("Dans l'app Zendure : Profil → « Authorization Cloud Key » (selon la version : Réglages → Développeur), avec le compte principal — un compte partagé renvoie une liste vide. La clé est conservée dans le trousseau macOS et ne sert qu'à obtenir les identifiants MQTT auprès de Zendure.")
+            Text("Clé à copier depuis l'app Zendure (Profil → « Authorization Cloud Key »), avec le compte principal. Conservée dans le trousseau macOS.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -599,32 +600,37 @@ private struct ControlSettingsTab: View {
     }
 }
 
-// MARK: - Distant
+// MARK: - Réseau
 
-private struct RemoteSettingsTab: View {
+/// Équipements et accès réseau annexes : compteur Smart CT, hôte de secours
+/// (mode local) et collecteur d'historique 24/7.
+private struct NetworkSettingsTab: View {
     @EnvironmentObject var monitor: Monitor
 
     var body: some View {
         Form {
+            SmartCTSection()
             Section("Accès distant (optionnel)") {
                 if monitor.connectionMode == .local {
                     TextField("Hôte de secours", text: $monitor.fallbackHost, prompt: Text("ex. 100.x.y.z (IP Tailscale)"))
                         .textFieldStyle(.roundedBorder)
                         .autocorrectionDisabled()
+                    Text("Essayé quand l'adresse principale ne répond pas (VPN type Tailscale recommandé). ⚠️ Ne jamais exposer le SolarFlow directement sur Internet : son API locale n'a aucune authentification.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 } else {
-                    Text("L'hôte de secours ne s'applique qu'au mode API locale — en mode Cloud, l'accès distant est déjà assuré par les serveurs Zendure.")
+                    Text("Hôte de secours : uniquement en mode API locale (le mode Cloud est déjà accessible partout).")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                TextField("Serveur d'historique 24/7", text: $monitor.historyServer, prompt: Text(verbatim: "minicorse.local:8899"))
+            }
+            Section("Historique 24/7 (optionnel)") {
+                TextField("Serveur d'historique", text: $monitor.historyServer, prompt: Text(verbatim: "minicorse.local:8899"))
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
-                Text("Collecteur optionnel qui tourne sur un Mac toujours allumé (voir Scripts/collector) : il enregistre la production 24 h/24 et l'app affiche alors un historique complet, même quand ce Mac est éteint.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Essayé automatiquement quand l'adresse principale ne répond pas (hors du réseau domestique). Recommandé : un VPN type Tailscale/WireGuard vers la maison. ⚠️ N'exposez jamais le port 80 du SolarFlow directement sur Internet : son API locale n'a aucune authentification.")
+                Text("Collecteur optionnel sur un Mac toujours allumé (voir Scripts/collector) : l'app affiche alors un historique complet, même quand ce Mac-ci est éteint.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

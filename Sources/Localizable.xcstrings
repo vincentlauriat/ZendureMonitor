@@ -106,9 +106,6 @@
     "Depuis le réseau" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "From grid" } } }
     },
-    "Distant" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote" } } }
-    },
     "Délai" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delay" } } }
     },
@@ -117,9 +114,6 @@
     },
     "ex. 100.x.y.z (IP Tailscale)" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "e.g. 100.x.y.z (Tailscale IP)" } } }
-    },
-    "Essayé automatiquement quand l'adresse principale ne répond pas (hors du réseau domestique). Recommandé : un VPN type Tailscale/WireGuard vers la maison. ⚠️ N'exposez jamais le port 80 du SolarFlow directement sur Internet : son API locale n'a aucune authentification." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tried automatically when the primary address does not answer (away from home). Recommended: a VPN such as Tailscale/WireGuard to your home network. ⚠️ Never expose the SolarFlow's port 80 directly to the internet: its local API has no authentication." } } }
     },
     "Flux" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows" } } }
@@ -465,12 +459,6 @@
     },
     "Record : %@" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Best: %@" } } }
-    },
-    "Serveur d'historique 24/7" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "24/7 history server" } } }
-    },
-    "Collecteur optionnel qui tourne sur un Mac toujours allumé (voir Scripts/collector) : il enregistre la production 24 h/24 et l'app affiche alors un historique complet, même quand ce Mac est éteint." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional collector running on an always-on Mac (see Scripts/collector): it records production around the clock, so the app shows a complete history even while this Mac is off." } } }
     },
     "Aucun appareil trouvé. Vérifiez que le SolarFlow est sur le même réseau, et que son API locale est active (app Zendure : ajouter un HEMS puis le quitter)." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No device found. Check that the SolarFlow is on the same network and that its local API is enabled (Zendure app: add a HEMS, then quit it)." } } }
@@ -895,9 +883,6 @@
     "Appareil suivi" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Monitored device" } } }
     },
-    "Dans l'app Zendure : Profil → « Authorization Cloud Key » (selon la version : Réglages → Développeur), avec le compte principal — un compte partagé renvoie une liste vide. La clé est conservée dans le trousseau macOS et ne sert qu'à obtenir les identifiants MQTT auprès de Zendure." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "In the Zendure app: Profile → “Authorization Cloud Key” (depending on the version: Settings → Developer), using the main account — a shared account returns an empty list. The key is kept in the macOS Keychain and is only used to obtain the MQTT credentials from Zendure." } } }
-    },
     "Aucune clé enregistrée" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No key saved" } } }
     },
@@ -915,9 +900,6 @@
     },
     "Le contrôle n'est disponible qu'en mode API locale — le mode Cloud est en lecture seule." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Control is only available in Local API mode — Cloud mode is read-only." } } }
-    },
-    "L'hôte de secours ne s'applique qu'au mode API locale — en mode Cloud, l'accès distant est déjà assuré par les serveurs Zendure." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The fallback host only applies to Local API mode — in Cloud mode, remote access is already provided by Zendure's servers." } } }
     },
     "Aucune Cloud Key enregistrée — ouvrez les Réglages." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No Cloud Key saved — open Settings." } } }
@@ -973,9 +955,6 @@
     "Soutirage réseau mesuré par le Smart CT (%@). Consommation totale de la maison = réseau + injection SolarFlow." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Grid draw measured by the Smart CT (%@). Home total consumption = grid + SolarFlow output." } } }
     },
-    "Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est pas mesuré : renseignez le Smart CT dans Réglages → Appareil pour l'afficher en réel." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows measured by the SolarFlow. What the home draws directly from the public grid (grey arc) is not measured: set up the Smart CT in Settings → Device to display the real flow." } } }
-    },
     "Compteur Smart CT (optionnel)" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Smart CT meter (optional)" } } }
     },
@@ -988,9 +967,6 @@
     "Tester" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Test" } } }
     },
-    "Le Smart CT mesure au tableau ce que la maison soutire du réseau public : le schéma de flux affiche alors le vrai flux Réseau → Maison et la consommation totale. Interrogé en local (le cloud Zendure ne relaie pas ces mesures) — hors de la maison, l'arc repasse en « non mesuré »." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The Smart CT measures, at the electrical panel, what the home draws from the public grid: the flow diagram then shows the real Grid → Home flow and the total consumption. Queried locally (the Zendure cloud does not relay these readings) — away from home, the arc falls back to “not measured”." } } }
-    },
     "Connecté — soutirage réseau : " : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected — grid draw: " } } }
     },
@@ -1002,6 +978,30 @@
     },
     "Connexion : locale — hôte de secours" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection: local — fallback host" } } }
+    },
+    "Clé à copier depuis l'app Zendure (Profil → « Authorization Cloud Key »), avec le compte principal. Conservée dans le trousseau macOS." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Key to copy from the Zendure app (Profile → “Authorization Cloud Key”), using the main account. Kept in the macOS Keychain." } } }
+    },
+    "Compteur au tableau électrique : mesure le soutirage réseau réel de la maison, affiché dans le schéma de flux. Interrogé en local uniquement (le cloud ne relaie pas ses mesures)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Meter in the electrical panel: measures the home's real grid draw, shown in the flow diagram. Queried locally only (the cloud does not relay its readings)." } } }
+    },
+    "Essayé quand l'adresse principale ne répond pas (VPN type Tailscale recommandé). ⚠️ Ne jamais exposer le SolarFlow directement sur Internet : son API locale n'a aucune authentification." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tried when the primary address does not answer (a VPN like Tailscale is recommended). ⚠️ Never expose the SolarFlow directly to the Internet: its local API has no authentication." } } }
+    },
+    "Hôte de secours : uniquement en mode API locale (le mode Cloud est déjà accessible partout)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fallback host: Local API mode only (Cloud mode is already reachable from anywhere)." } } }
+    },
+    "Historique 24/7 (optionnel)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "24/7 history (optional)" } } }
+    },
+    "Serveur d'historique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "History server" } } }
+    },
+    "Collecteur optionnel sur un Mac toujours allumé (voir Scripts/collector) : l'app affiche alors un historique complet, même quand ce Mac-ci est éteint." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional collector on an always-on Mac (see Scripts/collector): the app then shows a complete history, even while this Mac is off." } } }
+    },
+    "Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est pas mesuré : renseignez le Smart CT dans Réglages → Réseau pour l'afficher en réel." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows measured by the SolarFlow. What the home draws directly from the public grid (grey arc) is not measured: set up the Smart CT in Settings → Network to display the real flow." } } }
     }
   },
   "version" : "1.0"

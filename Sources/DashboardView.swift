@@ -38,7 +38,7 @@ struct DashboardContent: View {
                                 .foregroundStyle(.tertiary)
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
-                            Text("Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est pas mesuré : renseignez le Smart CT dans Réglages → Appareil pour l'afficher en réel.")
+                            Text("Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est pas mesuré : renseignez le Smart CT dans Réglages → Réseau pour l'afficher en réel.")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                                 .fixedSize(horizontal: false, vertical: true)
