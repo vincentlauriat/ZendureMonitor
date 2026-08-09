@@ -24,6 +24,7 @@ struct MenuView: View {
                     solarCard(state)
                     batteryCard(state)
                     flowsCard(state)
+                    consumptionCard(state)
                     historyCard()
                 }
                 .opacity(isStale ? 0.55 : 1)
@@ -160,6 +161,47 @@ struct MenuView: View {
                     }
                     .font(.caption2.monospacedDigit())
                     .foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    /// Consommation totale de la maison. Avec un Smart CT configuré, c'est le
+    /// soutirage réseau (hors charge secteur du SolarFlow) + l'injection du
+    /// SolarFlow ; sans compteur, seule l'injection est connue.
+    private func consumptionCard(_ state: DeviceState) -> some View {
+        MetricCard(title: "Consommation maison", systemImage: "house.fill") {
+            VStack(alignment: .leading, spacing: 8) {
+                if let ct = monitor.ctReport {
+                    let gridToHome = EnergyMath.gridToHome(ctTotal: ct.totalPower,
+                                                           gridIn: state.gridInputPower)
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(Format.watts(gridToHome + state.outputHomePower))
+                            .font(.system(.title, design: .rounded).weight(.semibold))
+                            .monospacedDigit()
+                        Spacer()
+                        Text("totale")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    LegendRow(color: homeColor, label: "Depuis le SolarFlow",
+                              value: Format.watts(state.outputHomePower))
+                    LegendRow(color: gridColor, label: "Depuis le réseau",
+                              value: Format.watts(gridToHome))
+                } else {
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(Format.watts(state.outputHomePower))
+                            .font(.system(.title, design: .rounded).weight(.semibold))
+                            .monospacedDigit()
+                        Spacer()
+                        Text("via SolarFlow")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    Text("Soutirage réseau direct non mesuré — renseignez le Smart CT dans Réglages → Réseau pour la consommation totale.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }
