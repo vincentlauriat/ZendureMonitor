@@ -100,6 +100,7 @@ private struct DeviceSettingsTab: View {
                 }
             }
             }
+            SmartCTSection()
             Section("Rafraîchissement") {
                 Slider(value: $monitor.pollInterval, in: 2...60, step: 1) {
                     Text("Rafraîchissement")
@@ -132,6 +133,78 @@ private struct DeviceSettingsTab: View {
                 }
                 if let sn = state.serialNumber { parts.append("SN \(sn)") }
                 testResult = parts.joined(separator: " — ")
+            case .failure(let error):
+                testOK = false
+                testResult = error.localizedDescription
+            }
+            testing = false
+        }
+    }
+}
+
+// MARK: - Smart CT
+
+/// Section Smart CT de l'onglet Appareil : le compteur en tableau (mesure du
+/// soutirage réseau de la maison) est interrogé en local quel que soit le
+/// mode — le cloud Zendure ne relaie pas ses mesures.
+private struct SmartCTSection: View {
+    @EnvironmentObject var monitor: Monitor
+    @StateObject private var discovery = DeviceDiscovery()
+    @State private var testing = false
+    @State private var testResult: String?
+    @State private var testOK = false
+
+    var body: some View {
+        Section("Compteur Smart CT (optionnel)") {
+            TextField("Hôte du Smart CT", text: $monitor.ctHost,
+                      prompt: Text(verbatim: "Zendure-smartMeter3CT-….local"))
+                .textFieldStyle(.roundedBorder)
+                .autocorrectionDisabled()
+
+            HStack {
+                Button(discovery.isSearching ? "Recherche…" : "Détecter sur le réseau") {
+                    discovery.start()
+                }
+                .disabled(discovery.isSearching)
+                Button(testing ? "Test…" : "Tester") { runTest() }
+                    .disabled(testing || monitor.ctHost.isEmpty)
+            }
+
+            ForEach(discovery.devices.filter { $0.name.lowercased().contains("smartmeter") || $0.name.lowercased().contains("3ct") }) { device in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(device.name).font(.callout)
+                        Text(device.host).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Utiliser") { monitor.ctHost = device.host }
+                }
+            }
+
+            if let testResult {
+                Label(testResult, systemImage: testOK ? "checkmark.circle" : "xmark.circle")
+                    .foregroundStyle(testOK ? .green : .red)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Text("Le Smart CT mesure au tableau ce que la maison soutire du réseau public : le schéma de flux affiche alors le vrai flux Réseau → Maison et la consommation totale. Interrogé en local (le cloud Zendure ne relaie pas ces mesures) — hors de la maison, l'arc repasse en « non mesuré ».")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func runTest() {
+        testing = true
+        testResult = nil
+        let host = monitor.ctHost
+        Task {
+            let result = await monitor.testSmartCT(host: host)
+            switch result {
+            case .success(let report):
+                testOK = true
+                testResult = String(localized: "Connecté — soutirage réseau : ") + Format.watts(report.totalPower)
             case .failure(let error):
                 testOK = false
                 testResult = error.localizedDescription

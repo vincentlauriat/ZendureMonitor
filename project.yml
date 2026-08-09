@@ -65,6 +65,7 @@ targets:
     sources:
       - path: Tests
       - path: Sources/DeviceState.swift
+      - path: Sources/SmartCT.swift
       - path: Sources/Cloud/CloudKey.swift
       - path: Sources/Cloud/CloudModels.swift
       - path: Sources/Cloud/ZendureAPI.swift

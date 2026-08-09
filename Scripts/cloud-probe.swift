@@ -129,6 +129,11 @@ func handlePacket(first: UInt8, body: Data) {
             sub.append(mqttString("/\(d.productKey)/\(d.deviceKey)/#")); sub.append(0x00)
             sub.append(mqttString("iot/\(d.productKey)/\(d.deviceKey)/#")); sub.append(0x00)
         }
+        // Filets larges : si les ACL du compte couvrent d'autres appareils
+        // (ex. Smart CT absent de deviceList), leurs topics arriveront aussi.
+        for wildcard in ["#", "iot/#", "/+/+/#"] {
+            sub.append(mqttString(wildcard)); sub.append(0x00)
+        }
         conn.send(content: framed(0x82, sub), completion: .contentProcessed { _ in })
         for (i, d) in devices.enumerated() {
             let payload: [String: Any] = ["properties": ["getAll"], "deviceId": d.deviceKey,

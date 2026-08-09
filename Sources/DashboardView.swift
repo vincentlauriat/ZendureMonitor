@@ -30,12 +30,19 @@ struct DashboardContent: View {
             if let state = monitor.state {
                 VStack(spacing: 14) {
                     MetricCard(title: "Flux d'énergie", systemImage: "arrow.triangle.swap") {
-                        EnergyFlowView(state: state)
+                        EnergyFlowView(state: state, ctTotalPower: monitor.ctReport?.totalPower)
                             .frame(height: 310)
-                        Text("Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est mesuré par personne : il faudrait un compteur en tableau (Zendure Smart CT) — la consommation totale de la maison est donc inconnue.")
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
-                            .fixedSize(horizontal: false, vertical: true)
+                        if let ct = monitor.ctReport {
+                            Text("Soutirage réseau mesuré par le Smart CT (\(phasesText(ct))). Consommation totale de la maison = réseau + injection SolarFlow.")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        } else {
+                            Text("Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est pas mesuré : renseignez le Smart CT dans Réglages → Appareil pour l'afficher en réel.")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
                     }
 
                     HStack(alignment: .top, spacing: 14) {
@@ -251,6 +258,15 @@ struct DashboardContent: View {
     }
 
     // MARK: - Helpers
+
+    /// « ph. A 0 W · B 0 W · C 2,09 kW » — seulement les phases publiées.
+    private func phasesText(_ ct: CTReport) -> String {
+        guard ct.phases.count == 3 else { return Format.watts(ct.totalPower) }
+        let names = ["A", "B", "C"]
+        return "ph. " + zip(names, ct.phases)
+            .map { "\($0) \(Format.watts($1))" }
+            .joined(separator: " · ")
+    }
 
     private func batterySubtext(_ state: DeviceState) -> String? {
         if state.batteryFlow > 5 { return String(localized: "charge") }

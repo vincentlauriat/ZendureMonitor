@@ -109,6 +109,15 @@ final class Monitor: ObservableObject {
     @Published var host: String {
         didSet { UserDefaults.standard.set(host, forKey: "deviceHost"); scheduleRestart() }
     }
+    /// Hôte local du compteur Smart CT (optionnel) — mesure le soutirage
+    /// réseau réel de la maison. Interrogé quel que soit le mode (le CT n'est
+    /// pas relayé par le cloud : API locale uniquement).
+    @Published var ctHost: String {
+        didSet { UserDefaults.standard.set(ctHost, forKey: "ctHost") }
+    }
+    /// Dernière mesure du Smart CT — nil dès que le compteur ne répond plus
+    /// (le schéma de flux repasse alors en « non mesuré »).
+    @Published var ctReport: CTReport?
     /// Optional second host tried when the primary is unreachable (e.g. a
     /// Tailscale/VPN address for remote access).
     @Published var fallbackHost: String {
@@ -231,6 +240,7 @@ final class Monitor: ObservableObject {
         connectionMode = ConnectionMode(rawValue: defaults.string(forKey: "connectionMode") ?? "local") ?? .local
         cloudDeviceKey = defaults.string(forKey: "cloudDeviceKey") ?? ""
         host = defaults.string(forKey: "deviceHost") ?? ""
+        ctHost = defaults.string(forKey: "ctHost") ?? ""
         fallbackHost = defaults.string(forKey: "fallbackHost") ?? ""
         historyServer = defaults.string(forKey: "historyServer") ?? ""
         let saved = defaults.double(forKey: "pollInterval")
@@ -339,6 +349,7 @@ final class Monitor: ObservableObject {
             checkExtraNotifications(fresh)
             checkOutage(fresh)
             publishWidgetSnapshot(fresh)
+            await refreshSmartCT()
             await refreshHistoryFromServer()
         } catch {
             // Garder les dernières valeurs affichées (grisées côté panneau,
@@ -347,6 +358,9 @@ final class Monitor: ObservableObject {
             lastError = error.localizedDescription
             accumulator.resetSampleClock()
             localNetworkDenied = connectionMode == .local && Self.looksLikeLocalNetworkDenial(error)
+            // Le Smart CT est un appareil distinct : sa mesure reste suivie
+            // (ou invalidée) même quand le SolarFlow ne répond pas.
+            await refreshSmartCT()
             if let event = watchdog.pollFailed(at: .now), notifyUnreachable,
                case .unreachable(let since) = event {
                 let minutes = Int(Date.now.timeIntervalSince(since) / 60)
@@ -605,6 +619,45 @@ final class Monitor: ObservableObject {
             throw ZendureError.badResponse(http.statusCode)
         }
         return try ZendureParser.parse(data)
+    }
+
+    // MARK: - Smart CT
+
+    /// Interroge le Smart CT local (best effort) : succès → mesure fraîche,
+    /// échec → nil, pour que l'interface ne présente jamais une mesure
+    /// figée comme un flux réel.
+    private func refreshSmartCT() async {
+        let target = ctHost.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !target.isEmpty, let url = URL(string: "http://\(target)/properties/report") else {
+            ctReport = nil
+            return
+        }
+        do {
+            let (data, response) = try await session.data(from: url)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                throw ZendureError.badResponse(http.statusCode)
+            }
+            ctReport = try SmartCTParser.parse(data)
+        } catch {
+            ctReport = nil
+        }
+    }
+
+    /// Sonde one-shot des réglages (« Tester ») pour le Smart CT.
+    func testSmartCT(host: String) async -> Result<CTReport, Error> {
+        let trimmed = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let url = URL(string: "http://\(trimmed)/properties/report") else {
+            return .failure(ZendureError.noHost)
+        }
+        do {
+            let (data, response) = try await session.data(from: url)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                throw ZendureError.badResponse(http.statusCode)
+            }
+            return .success(try SmartCTParser.parse(data))
+        } catch {
+            return .failure(error)
+        }
     }
 
     // MARK: - 24/7 collector

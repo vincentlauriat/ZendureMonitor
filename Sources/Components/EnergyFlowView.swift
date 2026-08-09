@@ -16,6 +16,10 @@ import SwiftUI
 /// alignés — c'était le défaut de la v1, qui centrait des blocs composites.
 struct EnergyFlowView: View {
     var state: DeviceState
+    /// Mesure du Smart CT au compteur (W), si un compteur local répond :
+    /// l'arc réseau → maison devient alors un vrai flux mesuré, et le nœud
+    /// Maison affiche la consommation totale.
+    var ctTotalPower: Double? = nil
 
     private let pvColor = Color.yellow
     private let homeColor = Color.blue
@@ -48,9 +52,9 @@ struct EnergyFlowView: View {
                 // existe électriquement mais rien ne le mesure sans Smart CT.
                 // Contrôle choisi pour que l'apex (0,64 h) passe entre le bas
                 // du hub et le haut de la jauge batterie, sans les toucher.
-                unmeasuredGridToHome(from: grid, to: home,
-                                     control: CGPoint(x: size.width * 0.5, y: size.height * 0.74),
-                                     trim: nodeRadius)
+                gridToHomeArc(from: grid, to: home,
+                              control: CGPoint(x: size.width * 0.5, y: size.height * 0.74),
+                              trim: nodeRadius)
 
                 link(from: sun, to: hub, trimFrom: nodeRadius, trimTo: hubRadius,
                      watts: state.solarInputPower, color: pvColor)
@@ -79,11 +83,18 @@ struct EnergyFlowView: View {
                      active: state.solarInputPower > 1, labelsBelow: false)
                 node(at: grid, radius: nodeRadius, icon: "bolt.fill", tint: gridColor,
                      label: "Réseau public", value: gridValue,
-                     active: state.gridInputPower > 1, labelsBelow: true)
-                node(at: home, radius: nodeRadius, icon: "house.fill", tint: homeColor,
-                     label: "Maison", value: Format.watts(state.outputHomePower),
-                     detail: "+ réseau : non mesuré",
-                     active: state.outputHomePower > 1, labelsBelow: true)
+                     active: state.gridInputPower > 1 || gridToHomeWatts > 1, labelsBelow: true)
+                if ctTotalPower != nil {
+                    node(at: home, radius: nodeRadius, icon: "house.fill", tint: homeColor,
+                         label: "Maison", value: Format.watts(homeTotalWatts),
+                         detail: "consommation totale",
+                         active: homeTotalWatts > 1, labelsBelow: true)
+                } else {
+                    node(at: home, radius: nodeRadius, icon: "house.fill", tint: homeColor,
+                         label: "Maison", value: Format.watts(state.outputHomePower),
+                         detail: "+ réseau : non mesuré",
+                         active: state.outputHomePower > 1, labelsBelow: true)
+                }
                 if outletActive {
                     node(at: outlet, radius: nodeRadius, icon: "powerplug.fill", tint: outletColor,
                          label: "Prise hors-réseau", value: Format.watts(state.offGridPower),
@@ -100,8 +111,21 @@ struct EnergyFlowView: View {
         }
     }
 
+    /// Soutirage réseau de la maison seule : la mesure du compteur inclut la
+    /// charge secteur du SolarFlow, qui a son propre lien — on la déduit.
+    private var gridToHomeWatts: Double {
+        guard let ct = ctTotalPower else { return 0 }
+        return max(0, ct - state.gridInputPower)
+    }
+
+    /// Consommation totale de la maison : soutirage réseau + injection SolarFlow.
+    private var homeTotalWatts: Double {
+        gridToHomeWatts + state.outputHomePower
+    }
+
     private var gridValue: String {
-        state.gridInputPower > 1 ? Format.watts(state.gridInputPower) : "—"
+        if let ct = ctTotalPower { return Format.watts(ct) }
+        return state.gridInputPower > 1 ? Format.watts(state.gridInputPower) : "—"
     }
 
     // MARK: - Liens
@@ -144,39 +168,62 @@ struct EnergyFlowView: View {
         }
     }
 
-    /// Arc quadratique réseau → maison : flux réel mais non mesuré (il
-    /// faudrait un Smart CT en tableau) — gris, statique, marqué « ? ».
-    private func unmeasuredGridToHome(from: CGPoint, to: CGPoint,
-                                      control: CGPoint, trim: CGFloat) -> some View {
+    /// Arc quadratique réseau → maison. Avec un Smart CT qui répond, c'est un
+    /// vrai flux mesuré (couleur réseau, pointillés animés, puissance) ; sans
+    /// compteur, un arc gris statique marqué « ? non mesuré ».
+    private func gridToHomeArc(from: CGPoint, to: CGPoint,
+                               control: CGPoint, trim: CGFloat) -> some View {
         let start = CGPoint(x: from.x + trim * 0.4, y: from.y + trim)
         let end = CGPoint(x: to.x - trim * 0.4, y: to.y + trim)
         // Étiquette posée sur le flanc gauche de l'arc (t = 0,22), dans le
         // vide entre Réseau et Batteries — le sommet passerait derrière la
         // jauge batterie.
         let t: CGFloat = 0.22
-        let label = CGPoint(
+        let labelPoint = CGPoint(
             x: (1 - t) * (1 - t) * start.x + 2 * t * (1 - t) * control.x + t * t * end.x,
             y: (1 - t) * (1 - t) * start.y + 2 * t * (1 - t) * control.y + t * t * end.y
         )
+        let measured = ctTotalPower != nil
+        let watts = gridToHomeWatts
+        let active = measured && watts > 1
         return ZStack {
-            Path { path in
-                path.move(to: start)
-                path.addQuadCurve(to: end, control: control)
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !active)) { timeline in
+                let phase: CGFloat = {
+                    guard active else { return 0 }
+                    let time = timeline.date.timeIntervalSinceReferenceDate
+                    let speed = 12.0 + min(watts / 40.0, 48.0)
+                    return CGFloat((time * speed).truncatingRemainder(dividingBy: 18)) * -1
+                }()
+                Path { path in
+                    path.move(to: start)
+                    path.addQuadCurve(to: end, control: control)
+                }
+                .stroke(active ? gridColor : Color.secondary.opacity(0.35),
+                        style: StrokeStyle(lineWidth: active ? 3 : 1.5,
+                                           lineCap: .round,
+                                           dash: active ? [7, 11] : [3, 6],
+                                           dashPhase: phase))
+                .shadow(color: active ? gridColor.opacity(0.35) : .clear, radius: 3)
             }
-            .stroke(Color.secondary.opacity(0.35),
-                    style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: [3, 6]))
-            HStack(spacing: 3) {
-                Image(systemName: "questionmark.circle")
-                    .font(.system(size: 9))
-                Text("non mesuré")
-                    .font(.caption2)
+            if measured {
+                if active {
+                    wattCapsule(Format.watts(watts), tint: gridColor)
+                        .position(labelPoint)
+                }
+            } else {
+                HStack(spacing: 3) {
+                    Image(systemName: "questionmark.circle")
+                        .font(.system(size: 9))
+                    Text("non mesuré")
+                        .font(.caption2)
+                }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Capsule().fill(.regularMaterial))
+                .overlay(Capsule().strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1))
+                .position(labelPoint)
             }
-            .foregroundStyle(.secondary)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(Capsule().fill(.regularMaterial))
-            .overlay(Capsule().strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1))
-            .position(label)
         }
     }
 

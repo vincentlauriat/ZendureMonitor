@@ -970,8 +970,32 @@
     "+ réseau : non mesuré" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "+ grid: not measured" } } }
     },
-    "Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est mesuré par personne : il faudrait un compteur en tableau (Zendure Smart CT) — la consommation totale de la maison est donc inconnue." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows measured by the SolarFlow. What the home draws directly from the public grid (grey arc) is measured by nothing: it would take a meter in the electrical panel (Zendure Smart CT) — so the home's total consumption is unknown." } } }
+    "consommation totale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "total consumption" } } }
+    },
+    "Soutirage réseau mesuré par le Smart CT (%@). Consommation totale de la maison = réseau + injection SolarFlow." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Grid draw measured by the Smart CT (%@). Home total consumption = grid + SolarFlow output." } } }
+    },
+    "Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est pas mesuré : renseignez le Smart CT dans Réglages → Appareil pour l'afficher en réel." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows measured by the SolarFlow. What the home draws directly from the public grid (grey arc) is not measured: set up the Smart CT in Settings → Device to display the real flow." } } }
+    },
+    "Compteur Smart CT (optionnel)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Smart CT meter (optional)" } } }
+    },
+    "Hôte du Smart CT" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Smart CT host" } } }
+    },
+    "Détecter sur le réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Detect on the network" } } }
+    },
+    "Tester" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Test" } } }
+    },
+    "Le Smart CT mesure au tableau ce que la maison soutire du réseau public : le schéma de flux affiche alors le vrai flux Réseau → Maison et la consommation totale. Interrogé en local (le cloud Zendure ne relaie pas ces mesures) — hors de la maison, l'arc repasse en « non mesuré »." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The Smart CT measures, at the electrical panel, what the home draws from the public grid: the flow diagram then shows the real Grid → Home flow and the total consumption. Queried locally (the Zendure cloud does not relay these readings) — away from home, the arc falls back to “not measured”." } } }
+    },
+    "Connecté — soutirage réseau : " : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected — grid draw: " } } }
     }
   },
   "version" : "1.0"
