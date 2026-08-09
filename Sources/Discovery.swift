@@ -57,13 +57,39 @@ extension DeviceDiscovery: NetServiceBrowserDelegate, NetServiceDelegate {
     }
 
     func netServiceDidResolveAddress(_ sender: NetService) {
-        guard var host = sender.hostName else { return }
-        if host.hasSuffix(".") { host.removeLast() }
+        // Préférer l'adresse IPv4 résolue au nom d'hôte : la résolution
+        // getaddrinfo des noms `.local` peut prendre ~5 s (requête AAAA
+        // muette sur certains réseaux) — au-delà du timeout de 5 s de l'app,
+        // un hôte détecté par son nom était ensuite inutilisable.
+        var host = Self.ipv4Address(from: sender.addresses)
+        if host == nil, var name = sender.hostName {
+            if name.hasSuffix(".") { name.removeLast() }
+            host = name
+        }
+        guard let host else { return }
         let found = Found(name: sender.name, host: host)
         DispatchQueue.main.async { [weak self] in
             guard let self, !self.devices.contains(where: { $0.name == found.name }) else { return }
             self.devices.append(found)
         }
+    }
+
+    /// Première adresse IPv4 d'une liste de `sockaddr` bruts (Bonjour).
+    static func ipv4Address(from addresses: [Data]?) -> String? {
+        for data in addresses ?? [] {
+            let ip: String? = data.withUnsafeBytes { raw -> String? in
+                guard let base = raw.baseAddress,
+                      raw.count >= MemoryLayout<sockaddr_in>.size else { return nil }
+                let family = base.assumingMemoryBound(to: sockaddr.self).pointee.sa_family
+                guard family == sa_family_t(AF_INET) else { return nil }
+                var addr = base.assumingMemoryBound(to: sockaddr_in.self).pointee.sin_addr
+                var buffer = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+                guard inet_ntop(AF_INET, &addr, &buffer, socklen_t(INET_ADDRSTRLEN)) != nil else { return nil }
+                return String(cString: buffer)
+            }
+            if let ip { return ip }
+        }
+        return nil
     }
 
     func netServiceBrowser(_ browser: NetServiceBrowser, didNotSearch errorDict: [String: NSNumber]) {
