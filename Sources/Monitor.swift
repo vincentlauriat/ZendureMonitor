@@ -26,6 +26,19 @@ enum AppearanceMode: String, CaseIterable, Identifiable {
     }
 }
 
+/// Source des données : API locale du SolarFlow ou cloud Zendure (MQTT).
+enum ConnectionMode: String, CaseIterable, Identifiable {
+    case local, cloud
+    var id: String { rawValue }
+
+    var label: LocalizedStringKey {
+        switch self {
+        case .local: return "API locale"
+        case .cloud: return "Cloud Zendure"
+        }
+    }
+}
+
 /// Solar energy produced on one day (persisted in UserDefaults as `energyWh-<yyyy-MM-dd>`).
 struct DayEnergy: Identifiable, Equatable {
     let day: String   // "2026-08-04"
@@ -64,11 +77,47 @@ final class Monitor: ObservableObject {
     /// Énergie tirée du réseau aujourd'hui (Wh), persistée (`gridWh-<day>`).
     @Published var gridTodayWh: Double = 0
 
+    // MARK: - Cloud mode
+
+    /// Phase courante de la session cloud (pour l'UI des réglages).
+    @Published var cloudPhase: CloudService.Phase = .notConfigured
+    /// Appareils du compte cloud (deviceList) — en général un seul.
+    @Published var cloudDevices: [ZendureDevice] = []
+    /// Dernier état cloud fusionné de l'appareil suivi.
+    private var cloudLatest: CloudDeviceState?
+    private var cloudService: CloudService?
+    /// Au-delà de cet âge, l'instantané cloud est considéré périmé (le poll
+    /// getAll tourne à 60 s : 3 cycles manqués = vraie coupure).
+    private static let cloudStaleAfter: TimeInterval = 180
+
     // MARK: - Settings (persisted)
 
+    @Published var connectionMode: ConnectionMode {
+        didSet {
+            UserDefaults.standard.set(connectionMode.rawValue, forKey: "connectionMode")
+            applyConnectionMode()
+            scheduleRestart()
+        }
+    }
+    /// Appareil cloud suivi (deviceKey) — vide tant que la liste n'est pas connue.
+    @Published var cloudDeviceKey: String {
+        didSet {
+            UserDefaults.standard.set(cloudDeviceKey, forKey: "cloudDeviceKey")
+            if cloudDeviceKey != oldValue { cloudLatest = nil }
+        }
+    }
     @Published var host: String {
         didSet { UserDefaults.standard.set(host, forKey: "deviceHost"); scheduleRestart() }
     }
+    /// Hôte local du compteur Smart CT (optionnel) — mesure le soutirage
+    /// réseau réel de la maison. Interrogé quel que soit le mode (le CT n'est
+    /// pas relayé par le cloud : API locale uniquement).
+    @Published var ctHost: String {
+        didSet { UserDefaults.standard.set(ctHost, forKey: "ctHost") }
+    }
+    /// Dernière mesure du Smart CT — nil dès que le compteur ne répond plus
+    /// (le schéma de flux repasse alors en « non mesuré »).
+    @Published var ctReport: CTReport?
     /// Optional second host tried when the primary is unreachable (e.g. a
     /// Tailscale/VPN address for remote access).
     @Published var fallbackHost: String {
@@ -188,7 +237,10 @@ final class Monitor: ObservableObject {
         session = URLSession(configuration: config)
 
         let defaults = UserDefaults.standard
+        connectionMode = ConnectionMode(rawValue: defaults.string(forKey: "connectionMode") ?? "local") ?? .local
+        cloudDeviceKey = defaults.string(forKey: "cloudDeviceKey") ?? ""
         host = defaults.string(forKey: "deviceHost") ?? ""
+        ctHost = defaults.string(forKey: "ctHost") ?? ""
         fallbackHost = defaults.string(forKey: "fallbackHost") ?? ""
         historyServer = defaults.string(forKey: "historyServer") ?? ""
         let saved = defaults.double(forKey: "pollInterval")
@@ -232,6 +284,7 @@ final class Monitor: ObservableObject {
         if lowSocAlertEnabled { Self.requestNotificationAuthorization() }
         appearance.apply()
         reloadDailyEnergy()
+        applyConnectionMode()
         restart()
         refreshNotificationsStatus()
     }
@@ -276,7 +329,14 @@ final class Monitor: ObservableObject {
 
     func refresh() async {
         do {
-            let (fresh, viaFallback) = try await fetchWithFallback()
+            let fresh: DeviceState
+            let viaFallback: Bool
+            if connectionMode == .cloud {
+                fresh = try cloudSnapshot()
+                viaFallback = false
+            } else {
+                (fresh, viaFallback) = try await fetchWithFallback()
+            }
             state = fresh
             usingFallback = viaFallback
             lastError = nil
@@ -289,6 +349,7 @@ final class Monitor: ObservableObject {
             checkExtraNotifications(fresh)
             checkOutage(fresh)
             publishWidgetSnapshot(fresh)
+            await refreshSmartCT()
             await refreshHistoryFromServer()
         } catch {
             // Garder les dernières valeurs affichées (grisées côté panneau,
@@ -296,7 +357,10 @@ final class Monitor: ObservableObject {
             // données » : en coupure réseau, l'état d'avant reste utile.
             lastError = error.localizedDescription
             accumulator.resetSampleClock()
-            localNetworkDenied = Self.looksLikeLocalNetworkDenial(error)
+            localNetworkDenied = connectionMode == .local && Self.looksLikeLocalNetworkDenial(error)
+            // Le Smart CT est un appareil distinct : sa mesure reste suivie
+            // (ou invalidée) même quand le SolarFlow ne répond pas.
+            await refreshSmartCT()
             if let event = watchdog.pollFailed(at: .now), notifyUnreachable,
                case .unreachable(let since) = event {
                 let minutes = Int(Date.now.timeIntervalSince(since) / 60)
@@ -361,6 +425,108 @@ final class Monitor: ObservableObject {
         catch { return .failure(error) }
     }
 
+    // MARK: - Cloud
+
+    /// Applique le mode de connexion : démarre la session cloud ou l'arrête
+    /// (retour au mode local).
+    private func applyConnectionMode() {
+        if connectionMode == .cloud {
+            startCloudService()
+        } else {
+            cloudService?.stop()
+            cloudService = nil
+            cloudLatest = nil
+            cloudPhase = .notConfigured
+        }
+    }
+
+    /// Démarre (ou redémarre) la session cloud avec le jeton du trousseau.
+    private func startCloudService() {
+        let service: CloudService
+        if let existing = cloudService {
+            service = existing
+        } else {
+            service = CloudService()
+            // Les callbacks sont dispatchés sur le main thread par CloudService.
+            service.onPhaseChanged = { [weak self] phase in
+                MainActor.assumeIsolated { self?.cloudPhase = phase }
+            }
+            service.onDevicesChanged = { [weak self] devices in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.cloudDevices = devices
+                    if self.cloudDeviceKey.isEmpty
+                        || !devices.contains(where: { $0.deviceKey == self.cloudDeviceKey }) {
+                        self.cloudDeviceKey = devices.first?.deviceKey ?? ""
+                    }
+                }
+            }
+            service.onStateChanged = { [weak self] deviceKey, state in
+                MainActor.assumeIsolated {
+                    guard let self, deviceKey == self.cloudDeviceKey else { return }
+                    self.cloudLatest = state
+                }
+            }
+            cloudService = service
+        }
+        guard let token = KeychainHelper.read(account: KeychainHelper.cloudKeyAccount),
+              !token.isEmpty else {
+            cloudPhase = .notConfigured
+            return
+        }
+        service.start(cloudKeyToken: token)
+    }
+
+    /// Instantané complet issu du flux MQTT — jette si la session cloud est en
+    /// erreur, sans données, ou avec des données périmées, pour que la chaîne
+    /// d'erreur existante (lastError, watchdog, isStale) s'applique à l'identique.
+    private func cloudSnapshot() throws -> DeviceState {
+        if case .failed(let message) = cloudPhase {
+            throw ZendureError.cloudUnavailable(message)
+        }
+        if cloudPhase == .notConfigured {
+            throw ZendureError.noCloudKey
+        }
+        guard let latest = cloudLatest, let date = latest.lastUpdate else {
+            throw ZendureError.cloudWaiting
+        }
+        guard Date.now.timeIntervalSince(date) < Self.cloudStaleAfter else {
+            throw ZendureError.cloudStale
+        }
+        let device = cloudDevices.first(where: { $0.deviceKey == cloudDeviceKey })
+        return latest.deviceState(fallbackSerial: device?.snNumber)
+    }
+
+    /// Enregistre (ou efface, si vide) le Cloud Key dans le trousseau et
+    /// relance la session cloud si le mode Cloud est actif.
+    func saveCloudKey(_ token: String) {
+        let trimmed = token.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            KeychainHelper.delete(account: KeychainHelper.cloudKeyAccount)
+            cloudService?.stop()
+            cloudLatest = nil
+            cloudPhase = .notConfigured
+        } else {
+            KeychainHelper.save(trimmed, account: KeychainHelper.cloudKeyAccount)
+            if connectionMode == .cloud { startCloudService() }
+        }
+    }
+
+    func loadCloudKey() -> String? {
+        KeychainHelper.read(account: KeychainHelper.cloudKeyAccount)
+    }
+
+    /// Sonde one-shot des réglages : décode le jeton et appelle deviceList.
+    func testCloudKey(_ token: String) async -> Result<[ZendureDevice], Error> {
+        do {
+            let key = try CloudKey.decode(token)
+            let (devices, _) = try await ZendureAPI.fetchDeviceList(cloudKey: key)
+            return .success(devices)
+        } catch {
+            return .failure(error)
+        }
+    }
+
     // MARK: - Fetching
 
     private func fetchWithFallback() async throws -> (DeviceState, viaFallback: Bool) {
@@ -392,7 +558,10 @@ final class Monitor: ObservableObject {
     // MARK: - Control (POST /properties/write)
 
     /// Sends a control command to the device. ⚠️ This drives the real battery.
+    /// Mode Cloud : lecture seule — `properties/write` via MQTT n'a jamais été
+    /// validé en réel, on refuse plutôt que de piloter la batterie à l'aveugle.
     func writeProperties(_ properties: [String: Any]) async throws {
+        guard connectionMode == .local else { throw ZendureError.cloudReadOnly }
         guard let sn = state?.serialNumber else { throw ZendureError.noHost }
         let target = (activeHost ?? host).trimmingCharacters(in: .whitespacesAndNewlines)
         guard !target.isEmpty, let url = URL(string: "http://\(target)/properties/write") else {
@@ -450,6 +619,45 @@ final class Monitor: ObservableObject {
             throw ZendureError.badResponse(http.statusCode)
         }
         return try ZendureParser.parse(data)
+    }
+
+    // MARK: - Smart CT
+
+    /// Interroge le Smart CT local (best effort) : succès → mesure fraîche,
+    /// échec → nil, pour que l'interface ne présente jamais une mesure
+    /// figée comme un flux réel.
+    private func refreshSmartCT() async {
+        let target = ctHost.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !target.isEmpty, let url = URL(string: "http://\(target)/properties/report") else {
+            ctReport = nil
+            return
+        }
+        do {
+            let (data, response) = try await session.data(from: url)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                throw ZendureError.badResponse(http.statusCode)
+            }
+            ctReport = try SmartCTParser.parse(data)
+        } catch {
+            ctReport = nil
+        }
+    }
+
+    /// Sonde one-shot des réglages (« Tester ») pour le Smart CT.
+    func testSmartCT(host: String) async -> Result<CTReport, Error> {
+        let trimmed = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let url = URL(string: "http://\(trimmed)/properties/report") else {
+            return .failure(ZendureError.noHost)
+        }
+        do {
+            let (data, response) = try await session.data(from: url)
+            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+                throw ZendureError.badResponse(http.statusCode)
+            }
+            return .success(try SmartCTParser.parse(data))
+        } catch {
+            return .failure(error)
+        }
     }
 
     // MARK: - 24/7 collector
@@ -512,12 +720,16 @@ final class Monitor: ObservableObject {
         let comps = Calendar.current.dateComponents([.hour, .minute], from: date)
         let peakBefore = accumulator.peakW
 
+        // En cloud, les échantillons sont datés du dernier rapport MQTT : ils
+        // peuvent être espacés jusqu'au cycle getAll (60 s) — un maxDt calé sur
+        // pollInterval*3 (15 s par défaut) ne créditerait presque rien.
+        let maxDt = connectionMode == .cloud ? Self.cloudStaleAfter : pollInterval * 3
         accumulator.ingest(solar: state.solarInputPower,
                            charge: state.outputPackPower,
                            gridIn: state.gridInputPower,
                            at: date, dayKey: day,
                            minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0),
-                           maxDt: pollInterval * 3)
+                           maxDt: maxDt)
 
         energyDay = accumulator.day
         energyTodayWh = accumulator.solarWh

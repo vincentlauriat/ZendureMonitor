@@ -101,12 +101,22 @@ enum ZendureError: LocalizedError {
     case badPayload
     case badResponse(Int)
     case noHost
+    case noCloudKey
+    case cloudWaiting
+    case cloudStale
+    case cloudUnavailable(String)
+    case cloudReadOnly
 
     var errorDescription: String? {
         switch self {
         case .badPayload: return String(localized: "Réponse du device illisible (JSON inattendu).")
         case .badResponse(let code): return String(localized: "Le device a répondu HTTP \(code).")
         case .noHost: return String(localized: "Aucune adresse configurée — ouvrez les Réglages.")
+        case .noCloudKey: return String(localized: "Aucune Cloud Key enregistrée — ouvrez les Réglages.")
+        case .cloudWaiting: return String(localized: "En attente des premières données du cloud Zendure…")
+        case .cloudStale: return String(localized: "Plus de données du cloud Zendure depuis 3 minutes.")
+        case .cloudUnavailable(let message): return message
+        case .cloudReadOnly: return String(localized: "Le contrôle n'est pas disponible en mode Cloud (lecture seule).")
         }
     }
 }

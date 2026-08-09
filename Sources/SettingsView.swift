@@ -1,7 +1,9 @@
 import SwiftUI
 
 /// Fenêtre de réglages en onglets (style Réglages Système) :
-/// Appareil / Affichage / Général / Notifications / Distant.
+/// Appareil / Affichage / Soleil / Notifications / Contrôle / Réseau / Général.
+/// L'onglet Appareil ne porte que la source de données ; les équipements
+/// annexes (Smart CT, hôte de secours, collecteur) vivent dans Réseau.
 struct SettingsView: View {
     @EnvironmentObject var monitor: Monitor
 
@@ -17,8 +19,8 @@ struct SettingsView: View {
                 .tabItem { Label("Notifications", systemImage: "bell.badge") }
             ControlSettingsTab()
                 .tabItem { Label("Contrôle", systemImage: "slider.horizontal.3") }
-            RemoteSettingsTab()
-                .tabItem { Label("Distant", systemImage: "network") }
+            NetworkSettingsTab()
+                .tabItem { Label("Réseau", systemImage: "network") }
             GeneralSettingsTab()
                 .tabItem { Label("Général", systemImage: "gearshape") }
         }
@@ -38,6 +40,24 @@ private struct DeviceSettingsTab: View {
 
     var body: some View {
         Form {
+            Section("Source des données") {
+                Picker("Source", selection: $monitor.connectionMode) {
+                    ForEach(ConnectionMode.allCases) { mode in
+                        Text(mode.label).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                Text(monitor.connectionMode == .local
+                     ? "Lecture directe sur le SolarFlow via le réseau local — recommandé : plus rapide et sans dépendre d'Internet."
+                     : "Données via les serveurs Zendure (MQTT temps réel) — utile quand l'API locale de l'appareil est inaccessible. Lecture seule.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if monitor.connectionMode == .cloud {
+                CloudSettingsSection()
+            } else {
             Section("Appareil SolarFlow") {
                 TextField("Adresse IP ou nom d'hôte", text: $monitor.host, prompt: Text("192.168.1.xx ou Zendure-….local"))
                     .textFieldStyle(.roundedBorder)
@@ -81,6 +101,7 @@ private struct DeviceSettingsTab: View {
                     .foregroundStyle(.secondary)
                 }
             }
+            }
             Section("Rafraîchissement") {
                 Slider(value: $monitor.pollInterval, in: 2...60, step: 1) {
                     Text("Rafraîchissement")
@@ -113,6 +134,182 @@ private struct DeviceSettingsTab: View {
                 }
                 if let sn = state.serialNumber { parts.append("SN \(sn)") }
                 testResult = parts.joined(separator: " — ")
+            case .failure(let error):
+                testOK = false
+                testResult = error.localizedDescription
+            }
+            testing = false
+        }
+    }
+}
+
+// MARK: - Smart CT
+
+/// Section Smart CT de l'onglet Appareil : le compteur en tableau (mesure du
+/// soutirage réseau de la maison) est interrogé en local quel que soit le
+/// mode — le cloud Zendure ne relaie pas ses mesures.
+private struct SmartCTSection: View {
+    @EnvironmentObject var monitor: Monitor
+    @StateObject private var discovery = DeviceDiscovery()
+    @State private var testing = false
+    @State private var testResult: String?
+    @State private var testOK = false
+
+    var body: some View {
+        Section("Compteur Smart CT (optionnel)") {
+            TextField("Hôte du Smart CT", text: $monitor.ctHost,
+                      prompt: Text(verbatim: "Zendure-smartMeter3CT-….local"))
+                .textFieldStyle(.roundedBorder)
+                .autocorrectionDisabled()
+
+            HStack {
+                Button(discovery.isSearching ? "Recherche…" : "Détecter sur le réseau") {
+                    discovery.start()
+                }
+                .disabled(discovery.isSearching)
+                Button(testing ? "Test…" : "Tester") { runTest() }
+                    .disabled(testing || monitor.ctHost.isEmpty)
+            }
+
+            ForEach(discovery.devices.filter { $0.name.lowercased().contains("smartmeter") || $0.name.lowercased().contains("3ct") }) { device in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(device.name).font(.callout)
+                        Text(device.host).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Utiliser") { monitor.ctHost = device.host }
+                }
+            }
+
+            if let testResult {
+                Label(testResult, systemImage: testOK ? "checkmark.circle" : "xmark.circle")
+                    .foregroundStyle(testOK ? .green : .red)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Text("Compteur au tableau électrique : mesure le soutirage réseau réel de la maison, affiché dans le schéma de flux. Interrogé en local uniquement (le cloud ne relaie pas ses mesures).")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func runTest() {
+        testing = true
+        testResult = nil
+        let host = monitor.ctHost
+        Task {
+            let result = await monitor.testSmartCT(host: host)
+            switch result {
+            case .success(let report):
+                testOK = true
+                testResult = String(localized: "Connecté — soutirage réseau : ") + Format.watts(report.totalPower)
+            case .failure(let error):
+                testOK = false
+                testResult = error.localizedDescription
+            }
+            testing = false
+        }
+    }
+}
+
+// MARK: - Cloud
+
+/// Section Cloud de l'onglet Appareil : saisie du Cloud Key (trousseau),
+/// statut de la session MQTT et choix de l'appareil suivi.
+private struct CloudSettingsSection: View {
+    @EnvironmentObject var monitor: Monitor
+    @State private var cloudKey = ""
+    @State private var loaded = false
+    @State private var testing = false
+    @State private var testResult: String?
+    @State private var testOK = false
+
+    var body: some View {
+        Section("Cloud Zendure") {
+            SecureField("Authorization Cloud Key", text: $cloudKey, prompt: Text("Coller le jeton copié depuis l'app Zendure"))
+                .textFieldStyle(.roundedBorder)
+
+            HStack {
+                Button(testing ? "Test…" : "Tester la clé") { runTest() }
+                    .disabled(testing || cloudKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Button("Enregistrer et connecter") {
+                    monitor.saveCloudKey(cloudKey)
+                }
+                .disabled(cloudKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+
+            if let testResult {
+                Label(testResult, systemImage: testOK ? "checkmark.circle" : "xmark.circle")
+                    .foregroundStyle(testOK ? .green : .red)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            phaseRow
+
+            if monitor.cloudDevices.count > 1 {
+                Picker("Appareil suivi", selection: $monitor.cloudDeviceKey) {
+                    ForEach(monitor.cloudDevices) { device in
+                        Text(device.displayName).tag(device.deviceKey)
+                    }
+                }
+            } else if let device = monitor.cloudDevices.first {
+                LabeledContent("Appareil", value: device.displayName)
+            }
+
+            Text("Clé à copier depuis l'app Zendure (Profil → « Authorization Cloud Key »), avec le compte principal. Conservée dans le trousseau macOS.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .onAppear {
+            guard !loaded else { return }
+            loaded = true
+            cloudKey = monitor.loadCloudKey() ?? ""
+        }
+    }
+
+    @ViewBuilder
+    private var phaseRow: some View {
+        switch monitor.cloudPhase {
+        case .notConfigured:
+            Label("Aucune clé enregistrée", systemImage: "key.slash")
+                .foregroundStyle(.secondary)
+                .font(.callout)
+        case .fetchingDevices:
+            Label("Connexion au compte Zendure…", systemImage: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.secondary)
+                .font(.callout)
+        case .connectingMQTT:
+            Label("Connexion au flux temps réel…", systemImage: "arrow.triangle.2.circlepath")
+                .foregroundStyle(.secondary)
+                .font(.callout)
+        case .live:
+            Label("Connecté — données en temps réel", systemImage: "checkmark.circle")
+                .foregroundStyle(.green)
+                .font(.callout)
+        case .failed(let message):
+            Label(message, systemImage: "xmark.circle")
+                .foregroundStyle(.red)
+                .font(.callout)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func runTest() {
+        testing = true
+        testResult = nil
+        let token = cloudKey
+        Task {
+            let result = await monitor.testCloudKey(token)
+            switch result {
+            case .success(let devices):
+                testOK = true
+                testResult = String(localized: "Clé valide — \(devices.count) appareil(s) : ")
+                    + devices.map(\.displayName).joined(separator: ", ")
             case .failure(let error):
                 testOK = false
                 testResult = error.localizedDescription
@@ -287,6 +484,25 @@ private struct ControlSettingsTab: View {
     @State private var confirmZero = false
 
     var body: some View {
+        if monitor.connectionMode == .cloud {
+            Form {
+                Section("Contrôle de la batterie") {
+                    Label {
+                        Text("Le contrôle n'est disponible qu'en mode API locale — le mode Cloud est en lecture seule.")
+                            .fixedSize(horizontal: false, vertical: true)
+                    } icon: {
+                        Image(systemName: "lock")
+                    }
+                    .foregroundStyle(.secondary)
+                }
+            }
+            .formStyle(.grouped)
+        } else {
+            controlForm
+        }
+    }
+
+    private var controlForm: some View {
         Form {
             Section("Contrôle de la batterie") {
                 Text("⚠️ Ces commandes pilotent réellement la batterie (POST /properties/write).")
@@ -384,25 +600,37 @@ private struct ControlSettingsTab: View {
     }
 }
 
-// MARK: - Distant
+// MARK: - Réseau
 
-private struct RemoteSettingsTab: View {
+/// Équipements et accès réseau annexes : compteur Smart CT, hôte de secours
+/// (mode local) et collecteur d'historique 24/7.
+private struct NetworkSettingsTab: View {
     @EnvironmentObject var monitor: Monitor
 
     var body: some View {
         Form {
+            SmartCTSection()
             Section("Accès distant (optionnel)") {
-                TextField("Hôte de secours", text: $monitor.fallbackHost, prompt: Text("ex. 100.x.y.z (IP Tailscale)"))
+                if monitor.connectionMode == .local {
+                    TextField("Hôte de secours", text: $monitor.fallbackHost, prompt: Text("ex. 100.x.y.z (IP Tailscale)"))
+                        .textFieldStyle(.roundedBorder)
+                        .autocorrectionDisabled()
+                    Text("Essayé quand l'adresse principale ne répond pas (VPN type Tailscale recommandé). ⚠️ Ne jamais exposer le SolarFlow directement sur Internet : son API locale n'a aucune authentification.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else {
+                    Text("Hôte de secours : uniquement en mode API locale (le mode Cloud est déjà accessible partout).")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Section("Historique 24/7 (optionnel)") {
+                TextField("Serveur d'historique", text: $monitor.historyServer, prompt: Text(verbatim: "minicorse.local:8899"))
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
-                TextField("Serveur d'historique 24/7", text: $monitor.historyServer, prompt: Text(verbatim: "minicorse.local:8899"))
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                Text("Collecteur optionnel qui tourne sur un Mac toujours allumé (voir Scripts/collector) : il enregistre la production 24 h/24 et l'app affiche alors un historique complet, même quand ce Mac est éteint.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text("Essayé automatiquement quand l'adresse principale ne répond pas (hors du réseau domestique). Recommandé : un VPN type Tailscale/WireGuard vers la maison. ⚠️ N'exposez jamais le port 80 du SolarFlow directement sur Internet : son API locale n'a aucune authentification.")
+                Text("Collecteur optionnel sur un Mac toujours allumé (voir Scripts/collector) : l'app affiche alors un historique complet, même quand ce Mac-ci est éteint.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)

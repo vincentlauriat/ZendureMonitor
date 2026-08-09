@@ -91,9 +91,6 @@
     "Connecté" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected" } } }
     },
-    "Connecté via l'hôte de secours" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected via the fallback host" } } }
-    },
     "Connexion au SolarFlow en cours…" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to the SolarFlow…" } } }
     },
@@ -109,9 +106,6 @@
     "Depuis le réseau" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "From grid" } } }
     },
-    "Distant" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote" } } }
-    },
     "Délai" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Delay" } } }
     },
@@ -120,9 +114,6 @@
     },
     "ex. 100.x.y.z (IP Tailscale)" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "e.g. 100.x.y.z (Tailscale IP)" } } }
-    },
-    "Essayé automatiquement quand l'adresse principale ne répond pas (hors du réseau domestique). Recommandé : un VPN type Tailscale/WireGuard vers la maison. ⚠️ N'exposez jamais le port 80 du SolarFlow directement sur Internet : son API locale n'a aucune authentification." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tried automatically when the primary address does not answer (away from home). Recommended: a VPN such as Tailscale/WireGuard to your home network. ⚠️ Never expose the SolarFlow's port 80 directly to the internet: its local API has no authentication." } } }
     },
     "Flux" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows" } } }
@@ -468,12 +459,6 @@
     },
     "Record : %@" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Best: %@" } } }
-    },
-    "Serveur d'historique 24/7" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "24/7 history server" } } }
-    },
-    "Collecteur optionnel qui tourne sur un Mac toujours allumé (voir Scripts/collector) : il enregistre la production 24 h/24 et l'app affiche alors un historique complet, même quand ce Mac est éteint." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional collector running on an always-on Mac (see Scripts/collector): it records production around the clock, so the app shows a complete history even while this Mac is off." } } }
     },
     "Aucun appareil trouvé. Vérifiez que le SolarFlow est sur le même réseau, et que son API locale est active (app Zendure : ajouter un HEMS puis le quitter)." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No device found. Check that the SolarFlow is on the same network and that its local API is enabled (Zendure app: add a HEMS, then quit it)." } } }
@@ -864,6 +849,159 @@
     },
     "Éphémérides" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Ephemerides" } } }
+    },
+    "API locale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Local API" } } }
+    },
+    "Cloud Zendure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Zendure Cloud" } } }
+    },
+    "Source des données" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Data source" } } }
+    },
+    "Source" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Source" } } }
+    },
+    "Lecture directe sur le SolarFlow via le réseau local — recommandé : plus rapide et sans dépendre d'Internet." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reads the SolarFlow directly over the local network — recommended: faster and independent of the Internet." } } }
+    },
+    "Données via les serveurs Zendure (MQTT temps réel) — utile quand l'API locale de l'appareil est inaccessible. Lecture seule." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Data through Zendure's servers (real-time MQTT) — useful when the device's local API is unreachable. Read-only." } } }
+    },
+    "Authorization Cloud Key" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Authorization Cloud Key" } } }
+    },
+    "Coller le jeton copié depuis l'app Zendure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Paste the token copied from the Zendure app" } } }
+    },
+    "Tester la clé" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Test the key" } } }
+    },
+    "Enregistrer et connecter" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Save and connect" } } }
+    },
+    "Appareil suivi" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Monitored device" } } }
+    },
+    "Aucune clé enregistrée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No key saved" } } }
+    },
+    "Connexion au compte Zendure…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to the Zendure account…" } } }
+    },
+    "Connexion au flux temps réel…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to the real-time feed…" } } }
+    },
+    "Connecté — données en temps réel" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected — real-time data" } } }
+    },
+    "Clé valide — %lld appareil(s) : " : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Valid key — %lld device(s): " } } }
+    },
+    "Le contrôle n'est disponible qu'en mode API locale — le mode Cloud est en lecture seule." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Control is only available in Local API mode — Cloud mode is read-only." } } }
+    },
+    "Aucune Cloud Key enregistrée — ouvrez les Réglages." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No Cloud Key saved — open Settings." } } }
+    },
+    "En attente des premières données du cloud Zendure…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Waiting for the first data from the Zendure cloud…" } } }
+    },
+    "Plus de données du cloud Zendure depuis 3 minutes." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No data from the Zendure cloud for 3 minutes." } } }
+    },
+    "Le contrôle n'est pas disponible en mode Cloud (lecture seule)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Control is not available in Cloud mode (read-only)." } } }
+    },
+    "Le jeton n'est pas du base64 valide." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The token is not valid base64." } } }
+    },
+    "Le jeton décodé n'a pas la forme attendue (URL.appKey)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The decoded token does not have the expected shape (URL.appKey)." } } }
+    },
+    "Le serveur Zendure a répondu HTTP %lld." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The Zendure server answered HTTP %lld." } } }
+    },
+    "L'API Zendure a refusé la requête (code %@%@)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The Zendure API rejected the request (code %@%@)." } } }
+    },
+    "Aucun appareil sur ce compte — le jeton doit venir du compte principal Zendure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No device on this account — the token must come from the main Zendure account." } } }
+    },
+    "Réponse sans identifiants MQTT — temps réel indisponible." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Response without MQTT credentials — real-time unavailable." } } }
+    },
+    "Réponse illisible du serveur Zendure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Unreadable response from the Zendure server." } } }
+    },
+    "Cloud Key invalide : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Invalid Cloud Key: %@" } } }
+    },
+    "Connexion MQTT perdue%@ — reconnexion dans 15 s…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "MQTT connection lost%@ — reconnecting in 15 s…" } } }
+    },
+    "connexion fermée par le serveur" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "connection closed by the server" } } }
+    },
+    "non mesuré" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "not measured" } } }
+    },
+    "+ réseau : non mesuré" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "+ grid: not measured" } } }
+    },
+    "consommation totale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "total consumption" } } }
+    },
+    "Soutirage réseau mesuré par le Smart CT (%@). Consommation totale de la maison = réseau + injection SolarFlow." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Grid draw measured by the Smart CT (%@). Home total consumption = grid + SolarFlow output." } } }
+    },
+    "Compteur Smart CT (optionnel)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Smart CT meter (optional)" } } }
+    },
+    "Hôte du Smart CT" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Smart CT host" } } }
+    },
+    "Détecter sur le réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Detect on the network" } } }
+    },
+    "Tester" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Test" } } }
+    },
+    "Connecté — soutirage réseau : " : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected — grid draw: " } } }
+    },
+    "Connexion : Cloud Zendure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection: Zendure Cloud" } } }
+    },
+    "Connexion : locale — hôte principal" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection: local — primary host" } } }
+    },
+    "Connexion : locale — hôte de secours" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection: local — fallback host" } } }
+    },
+    "Clé à copier depuis l'app Zendure (Profil → « Authorization Cloud Key »), avec le compte principal. Conservée dans le trousseau macOS." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Key to copy from the Zendure app (Profile → “Authorization Cloud Key”), using the main account. Kept in the macOS Keychain." } } }
+    },
+    "Compteur au tableau électrique : mesure le soutirage réseau réel de la maison, affiché dans le schéma de flux. Interrogé en local uniquement (le cloud ne relaie pas ses mesures)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Meter in the electrical panel: measures the home's real grid draw, shown in the flow diagram. Queried locally only (the cloud does not relay its readings)." } } }
+    },
+    "Essayé quand l'adresse principale ne répond pas (VPN type Tailscale recommandé). ⚠️ Ne jamais exposer le SolarFlow directement sur Internet : son API locale n'a aucune authentification." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Tried when the primary address does not answer (a VPN like Tailscale is recommended). ⚠️ Never expose the SolarFlow directly to the Internet: its local API has no authentication." } } }
+    },
+    "Hôte de secours : uniquement en mode API locale (le mode Cloud est déjà accessible partout)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Fallback host: Local API mode only (Cloud mode is already reachable from anywhere)." } } }
+    },
+    "Historique 24/7 (optionnel)" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "24/7 history (optional)" } } }
+    },
+    "Serveur d'historique" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "History server" } } }
+    },
+    "Collecteur optionnel sur un Mac toujours allumé (voir Scripts/collector) : l'app affiche alors un historique complet, même quand ce Mac-ci est éteint." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Optional collector on an always-on Mac (see Scripts/collector): the app then shows a complete history, even while this Mac is off." } } }
+    },
+    "Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (arc gris) n'est pas mesuré : renseignez le Smart CT dans Réglages → Réseau pour l'afficher en réel." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Flows measured by the SolarFlow. What the home draws directly from the public grid (grey arc) is not measured: set up the Smart CT in Settings → Network to display the real flow." } } }
     }
   },
   "version" : "1.0"

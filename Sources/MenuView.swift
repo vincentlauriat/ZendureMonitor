@@ -36,6 +36,8 @@ struct MenuView: View {
                 }
             }
             warnings
+            Divider()
+            connectionFooter
         }
         .padding(12)
         .frame(width: 320)
@@ -291,11 +293,6 @@ struct MenuView: View {
 
     @ViewBuilder
     private var warnings: some View {
-        if monitor.usingFallback {
-            Label("Connect\u{00e9} via l'h\u{00f4}te de secours", systemImage: "network")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-        }
         if monitor.state != nil, let error = monitor.lastError {
             Label(error, systemImage: "exclamationmark.triangle")
                 .font(.caption)
@@ -321,6 +318,40 @@ struct MenuView: View {
                 .font(.caption)
             }
         }
+    }
+
+    // MARK: - Pied : mode de connexion
+
+    /// Ligne permanente en bas du panneau : par où arrivent les données
+    /// (cloud, hôte local principal ou hôte local de secours), avec une
+    /// pastille verte/orange selon que le dernier cycle a réussi.
+    private var connectionFooter: some View {
+        HStack(spacing: 5) {
+            Image(systemName: connectionIcon)
+                .font(.caption2)
+            Text(connectionText)
+                .font(.caption2)
+            Spacer()
+            Circle()
+                .fill(monitor.lastError == nil ? Color.green : Color.orange)
+                .frame(width: 6, height: 6)
+        }
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 2)
+    }
+
+    private var connectionIcon: String {
+        if monitor.connectionMode == .cloud { return "icloud" }
+        return monitor.usingFallback ? "network" : "house"
+    }
+
+    private var connectionText: String {
+        if monitor.connectionMode == .cloud {
+            return String(localized: "Connexion : Cloud Zendure")
+        }
+        return monitor.usingFallback
+            ? String(localized: "Connexion : locale — hôte de secours")
+            : String(localized: "Connexion : locale — hôte principal")
     }
 
     // MARK: - Helpers
