@@ -1,12 +1,12 @@
 import SwiftUI
 
 /// Schéma de flux d'énergie animé, planaire par construction : AUCUN lien
-/// n'en croise un autre. Colonne centrale panneaux → SolarFlow → batteries
-/// (batteries pile sous le hub) ; Réseau public et Maison sont ADJACENTS sur
-/// la colonne de droite (maison en haut, réseau en bas — le compteur est
-/// physiquement entre les deux), si bien que leur liaison directe est un
-/// simple segment vertical le long du bord, hors du chemin de tous les autres
-/// flux. La prise hors-réseau occupe le coin bas-gauche (seulement quand elle
+/// n'en croise un autre. Disposition en X symétrique autour du SolarFlow :
+/// la colonne de gauche porte Panneaux (haut) et Batteries (bas), en miroir
+/// exact de la colonne de droite — Maison (haut) et Réseau public (bas, le
+/// compteur est physiquement entre les deux : leur liaison directe est un
+/// simple segment vertical le long du bord, hors du chemin de tous les
+/// autres flux). La prise hors-réseau pend sous le hub (seulement quand elle
 /// débite). Chaque lien ne s'anime que lorsque l'énergie circule réellement,
 /// dans le sens réel, à une vitesse proportionnelle à la puissance.
 ///
@@ -39,16 +39,16 @@ struct EnergyFlowView: View {
     var body: some View {
         GeometryReader { geo in
             let size = geo.size
-            // Colonne centrale (sun, hub, batteries : même x, décalé à gauche
-            // pour équilibrer la colonne droite) ; colonne droite (home, grid :
-            // même x) — leur liaison directe est verticale et ne peut croiser
-            // aucun lien du hub, tous à gauche d'elle.
-            let sun = CGPoint(x: size.width * 0.42, y: size.height * 0.13)
-            let hub = CGPoint(x: size.width * 0.42, y: size.height * 0.45)
-            let battery = CGPoint(x: size.width * 0.42, y: size.height * 0.77)
+            // X symétrique : colonne gauche (sun, batteries) en miroir de la
+            // colonne droite (home, grid), hub au centre. La liaison directe
+            // grid → home est verticale et ne peut croiser aucun lien du hub,
+            // tous à gauche d'elle ; l'exutoire hors-réseau pend sous le hub.
+            let sun = CGPoint(x: size.width * 0.16, y: size.height * 0.26)
+            let hub = CGPoint(x: size.width * 0.50, y: size.height * 0.45)
+            let battery = CGPoint(x: size.width * 0.16, y: size.height * 0.64)
             let home = CGPoint(x: size.width * 0.84, y: size.height * 0.26)
             let grid = CGPoint(x: size.width * 0.84, y: size.height * 0.64)
-            let outlet = CGPoint(x: size.width * 0.12, y: size.height * 0.64)
+            let outlet = CGPoint(x: size.width * 0.50, y: size.height * 0.80)
             let hubRadius: CGFloat = 38
             let nodeRadius: CGFloat = 26
             let batteryRadius: CGFloat = 32
@@ -76,8 +76,8 @@ struct EnergyFlowView: View {
                     link(from: hub, to: outlet, trimFrom: hubRadius, trimTo: nodeRadius,
                          watts: state.offGridPower, color: outletColor)
                 }
-                // Le flux batterie est court et vertical : sa valeur vit dans
-                // le libellé du nœud (▲/▼), pas dans une capsule sur le lien.
+                // La valeur du flux batterie vit dans le libellé du nœud
+                // (▲/▼), pas dans une capsule sur le lien.
                 if state.batteryFlow >= 0 {
                     link(from: hub, to: battery, trimFrom: hubRadius, trimTo: batteryRadius,
                          watts: state.batteryFlow, color: batteryColor, showLabel: false)
@@ -87,7 +87,7 @@ struct EnergyFlowView: View {
                 }
 
                 // La valeur PV vit dans la capsule du lien : le libellé seul
-                // se place au-dessus, pour ne pas recouvrir le lien vertical.
+                // se place au-dessus, hors du chemin du lien vers le hub.
                 node(at: sun, radius: nodeRadius, icon: "sun.max.fill", tint: pvColor,
                      label: "Panneaux", value: Format.watts(state.solarInputPower),
                      active: state.solarInputPower > 1, labels: .titleAbove)
