@@ -91,9 +91,6 @@
     "Connecté" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected" } } }
     },
-    "Connecté via l'hôte de secours" : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected via the fallback host" } } }
-    },
     "Connexion au SolarFlow en cours…" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connecting to the SolarFlow…" } } }
     },
@@ -996,6 +993,15 @@
     },
     "Connecté — soutirage réseau : " : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connected — grid draw: " } } }
+    },
+    "Connexion : Cloud Zendure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection: Zendure Cloud" } } }
+    },
+    "Connexion : locale — hôte principal" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection: local — primary host" } } }
+    },
+    "Connexion : locale — hôte de secours" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Connection: local — fallback host" } } }
     }
   },
   "version" : "1.0"
