@@ -4,13 +4,15 @@
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-A tiny macOS menu bar app that shows the **live solar production of a Zendure SolarFlow battery** — 100% local, no Zendure cloud account, no MQTT broker, no credentials.
+A tiny macOS menu bar app that shows the **live solar production of a Zendure SolarFlow battery** — local-first (on your LAN: no cloud account, no broker, no credentials), with an **optional Zendure Cloud mode** for when the local API isn't reachable.
 
 ```
 ☀️ 842 W          ← in your menu bar, refreshed every 5 s
 ```
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
+
+New in 1.10: an optional **Zendure Cloud mode** (real-time MQTT through Zendure's servers, configured with the app's *Authorization Cloud Key* stored in the Keychain — read-only, and the local API remains the default), **Smart CT support** (the SmartMeter3CT is polled on the LAN, giving the flow diagram the home's real grid draw and total consumption), a **redesigned energy-flow diagram** (aligned diamond layout, per-pack SOC chips, an explicit grid→home arc that is measured with the CT and honestly marked "not measured" without it), a **connection footer** in the panel (local primary / local fallback / cloud), and reorganized Settings with a **Network** tab.
 
 New in 1.9: the **Sun window v3** — describe each of your panel arrays (peak power, azimuth, tilt) and the window shows an animated **sky dome** (the sun's real path over the day, both solstice arcs, today's measured production placed where the sun stood, and each array's aiming direction with its live incidence gap), a **solar compass** with true iso-incidence loops, a per-array breakdown (clear-sky output, incidence, best hour, potential for the day) and richer ephemerides (twilights, golden hours, day-length delta to the second, next solstice or equinox). Azimuth and tilt are **adjustable straight from the window** with two sliders per array — the dome, the compass and the output follow the gesture — and the whole thing fits **on one screen, no scrolling**.
 
@@ -99,7 +101,13 @@ Field reference: [zenSDK `en_properties.md`](https://github.com/Zendure/zenSDK/b
 
 Writing is possible too (`POST /properties/write` with `{"sn": …, "properties": {"acMode": 2}}`) but this app is strictly **read-only**.
 
-### 2. Device discovery — a firmware quirk worth knowing
+### 2. The optional Cloud mode (1.10)
+
+When the local API isn't reachable (device offline on the LAN, or you're away without a VPN), the app can read the same data through Zendure's servers. The protocol is the one used by Zendure's own Home Assistant integration: the **Authorization Cloud Key** copied from the mobile app is base64 for `<apiUrl>.<appKey>`; a SHA1-signed `POST /api/ha/deviceList` returns the account's devices plus **MQTT credentials**; the app then subscribes to `/{productKey}/{deviceKey}/#` (both topic forms) and merges the device's partial `properties/report` messages, with a `getAll` safety poll every 60 s. The MQTT client is a dependency-free MQTT 3.1.1 implementation on Network.framework (`Sources/Cloud/`). The key lives in the **macOS Keychain**, the raw token never leaves the Mac, and cloud mode is **read-only** — the control tab stays local-only. `Scripts/cloud-probe.swift` is a CLI probe that dumps every topic and key the cloud publishes for your account.
+
+**Smart CT:** the SmartMeter3CT is *not* exposed by the cloud's HA endpoint — but it answers on the LAN like any zenSDK device (`GET /properties/report` → per-phase and total apparent power at the panel). The app polls it directly (Settings → Network, with Bonjour detection) in both modes, which is what turns the flow diagram's grid→home arc into a measured value and yields the home's total consumption.
+
+### 3. Device discovery — a firmware quirk worth knowing
 
 The zenSDK docs say devices advertise over mDNS/Bonjour as **`_zendure._tcp`**. In practice, a SolarFlow 2400 Pro (firmware as of mid-2026) advertises under the generic **`_http._tcp`** type instead, with an instance name of:
 
@@ -114,7 +122,7 @@ dns-sd -B _http._tcp local.        # look for a Zendure-* instance
 curl http://Zendure-<…>.local/properties/report | jq .properties.solarInputPower
 ```
 
-### 3. App architecture
+### 4. App architecture
 
 Pure Swift / SwiftUI, no third-party dependency besides Sparkle. Generated with [XcodeGen](https://github.com/yonaskolb/XcodeGen) from `project.yml`.
 
@@ -125,14 +133,20 @@ Sources/
   Components/               reusable card/gauge/sparkline views (Swift Charts), the energy-flow
                             diagram and the Sun card — shared design language with MacInside
   Monitor.swift             @MainActor ObservableObject: async polling loop (2–60 s, URLSession,
-                            5 s timeout), daily curve/peak persistence, savings, notifications
+                            5 s timeout), local/cloud data source switch, daily curve/peak
+                            persistence, savings, notifications
+  Cloud/                    optional cloud mode: Cloud Key decoding, SHA1-signed deviceList,
+                            dependency-free MQTT 3.1.1 client (Network.framework), partial-report
+                            merging, Keychain storage — read-only by design
   DeviceState.swift         zenSDK payload model + tolerant JSONSerialization parser
+  SmartCT.swift             SmartMeter3CT local report (per-phase + total grid draw)
   Discovery.swift           Bonjour browser (_zendure._tcp + _http._tcp) resolving hostnames
   MenuView.swift            dropdown panel (header with icon actions, cards, period selector)
   DashboardView.swift       dashboard window (flow diagram + full indicator cards)
   SunView.swift             Sun window (sky dome, solar compass, per-array orientation with
                             live azimuth/tilt sliders, ephemerides, twilights, yield, weather)
-  SettingsView.swift        tabs: device, display, sun, notifications, control, remote, general
+  SettingsView.swift        tabs: device (local/cloud source), display, sun, notifications,
+                            control, network (Smart CT, fallback host, collector), general
   LocationFetcher.swift     one-shot CoreLocation fix to prefill the sun position
   PermissionsStatus.swift   upfront permissions check (local network, location, notifications)
   Shared/                   Format, SunCalc (NOAA ephemerides, twilights, solstices),
@@ -149,7 +163,7 @@ Design choices:
 - **Stale-data policy:** on errors the last reading stays visible (with a warning row) for 60 s, then the display falls back to "no data" — avoids flapping on a single missed poll.
 - **Privacy/entitlements:** `NSLocalNetworkUsageDescription` + `NSBonjourServices` (macOS local-network privacy), `NSAllowsLocalNetworking` for cleartext HTTP to `.local` hosts. IP literals are ATS-exempt.
 
-### 4. Release & auto-update pipeline
+### 5. Release & auto-update pipeline
 
 `Scripts/release.sh <version>` produces a distributable DMG:
 
@@ -201,7 +215,8 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.7 — large widget (14-day histogram), weather in the Sun window (Open-Meteo, cloud-adjusted forecast), redesigned Sun window, extracted & tested DailyAccumulator
 - [x] v1.8 — outage alerts: device-unreachable notification, zero-production-in-daylight notification, ⚠️ menu bar offline state (tested OutageWatchdog)
 - [x] v1.9 — Sun window v3: per-array orientations with live azimuth/tilt sliders, animated sky dome, solar compass with iso-incidence loops, twilights & seasons, atmospheric transmittance in the yield model, one-screen layout (tested SolarGeometry)
-- [ ] v1.10 — zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents)
+- [x] v1.10 — optional Zendure Cloud mode (Cloud Key → signed deviceList → real-time MQTT, Keychain, read-only), Smart CT support (real grid draw + home total consumption on the LAN), redesigned energy-flow diagram (aligned diamond, measured grid→home arc, per-pack chips), connection footer, Network settings tab (tested Cloud layer + Smart CT parser)
+- [ ] v1.11 — zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents), grid-draw daily history from the Smart CT
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements

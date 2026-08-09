@@ -1,8 +1,8 @@
 # Zendure Monitor — Guide utilisateur / User guide
 
-Application macOS de barre de menu qui affiche en direct la production solaire d'une batterie **Zendure SolarFlow**, 100 % en local (API zenSDK, sans compte cloud).
+Application macOS de barre de menu qui affiche en direct la production solaire d'une batterie **Zendure SolarFlow** — en local d'abord (API zenSDK), avec un mode Cloud Zendure optionnel.
 
-A macOS menu bar app showing the live solar production of a **Zendure SolarFlow** battery, 100% locally (zenSDK API, no cloud account).
+A macOS menu bar app showing the live solar production of a **Zendure SolarFlow** battery — local-first (zenSDK API), with an optional Zendure Cloud mode.
 
 ## 🇫🇷 Guide en français
 
@@ -15,7 +15,8 @@ A macOS menu bar app showing the live solar production of a **Zendure SolarFlow*
 7. [Contrôle de la batterie](fr/controle.md) — mode AC, limites de charge et de sortie
 8. [Alertes et économies](fr/alertes.md) — notifications, prix du kWh, CO₂
 9. [Accès distant](fr/acces-distant.md) — VPN, hôte de secours, collecteur 24/7
-10. [FAQ et dépannage](fr/faq.md)
+10. [Mode Cloud et Smart CT](fr/cloud.md) — données via les serveurs Zendure, compteur en tableau, consommation totale
+11. [FAQ et dépannage](fr/faq.md)
 
 ## 🇬🇧 English guide
 
@@ -28,7 +29,8 @@ A macOS menu bar app showing the live solar production of a **Zendure SolarFlow*
 7. [Battery control](en/control.md) — AC mode, charge and output limits
 8. [Alerts and savings](en/alerts.md) — notifications, kWh price, CO₂
 9. [Remote access](en/remote-access.md) — VPN, fallback host, 24/7 collector
-10. [FAQ and troubleshooting](en/faq.md)
+10. [Cloud mode and the Smart CT](en/cloud.md) — data through Zendure's servers, panel meter, total consumption
+11. [FAQ and troubleshooting](en/faq.md)
 
 ---
 

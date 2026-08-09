@@ -139,14 +139,15 @@
 
   <h1>Zendure Monitor</h1>
   <p class="tagline">A tiny native macOS menu bar app showing the live solar production of a
-  Zendure SolarFlow battery — <strong>100% local</strong>, no Zendure cloud account,
-  no MQTT broker, no credentials.</p>
+  Zendure SolarFlow battery — <strong>local-first</strong> (no account, no broker, no credentials
+  on your LAN), with an optional <strong>Zendure Cloud mode</strong> for when the local API
+  isn't reachable.</p>
 
   <div class="buttons">
     <a class="btn btn-primary" href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">⬇︎&nbsp; Download for macOS</a>
     <a class="btn btn-secondary" href="https://github.com/vincentlauriat/ZendureMonitor">View on GitHub</a>
   </div>
-  <p class="fineprint">Free &amp; open source (MIT) · macOS 14+ · signed &amp; notarized DMG · Sparkle auto-updates · 100% local</p>
+  <p class="fineprint">Free &amp; open source (MIT) · macOS 14+ · signed &amp; notarized DMG · Sparkle auto-updates · local-first</p>
 
   <figure class="shot">
     <img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: header with icon actions, solar production with a period selector, battery state of charge with a ring gauge, energy flows and 14-day history">
@@ -172,9 +173,19 @@
     </div>
     <div class="card">
       <h3>🔀 Energy-flow dashboard</h3>
-      <p>A dashboard window with a live diagram: the SolarFlow at the center, panels, batteries,
-      public grid, home and the off-grid outlet around it. Links animate only when energy
-      actually flows, with the wattage on each link — plus savings estimates in € and CO₂.</p>
+      <p>Redesigned in 1.10: a strictly aligned diagram — panels on top, the SolarFlow at the
+      center, batteries right underneath with per-pack SOC chips, grid and home on the sides.
+      Links animate only when energy actually flows, with the wattage on each link, and the
+      grid→home draw is drawn explicitly: measured with a Smart CT, honestly marked
+      “not measured” without one — plus savings estimates in € and CO₂.</p>
+    </div>
+    <div class="card">
+      <h3>☁️ Cloud mode &amp; Smart CT</h3>
+      <p>New in 1.10. Away from home or LAN down? Switch to the optional <strong>Zendure Cloud
+      mode</strong>: paste the app's Authorization Cloud Key (kept in the macOS Keychain) and the
+      data arrives in real time over MQTT — read-only, the local API stays the default. And if a
+      <strong>SmartMeter3CT</strong> sits in your electrical panel, the app polls it on the LAN
+      for the home's real grid draw and total consumption.</p>
     </div>
     <div class="card">
       <h3>🌅 Sun window</h3>
@@ -217,7 +228,7 @@
   <p class="lead">A dedicated window for the whole picture — and another one for the sun itself.</p>
   <figure class="shot" style="max-width:760px">
     <img src="dashboard.png" alt="Zendure Monitor dashboard: hub-centric energy-flow diagram with the SolarFlow at the center and panels, batteries, public grid, home and off-grid outlet as peripherals, plus production, battery, device and history cards">
-    <figcaption>The energy-flow diagram: links animate only when energy actually flows, with live wattage.</figcaption>
+    <figcaption>The energy-flow diagram: links animate only when energy actually flows, with live wattage — and with a Smart CT, the real grid draw and the home's total consumption.</figcaption>
   </figure>
   <figure class="shot" style="max-width:900px; margin-top:32px">
     <img src="sun.png" alt="Zendure Monitor Sun window: an animated sky dome with the sun's real path, the solstice arcs, today's production and a marker per panel array, a solar compass with iso-incidence loops, the per-array breakdown with azimuth and tilt sliders, the ephemerides, the twilights, the theoretical output and the local weather">
@@ -226,10 +237,10 @@
 </section>
 
 <section class="wrap">
-  <h2>100% <span class="em">local</span></h2>
+  <h2><span class="em">Local-first</span></h2>
   <p class="lead">Recent Zendure firmwares embed a plain HTTP server on the device itself — the
-  <a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API. Zendure Monitor talks to that,
-  and to nothing else.</p>
+  <a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API. By default, Zendure Monitor
+  talks to that and to nothing else.</p>
   <div class="panel">
     <ul>
       <li><strong>One HTTP call on your LAN.</strong> The app polls <code>GET /properties/report</code> on the battery and gets everything back in a single JSON document.</li>
@@ -237,6 +248,7 @@
       <li><strong>No MQTT broker, no credentials.</strong> Nothing to host, nothing to configure, no token or password to store.</li>
       <li><strong>Bonjour discovery.</strong> The app finds the device on your network by itself — or you can simply type its IP address.</li>
       <li><strong>Optional fallback host for VPN access.</strong> Set a second address — your battery reached through a Tailscale or WireGuard tunnel — and the app polls the local one first, switching over automatically when it doesn't answer.</li>
+      <li><strong>Optional Cloud mode (1.10), your choice.</strong> If you prefer, the app can read the same data through Zendure's servers in real time (MQTT), using the Authorization Cloud Key from the mobile app — stored in the macOS Keychain, read-only, and off by default. The menu panel always shows which path is in use.</li>
     </ul>
     <p class="warn"><strong>⚠️ A word on remote access:</strong> the zenSDK API has no authentication
     whatsoever. Never port-forward the device's port 80 to the internet — use a VPN into your home
