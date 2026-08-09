@@ -1,19 +1,24 @@
 import SwiftUI
 
-/// Schéma de flux d'énergie animé, en losange strictement aligné : panneaux
-/// en haut, SolarFlow au centre, batteries exactement sous lui, réseau public
-/// à gauche, maison à droite (prise hors-réseau en coin, seulement quand elle
+/// Schéma de flux d'énergie animé, planaire par construction : AUCUN lien
+/// n'en croise un autre. Colonne centrale panneaux → SolarFlow → batteries
+/// (batteries pile sous le hub) ; Réseau public et Maison sont ADJACENTS sur
+/// la colonne de droite (maison en haut, réseau en bas — le compteur est
+/// physiquement entre les deux), si bien que leur liaison directe est un
+/// simple segment vertical le long du bord, hors du chemin de tous les autres
+/// flux. La prise hors-réseau occupe le coin bas-gauche (seulement quand elle
 /// débite). Chaque lien ne s'anime que lorsque l'énergie circule réellement,
 /// dans le sens réel, à une vitesse proportionnelle à la puissance.
 ///
 /// Honnêteté des données : le SolarFlow ne mesure que SES flux. Le soutirage
 /// direct de la maison sur le réseau public (et donc la consommation totale
 /// de la maison) n'est pas mesurable sans compteur en tableau (Smart CT) —
-/// ce flux est dessiné en arc gris « non mesuré », pas omis ni inventé.
+/// cette liaison est dessinée en gris « non mesuré », pas omise ni inventée.
 ///
 /// Les positions sont ancrées sur le CENTRE des pastilles (les libellés sont
-/// positionnés à part, sous chaque pastille) pour que liens et nœuds restent
-/// alignés — c'était le défaut de la v1, qui centrait des blocs composites.
+/// positionnés à part, au-dessus ou au-dessous selon la place disponible)
+/// pour que liens et nœuds restent alignés — c'était le défaut de la v1, qui
+/// centrait des blocs composites.
 struct EnergyFlowView: View {
     var state: DeviceState
     /// Mesure du Smart CT au compteur (W), si un compteur local répond :
@@ -34,27 +39,32 @@ struct EnergyFlowView: View {
     var body: some View {
         GeometryReader { geo in
             let size = geo.size
-            // Losange aligné : sun, hub et batteries partagent le même x ;
-            // grid, hub et home partagent le même y.
-            let sun = CGPoint(x: size.width * 0.5, y: size.height * 0.13)
-            let hub = CGPoint(x: size.width * 0.5, y: size.height * 0.45)
-            let battery = CGPoint(x: size.width * 0.5, y: size.height * 0.77)
-            let grid = CGPoint(x: size.width * 0.13, y: size.height * 0.45)
-            let home = CGPoint(x: size.width * 0.87, y: size.height * 0.45)
-            let outlet = CGPoint(x: size.width * 0.85, y: size.height * 0.77)
+            // Colonne centrale (sun, hub, batteries : même x, décalé à gauche
+            // pour équilibrer la colonne droite) ; colonne droite (home, grid :
+            // même x) — leur liaison directe est verticale et ne peut croiser
+            // aucun lien du hub, tous à gauche d'elle.
+            let sun = CGPoint(x: size.width * 0.42, y: size.height * 0.13)
+            let hub = CGPoint(x: size.width * 0.42, y: size.height * 0.45)
+            let battery = CGPoint(x: size.width * 0.42, y: size.height * 0.77)
+            let home = CGPoint(x: size.width * 0.84, y: size.height * 0.26)
+            let grid = CGPoint(x: size.width * 0.84, y: size.height * 0.64)
+            let outlet = CGPoint(x: size.width * 0.12, y: size.height * 0.64)
             let hubRadius: CGFloat = 38
             let nodeRadius: CGFloat = 26
             let batteryRadius: CGFloat = 32
             let outletActive = state.offGridPower > 1
 
             ZStack {
-                // Arc « non mesuré » réseau → maison, sous le hub : ce flux
-                // existe électriquement mais rien ne le mesure sans Smart CT.
-                // Contrôle choisi pour que l'apex (0,64 h) passe entre le bas
-                // du hub et le haut de la jauge batterie, sans les toucher.
-                gridToHomeArc(from: grid, to: home,
-                              control: CGPoint(x: size.width * 0.5, y: size.height * 0.74),
-                              trim: nodeRadius)
+                // Liaison directe réseau → maison, verticale le long du bord
+                // droit : ce flux existe électriquement mais rien ne le mesure
+                // sans Smart CT — mesuré : flux animé comme les autres ; sinon
+                // gris « non mesuré ».
+                if ctTotalPower != nil {
+                    link(from: grid, to: home, trimFrom: nodeRadius, trimTo: nodeRadius,
+                         watts: gridToHomeWatts, color: gridColor)
+                } else {
+                    unmeasuredLink(from: grid, to: home, trim: nodeRadius)
+                }
 
                 link(from: sun, to: hub, trimFrom: nodeRadius, trimTo: hubRadius,
                      watts: state.solarInputPower, color: pvColor)
@@ -80,25 +90,27 @@ struct EnergyFlowView: View {
                 // se place au-dessus, pour ne pas recouvrir le lien vertical.
                 node(at: sun, radius: nodeRadius, icon: "sun.max.fill", tint: pvColor,
                      label: "Panneaux", value: Format.watts(state.solarInputPower),
-                     active: state.solarInputPower > 1, labelsBelow: false)
+                     active: state.solarInputPower > 1, labels: .titleAbove)
+                // Réseau et Maison : libellés vers l'extérieur (dessous /
+                // dessus) pour laisser leur liaison verticale dégagée.
                 node(at: grid, radius: nodeRadius, icon: "bolt.fill", tint: gridColor,
                      label: "Réseau public", value: gridValue,
-                     active: state.gridInputPower > 1 || gridToHomeWatts > 1, labelsBelow: true)
+                     active: state.gridInputPower > 1 || gridToHomeWatts > 1, labels: .below)
                 if ctTotalPower != nil {
                     node(at: home, radius: nodeRadius, icon: "house.fill", tint: homeColor,
                          label: "Maison", value: Format.watts(homeTotalWatts),
                          detail: "consommation totale",
-                         active: homeTotalWatts > 1, labelsBelow: true)
+                         active: homeTotalWatts > 1, labels: .above)
                 } else {
                     node(at: home, radius: nodeRadius, icon: "house.fill", tint: homeColor,
                          label: "Maison", value: Format.watts(state.outputHomePower),
                          detail: "+ réseau : non mesuré",
-                         active: state.outputHomePower > 1, labelsBelow: true)
+                         active: state.outputHomePower > 1, labels: .above)
                 }
                 if outletActive {
                     node(at: outlet, radius: nodeRadius, icon: "powerplug.fill", tint: outletColor,
                          label: "Prise hors-réseau", value: Format.watts(state.offGridPower),
-                         active: true, labelsBelow: true)
+                         active: true, labels: .below)
                 }
                 batteryNode(at: battery, radius: batteryRadius)
                 hubNode(at: hub, radius: hubRadius)
@@ -168,62 +180,28 @@ struct EnergyFlowView: View {
         }
     }
 
-    /// Arc quadratique réseau → maison. Avec un Smart CT qui répond, c'est un
-    /// vrai flux mesuré (couleur réseau, pointillés animés, puissance) ; sans
-    /// compteur, un arc gris statique marqué « ? non mesuré ».
-    private func gridToHomeArc(from: CGPoint, to: CGPoint,
-                               control: CGPoint, trim: CGFloat) -> some View {
-        let start = CGPoint(x: from.x + trim * 0.4, y: from.y + trim)
-        let end = CGPoint(x: to.x - trim * 0.4, y: to.y + trim)
-        // Étiquette posée sur le flanc gauche de l'arc (t = 0,22), dans le
-        // vide entre Réseau et Batteries — le sommet passerait derrière la
-        // jauge batterie.
-        let t: CGFloat = 0.22
-        let labelPoint = CGPoint(
-            x: (1 - t) * (1 - t) * start.x + 2 * t * (1 - t) * control.x + t * t * end.x,
-            y: (1 - t) * (1 - t) * start.y + 2 * t * (1 - t) * control.y + t * t * end.y
-        )
-        let measured = ctTotalPower != nil
-        let watts = gridToHomeWatts
-        let active = measured && watts > 1
+    /// Liaison réseau → maison sans compteur : segment gris statique marqué
+    /// « ? non mesuré » (le cas mesuré passe par link(), comme tout flux réel).
+    private func unmeasuredLink(from: CGPoint, to: CGPoint, trim: CGFloat) -> some View {
+        let start = shorten(from, toward: to, by: trim)
+        let end = shorten(to, toward: from, by: trim)
+        let mid = CGPoint(x: (start.x + end.x) / 2, y: (start.y + end.y) / 2)
         return ZStack {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !active)) { timeline in
-                let phase: CGFloat = {
-                    guard active else { return 0 }
-                    let time = timeline.date.timeIntervalSinceReferenceDate
-                    let speed = 12.0 + min(watts / 40.0, 48.0)
-                    return CGFloat((time * speed).truncatingRemainder(dividingBy: 18)) * -1
-                }()
-                Path { path in
-                    path.move(to: start)
-                    path.addQuadCurve(to: end, control: control)
-                }
-                .stroke(active ? gridColor : Color.secondary.opacity(0.35),
-                        style: StrokeStyle(lineWidth: active ? 3 : 1.5,
-                                           lineCap: .round,
-                                           dash: active ? [7, 11] : [3, 6],
-                                           dashPhase: phase))
-                .shadow(color: active ? gridColor.opacity(0.35) : .clear, radius: 3)
+            LinkPath(from: start, to: end)
+                .stroke(Color.secondary.opacity(0.35),
+                        style: StrokeStyle(lineWidth: 1.5, lineCap: .round, dash: [3, 6]))
+            HStack(spacing: 3) {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 9))
+                Text("non mesuré")
+                    .font(.caption2)
             }
-            if measured {
-                if active {
-                    wattCapsule(Format.watts(watts), tint: gridColor)
-                        .position(labelPoint)
-                }
-            } else {
-                HStack(spacing: 3) {
-                    Image(systemName: "questionmark.circle")
-                        .font(.system(size: 9))
-                    Text("non mesuré")
-                        .font(.caption2)
-                }
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Capsule().fill(.regularMaterial))
-                .overlay(Capsule().strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1))
-                .position(labelPoint)
-            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Capsule().fill(.regularMaterial))
+            .overlay(Capsule().strokeBorder(Color.secondary.opacity(0.3), lineWidth: 1))
+            .position(mid)
         }
     }
 
@@ -250,13 +228,23 @@ struct EnergyFlowView: View {
 
     // MARK: - Nœuds
 
+    /// Où poser les textes d'un nœud, pour les garder hors du chemin des liens.
+    private enum LabelPlacement {
+        /// Libellé + valeur (+ détail) sous la pastille.
+        case below
+        /// Libellé + valeur (+ détail) au-dessus de la pastille.
+        case above
+        /// Libellé seul au-dessus — la valeur vit dans la capsule du lien.
+        case titleAbove
+    }
+
     /// Pastille ancrée par son CENTRE à `point` ; libellé et valeur positionnés
-    /// à part sous la pastille — l'alignement des liens ne dépend ainsi jamais
-    /// de la longueur des textes.
+    /// à part au-dessus ou au-dessous — l'alignement des liens ne dépend ainsi
+    /// jamais de la longueur des textes.
     @ViewBuilder
     private func node(at point: CGPoint, radius: CGFloat, icon: String, tint: Color,
                       label: LocalizedStringKey, value: String, detail: LocalizedStringKey? = nil,
-                      active: Bool, labelsBelow: Bool) -> some View {
+                      active: Bool, labels: LabelPlacement) -> some View {
         ZStack {
             if active {
                 Circle()
@@ -277,7 +265,9 @@ struct EnergyFlowView: View {
         }
         .position(point)
 
-        if labelsBelow {
+        switch labels {
+        case .below, .above:
+            let offset = radius + (detail == nil ? 22 : 28)
             VStack(spacing: 1) {
                 Text(label)
                     .font(.caption2)
@@ -291,8 +281,8 @@ struct EnergyFlowView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .position(x: point.x, y: point.y + radius + (detail == nil ? 22 : 28))
-        } else {
+            .position(x: point.x, y: labels == .below ? point.y + offset : point.y - offset)
+        case .titleAbove:
             // Libellé seul au-dessus de la pastille (la valeur est ailleurs).
             Text(label)
                 .font(.caption2)
