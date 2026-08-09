@@ -20,6 +20,17 @@ enum EnergyMath {
         return min(storedWh / solarWh, 1)
     }
 
+    /// Soutirage réseau de la maison seule : la mesure du Smart CT inclut la
+    /// charge secteur du SolarFlow — on la déduit.
+    static func gridToHome(ctTotal: Double, gridIn: Double) -> Double {
+        max(0, ctTotal - gridIn)
+    }
+
+    /// Consommation totale de la maison : soutirage réseau + injection SolarFlow.
+    static func homeTotal(ctTotal: Double, gridIn: Double, outputHome: Double) -> Double {
+        gridToHome(ctTotal: ctTotal, gridIn: gridIn) + outputHome
+    }
+
     /// Facteur d'atténuation nuageuse de Kasten–Czeplak (1980) :
     /// G = G_clair × (1 − 0,75 × (C/8)^3,4), C en octas — ici la couverture
     /// arrive en % (0–100). Plancher naturel : 0,25 à ciel entièrement couvert.

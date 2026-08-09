@@ -127,12 +127,14 @@ struct EnergyFlowView: View {
     /// charge secteur du SolarFlow, qui a son propre lien — on la déduit.
     private var gridToHomeWatts: Double {
         guard let ct = ctTotalPower else { return 0 }
-        return max(0, ct - state.gridInputPower)
+        return EnergyMath.gridToHome(ctTotal: ct, gridIn: state.gridInputPower)
     }
 
     /// Consommation totale de la maison : soutirage réseau + injection SolarFlow.
     private var homeTotalWatts: Double {
-        gridToHomeWatts + state.outputHomePower
+        guard let ct = ctTotalPower else { return state.outputHomePower }
+        return EnergyMath.homeTotal(ctTotal: ct, gridIn: state.gridInputPower,
+                                    outputHome: state.outputHomePower)
     }
 
     private var gridValue: String {
