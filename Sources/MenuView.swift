@@ -327,6 +327,10 @@ struct MenuView: View {
                 openWindow(id: "sun")
                 NSApp.activate(ignoringOtherApps: true)
             }
+            headerButton("clock.arrow.circlepath", color: .purple, help: "Historique") {
+                openWindow(id: "history")
+                NSApp.activate(ignoringOtherApps: true)
+            }
             headerButton("gearshape.fill", color: .teal, help: "R\u{00e9}glages") {
                 openSettings()
                 NSApp.activate(ignoringOtherApps: true)
