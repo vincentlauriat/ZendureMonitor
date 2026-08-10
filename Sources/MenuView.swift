@@ -323,8 +323,8 @@ struct MenuView: View {
                 openWindow(id: "dashboard")
                 NSApp.activate(ignoringOtherApps: true)
             }
-            headerButton("sun.horizon.fill", color: .orange, help: "Soleil") {
-                openWindow(id: "sun")
+            headerButton("sun.horizon.fill", color: .orange, help: "SunRoad (soleil en 3D)") {
+                openWindow(id: "sunroad")
                 NSApp.activate(ignoringOtherApps: true)
             }
             headerButton("clock.arrow.circlepath", color: .purple, help: "Historique") {

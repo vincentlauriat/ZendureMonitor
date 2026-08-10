@@ -74,6 +74,9 @@ targets:
       - path: Sources/Cloud/CloudDeviceState.swift
       - path: Sources/Cloud/ZendureAppAPI.swift
       - path: Sources/Cloud/EnergyHistory.swift
+      - path: Sources/SunRoad/SunRoadGeometry.swift
+      - path: Sources/SunRoad/GeoProjection.swift
+      - path: Sources/SunRoad/OverpassService.swift
       - path: Sources/Shared/SunCalc.swift
       - path: Sources/Shared/SolarGeometry.swift
       - path: Sources/Shared/Format.swift

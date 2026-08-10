@@ -192,15 +192,22 @@
       and back to local as soon as it does again.</p>
     </div>
     <div class="card">
-      <h3>🌅 Sun window</h3>
-      <p>Rebuilt in 1.9 around your panel arrays — describe each orientation (peak power,
-      azimuth, tilt) and re-aim it live with two sliders. An animated <strong>sky dome</strong>
-      shows the sun's real path over the day, both solstice
-      arcs, today's measured production placed where the sun actually stood, and a marker for
-      each of your panel arrays with its live incidence gap. A <strong>solar compass</strong>
-      with true iso-incidence loops, a per-array breakdown, twilights and golden hours — plus
-      the local weather (Open-Meteo) with a cloud-adjusted forecast. Ephemerides are computed
-      locally (NOAA algorithm — nothing leaves your Mac).</p>
+      <h3>🌅 Sun analytics — now inside SunRoad</h3>
+      <p>Everything the Sun window pioneered lives on in SunRoad's sidebar: per-array
+      <strong>azimuth/tilt sliders</strong> that re-aim the panels live in the 3D scene,
+      ephemerides computed locally (NOAA — nothing leaves your Mac), twilights and golden
+      hours, clear-sky theoretical output with estimated efficiency, and the local weather
+      (Open-Meteo) with a cloud-adjusted forecast.</p>
+    </div>
+    <div class="card">
+      <h3>🧊 SunRoad — your home in 3D</h3>
+      <p>New in 2.0. A real-3D scene of <strong>your house, your neighborhood and the sun</strong>:
+      building footprints and roads from OpenStreetMap, the sun as an actual light source with
+      <strong>real cast shadows</strong> sweeping across the day, your panel arrays at their true
+      azimuth and tilt, animated energy-flow beads paced by the live watts, a production ribbon
+      along the sun's arc, real cloud cover veiling the light, a <strong>±48 h timeline</strong>,
+      per-layer visibility toggles and a clean wall mode. Inspired by the Helios card for
+      Home Assistant — in native SceneKit.</p>
     </div>
     <div class="card">
       <h3>📈 History window</h3>
@@ -236,15 +243,12 @@
 </section>
 
 <section class="wrap">
-  <h2>The <span class="em">dashboard</span> and the Sun window</h2>
-  <p class="lead">A dedicated window for the whole picture — and another one for the sun itself.</p>
+  <h2>The <span class="em">dashboard</span> — and SunRoad in 3D</h2>
+  <p class="lead">A dedicated window for the whole picture — and, since 2.0, a real-3D scene of your
+  home under its sun (SunRoad replaces the former Sun window; its analytics live on in the sidebar).</p>
   <figure class="shot" style="max-width:760px">
     <img src="dashboard.png" alt="Zendure Monitor dashboard: hub-centric energy-flow diagram with the SolarFlow at the center and panels, batteries, public grid, home and off-grid outlet as peripherals, plus production, battery, device and history cards">
     <figcaption>The energy-flow diagram: links animate only when energy actually flows, with live wattage — and with a Smart CT, the real grid draw and the home's total consumption.</figcaption>
-  </figure>
-  <figure class="shot" style="max-width:900px; margin-top:32px">
-    <img src="sun.png" alt="Zendure Monitor Sun window: an animated sky dome with the sun's real path, the solstice arcs, today's production and a marker per panel array, a solar compass with iso-incidence loops, the per-array breakdown with azimuth and tilt sliders, the ephemerides, the twilights, the theoretical output and the local weather">
-    <figcaption>The Sun window — the animated sky dome and the solar compass, then your panel arrays (two sliders re-aim one live), the ephemerides, the light, the theoretical output and the weather. All on one screen.</figcaption>
   </figure>
 </section>
 

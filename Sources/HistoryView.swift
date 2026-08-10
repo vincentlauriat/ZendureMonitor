@@ -20,8 +20,13 @@ struct HistoryView: View {
                 if history.isConfigured {
                     controls
                     statusBanner
-                    ForEach(history.devices) { device in
+                    ForEach(history.devices.filter { !history.unsupported.contains($0.id) }) { device in
                         deviceSection(device)
+                    }
+                    if !history.unsupported.isEmpty {
+                        Text("\(history.unsupported.count) appareil(s) du compte sans historique d'énergie (SmartMeter…) masqué(s).")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
                     }
                     disclaimer
                 } else {

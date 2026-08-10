@@ -37,4 +37,4 @@ This API is **not contractual**: field names and units (assumed Wh) come from co
 
 ---
 
-[← The Sun window](sun.md) | [Index](../README.md) | [Widgets →](widgets.md)
+[← The dashboard](dashboard.md) | [Index](../README.md) | [The SunRoad window →](sunroad.md)

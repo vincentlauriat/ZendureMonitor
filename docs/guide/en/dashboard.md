@@ -54,4 +54,4 @@ The 14-day histogram with the period **total**, the period **record**, today's *
 
 ---
 
-[← The panel](panel.md) | [Index](../README.md) | [The Sun window →](sun.md)
+[← The panel](panel.md) | [Index](../README.md) | [The History window →](history.md)

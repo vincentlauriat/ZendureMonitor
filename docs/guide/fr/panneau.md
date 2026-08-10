@@ -23,7 +23,7 @@ Depuis la 1.11, chaque carte se **replie d'un clic sur son en-tête** (chevron �
 En haut du panneau : le nom de l'application, l'heure de la dernière mise à jour, et cinq actions en icônes :
 
 - **Jauge bleue** — ouvre le [tableau de bord](tableau-de-bord.md) ;
-- **Soleil orange** — ouvre la [fenêtre Soleil](soleil.md) ;
+- **Soleil orange** — ouvre la [fenêtre SunRoad](sunroad.md), le soleil en 3D *(2.0 — remplace l'ancienne fenêtre Soleil)* ;
 - **Horloge violette** — ouvre la [fenêtre Historique](historique.md) *(1.12)* ;
 - **Engrenage turquoise** — ouvre les Réglages ;
 - **⋯** — menu avec **Rechercher des mises à jour…** et **Quitter Zendure Monitor**.
