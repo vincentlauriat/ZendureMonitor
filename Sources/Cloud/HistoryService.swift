@@ -127,8 +127,14 @@ final class HistoryService: ObservableObject {
                     )
                     let totals = try ZendureAppAPI.parseEnergyFields(totalsData)
                     done += 1
-                    if totals.isEmpty, (days[item.device.id] ?? []).isEmpty {
+                    // « Aucune donnée » = totaux vides ET aucun jour PORTEUR
+                    // de champs — des jours en cache aux champs vides (récoltés
+                    // avant ce filtre) ne comptent pas, et sont purgés.
+                    let meaningfulDays = (days[item.device.id] ?? []).contains { !$0.fields.isEmpty }
+                    if totals.isEmpty, !meaningfulDays {
                         unsupported.insert(item.device.id)
+                        days[item.device.id] = []
+                        HistoryCache.save([], deviceId: item.device.id)
                         done += item.dates.count
                         phase = .loading(done: done, total: total)
                         continue
@@ -153,6 +159,13 @@ final class HistoryService: ObservableObject {
                     stored.sort { $0.date < $1.date }
                     days[item.device.id] = stored
                     HistoryCache.save(stored, deviceId: item.device.id)
+                    // Filet après coup : si même les jours fraîchement
+                    // récupérés sont vides et les totaux aussi, l'appareil
+                    // n'a réellement pas d'historique.
+                    if (lifetime[item.device.id]?.isEmpty ?? true),
+                       !stored.contains(where: { !$0.fields.isEmpty }) {
+                        unsupported.insert(item.device.id)
+                    }
                 } catch {
                     // Un appareil en échec ne condamne pas les autres.
                     lastDeviceError = error.localizedDescription
