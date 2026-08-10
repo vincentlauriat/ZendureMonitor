@@ -15,6 +15,16 @@ Par défaut, l'app lit le SolarFlow **en local** (API zenSDK sur votre réseau) 
 
 Les données arrivent alors en **MQTT temps réel** depuis les serveurs Zendure, où que vous soyez — pas besoin de VPN. Historique, cumuls du jour, alertes de panne et widgets fonctionnent exactement comme en local. Le bas du panneau indique toujours la voie utilisée (locale — hôte principal / de secours, ou Cloud).
 
+### La bascule automatique (nouveau en 1.11)
+
+Plus besoin de changer de source à la main : dans *Réglages → Appareil → Source des données*, activez **« Basculer automatiquement »**. Ensuite :
+
+- **En local**, après **2 relevés consécutifs en échec** (l'hôte de secours compris) et si une Cloud Key est enregistrée, l'app passe seule en mode Cloud — typiquement quand votre Mac quitte la maison.
+- **En mode Cloud**, elle sonde l'hôte local toutes les 60 secondes et **revient en local** dès que le SolarFlow répond à nouveau.
+- Quand le mode Cloud résulte d'une bascule, le pied du panneau l'indique : « Connexion : Cloud Zendure — **bascule auto** ».
+
+L'option est désactivée par défaut. Deux échecs (une dizaine de secondes) suffisent à basculer, une micro-coupure Wi-Fi ne suffit donc généralement pas à déclencher un aller-retour.
+
 ### Ce qu'il faut savoir
 
 - **La clé reste sur votre Mac** : elle est conservée dans le trousseau macOS et sert uniquement à obtenir les identifiants MQTT auprès de Zendure. Le jeton brut ne quitte jamais la machine.

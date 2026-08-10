@@ -6,7 +6,9 @@ title: Le panneau
 
 # Le panneau de la barre de menu
 
-Cliquez sur l'icône ☀️ pour ouvrir le panneau : quatre cartes qui résument l'essentiel en un coup d'œil.
+Cliquez sur l'icône ☀️ pour ouvrir le panneau : cinq cartes qui résument l'essentiel en un coup d'œil.
+
+Depuis la 1.11, chaque carte se **replie d'un clic sur son en-tête** (chevron à droite) : repliée, elle ne garde qu'une ligne avec sa valeur clé — production en W, batterie en %, flux maison en W, consommation totale en W, total 14 jours en kWh. L'état est mémorisé carte par carte. Et chaque carte peut être **masquée entièrement** dans *Réglages → Affichage → Cartes du panneau*.
 
 ![Panneau, thème clair](../images/panel-light.png)
 
@@ -49,6 +51,14 @@ Astuce : un **double-clic sur n'importe quel graphique** du panneau ouvre le tab
 - Une sparkline de la consommation envoyée à la maison.
 - La **répartition solaire du jour** : « X % direct · Y % stocké » — la part de la production partie directement vers la maison et la part qui a chargé la batterie (la charge depuis le secteur, par exemple en heures creuses, est déduite du calcul). Le cumul **Réseau** du jour s'affiche à droite dès qu'il est significatif.
 
+## Carte Consommation maison
+
+*Nouvelle en 1.10.3.*
+
+- Avec un [compteur Smart CT](cloud.md#le-compteur-smart-ct) configuré : la **consommation totale de la maison** en grand — le soutirage réseau mesuré au tableau (la charge secteur du SolarFlow, que le compteur voit passer aussi, est déduite) plus l'injection du SolarFlow — avec le détail par source : **Depuis le SolarFlow** et **Depuis le réseau**.
+- Sans compteur : seule l'injection du SolarFlow est affichée (« via SolarFlow seulement »), avec une invitation à renseigner le Smart CT.
+- Si le compteur est configuré mais **injoignable** (typiquement à distance : il n'est lisible que sur le réseau local), la carte le dit explicitement — la valeur est marquée partielle plutôt que de laisser croire qu'aucun compteur n'existe.
+
 ## Carte Historique
 
 - L'histogramme des **14 derniers jours** avec le total de la période.
@@ -67,7 +77,7 @@ Dans **Réglages → Affichage**, choisissez ce que la barre de menu affiche à 
 - **Niveau de batterie (%)** ;
 - **Consommation maison (W)**.
 
-Tout décocher n'affiche que l'icône ☀️. Le même onglet propose le **thème** : Auto (suit macOS), Sombre ou Clair.
+Tout décocher n'affiche que l'icône ☀️. Le même onglet propose la section **Cartes du panneau** (afficher ou masquer chacune des cinq cartes) et le **thème** : Auto (suit macOS), Sombre ou Clair.
 
 ---
 
