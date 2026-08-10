@@ -129,6 +129,20 @@ final class MQTTPacketTests: XCTestCase {
         XCTAssertEqual(MQTTPacket.parse(from: &buffer), .pingresp)
         XCTAssertNil(MQTTPacket.parse(from: &buffer))
     }
+
+    func testParseSubackCarriesReturnCodes() {
+        // SUBACK : packetId 1, deux topics accordés QoS 0, un refusé (0x80).
+        var buffer = Data([0x90, 0x05, 0x00, 0x01, 0x00, 0x00, 0x80])
+        XCTAssertEqual(MQTTPacket.parse(from: &buffer),
+                       .suback(returnCodes: [0x00, 0x00, 0x80]))
+    }
+
+    func testParseSubackWithoutCodesIsEmpty() {
+        // Corps réduit au packetId : aucun code — ne doit pas être pris pour
+        // un refus généralisé.
+        var buffer = Data([0x90, 0x02, 0x00, 0x01])
+        XCTAssertEqual(MQTTPacket.parse(from: &buffer), .suback(returnCodes: []))
+    }
 }
 
 final class CloudDeviceStateTests: XCTestCase {
