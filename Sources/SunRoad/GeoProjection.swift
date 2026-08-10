@@ -11,6 +11,22 @@ struct SunRoadBuilding: Codable, Equatable {
     var height: Double
 }
 
+/// Une route du quartier : polyligne (lat/lon OSM), largeur déduite de la
+/// classe `highway`, et distinction piéton (rendu plus clair et plus fin).
+struct SunRoadRoad: Codable, Equatable {
+    var points: [SunRoadBuilding.GeoPoint]
+    var width: Double
+    var footpath: Bool
+}
+
+/// Le quartier complet tel que mis en cache — bâtiments et routes.
+struct SunRoadNeighborhood: Codable, Equatable {
+    var buildings: [SunRoadBuilding]
+    var roads: [SunRoadRoad]
+
+    static let empty = SunRoadNeighborhood(buildings: [], roads: [])
+}
+
 /// Projection locale lat/lon → mètres autour d'un point d'origine.
 /// Équirectangulaire : l'erreur est négligeable à l'échelle d'un quartier
 /// (< 0,1 % à 200 m). Fonctions pures, testées.

@@ -7,21 +7,48 @@ enum OverpassParser {
     /// Mètres par étage quand seul `building:levels` est renseigné.
     static let metersPerLevel = 3.0
 
-    static func parse(_ data: Data) throws -> [SunRoadBuilding] {
+    static func parse(_ data: Data) throws -> SunRoadNeighborhood {
         guard let root = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
               let elements = root["elements"] as? [[String: Any]] else {
             throw URLError(.cannotParseResponse)
         }
-        return elements.compactMap { element in
+        var buildings: [SunRoadBuilding] = []
+        var roads: [SunRoadRoad] = []
+        for element in elements {
             guard element["type"] as? String == "way",
-                  let geometry = element["geometry"] as? [[String: Any]] else { return nil }
+                  let geometry = element["geometry"] as? [[String: Any]] else { continue }
             let points = geometry.compactMap { entry -> SunRoadBuilding.GeoPoint? in
                 guard let lat = entry["lat"] as? Double, let lon = entry["lon"] as? Double else { return nil }
                 return .init(lat: lat, lon: lon)
             }
-            guard points.count >= 3 else { return nil }
             let tags = element["tags"] as? [String: String] ?? [:]
-            return SunRoadBuilding(points: points, height: height(from: tags))
+            if let highway = tags["highway"] {
+                // Une route est une polyligne : 2 points suffisent.
+                guard points.count >= 2 else { continue }
+                let (width, footpath) = roadProfile(highway: highway)
+                roads.append(SunRoadRoad(points: points, width: width, footpath: footpath))
+            } else if tags["building"] != nil {
+                guard points.count >= 3 else { continue }
+                buildings.append(SunRoadBuilding(points: points, height: height(from: tags)))
+            }
+        }
+        return SunRoadNeighborhood(buildings: buildings, roads: roads)
+    }
+
+    /// Largeur de chaussée plausible (m) par classe `highway`, et caractère
+    /// piéton (rendu plus fin et plus clair).
+    static func roadProfile(highway: String) -> (width: Double, footpath: Bool) {
+        switch highway {
+        case "motorway", "trunk": return (9, false)
+        case "primary": return (8, false)
+        case "secondary": return (7, false)
+        case "tertiary": return (6, false)
+        case "residential", "unclassified", "living_street": return (5, false)
+        case "service": return (3.5, false)
+        case "track": return (3, false)
+        case "footway", "path", "cycleway", "pedestrian", "steps", "bridleway":
+            return (1.8, true)
+        default: return (4, false)
         }
     }
 
@@ -51,21 +78,22 @@ enum SunRoadCache {
         return dir
     }
 
+    /// Suffixe `_v2` : le format v1 (bâtiments seuls) est simplement refetché.
     private static func file(latitude: Double, longitude: Double) -> URL? {
-        directory?.appendingPathComponent(String(format: "%.4f_%.4f.json", latitude, longitude))
+        directory?.appendingPathComponent(String(format: "%.4f_%.4f_v2.json", latitude, longitude))
     }
 
-    static func load(latitude: Double, longitude: Double) -> [SunRoadBuilding]? {
+    static func load(latitude: Double, longitude: Double) -> SunRoadNeighborhood? {
         guard let url = file(latitude: latitude, longitude: longitude),
               let data = try? Data(contentsOf: url),
-              let buildings = try? JSONDecoder().decode([SunRoadBuilding].self, from: data)
+              let neighborhood = try? JSONDecoder().decode(SunRoadNeighborhood.self, from: data)
         else { return nil }
-        return buildings
+        return neighborhood
     }
 
-    static func save(_ buildings: [SunRoadBuilding], latitude: Double, longitude: Double) {
+    static func save(_ neighborhood: SunRoadNeighborhood, latitude: Double, longitude: Double) {
         guard let url = file(latitude: latitude, longitude: longitude),
-              let data = try? JSONEncoder().encode(buildings) else { return }
+              let data = try? JSONEncoder().encode(neighborhood) else { return }
         try? data.write(to: url, options: .atomic)
     }
 }
@@ -75,19 +103,25 @@ enum SunRoadCache {
 /// cache agressif, un seul rayon, plafond de résultats.
 enum OverpassService {
     static let radiusMeters = 120
+    /// Les routes un peu plus loin que les bâtiments : elles structurent la vue.
+    static let roadRadiusMeters = 170
     static let maxBuildings = 250
+    static let maxRoads = 200
     private static let endpoint = URL(string: "https://overpass-api.de/api/interpreter")!
 
     /// Quartier depuis le cache, sinon depuis Overpass (`force` re-télécharge).
     static func neighborhood(latitude: Double, longitude: Double,
-                             force: Bool = false) async throws -> [SunRoadBuilding] {
+                             force: Bool = false) async throws -> SunRoadNeighborhood {
         if !force, let cached = SunRoadCache.load(latitude: latitude, longitude: longitude) {
             return cached
         }
         let query = """
         [out:json][timeout:25];
-        way["building"](around:\(radiusMeters),\(latitude),\(longitude));
-        out geom \(maxBuildings * 2);
+        (
+          way["building"](around:\(radiusMeters),\(latitude),\(longitude));
+          way["highway"](around:\(roadRadiusMeters),\(latitude),\(longitude));
+        );
+        out geom \((maxBuildings + maxRoads) * 2);
         """
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
@@ -100,13 +134,15 @@ enum OverpassService {
             throw URLError(.badServerResponse)
         }
         // Les plus proches d'abord, plafonnés — la scène reste fluide.
-        let buildings = try OverpassParser.parse(data)
+        let parsed = try OverpassParser.parse(data)
+        let buildings = parsed.buildings
             .sorted {
                 GeoProjection.distance(from: $0, originLat: latitude, originLon: longitude)
                     < GeoProjection.distance(from: $1, originLat: latitude, originLon: longitude)
             }
             .prefix(maxBuildings)
-        let result = Array(buildings)
+        let result = SunRoadNeighborhood(buildings: Array(buildings),
+                                         roads: Array(parsed.roads.prefix(maxRoads)))
         SunRoadCache.save(result, latitude: latitude, longitude: longitude)
         return result
     }

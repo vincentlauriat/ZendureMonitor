@@ -10,9 +10,9 @@ struct SunRoadSceneView: NSViewRepresentable {
     var longitude: Double
     var date: Date
     var arrays: [PanelArray]
-    /// Bâtiments du quartier (Overpass/OSM) — vide tant que non chargés :
-    /// la maison placeholder assure l'intérim.
-    var buildings: [SunRoadBuilding]
+    /// Le quartier (Overpass/OSM : bâtiments + routes) — vide tant que non
+    /// chargé : la maison placeholder assure l'intérim.
+    var neighborhood: SunRoadNeighborhood
 
     private static let domeRadius = 140.0
 
@@ -60,9 +60,10 @@ struct SunRoadSceneView: NSViewRepresentable {
             coordinator.arraysKey = arrays
             rebuildPanels(coordinator: coordinator)
         }
-        if coordinator.buildingsKey != buildings {
-            coordinator.buildingsKey = buildings
+        if coordinator.neighborhoodKey != neighborhood {
+            coordinator.neighborhoodKey = neighborhood
             rebuildBuildings(coordinator: coordinator)
+            rebuildRoads(coordinator: coordinator)
         }
         updateSun(coordinator: coordinator)
     }
@@ -161,6 +162,9 @@ struct SunRoadSceneView: NSViewRepresentable {
         let buildingsContainer = SCNNode()
         root.addChildNode(buildingsContainer)
         coordinator.buildingsNode = buildingsContainer
+        let roadsContainer = SCNNode()
+        root.addChildNode(roadsContainer)
+        coordinator.roadsNode = roadsContainer
     }
 
     // MARK: - Le quartier (Overpass/OSM)
@@ -168,6 +172,7 @@ struct SunRoadSceneView: NSViewRepresentable {
     private func rebuildBuildings(coordinator: Coordinator) {
         guard let container = coordinator.buildingsNode else { return }
         container.childNodes.forEach { $0.removeFromParentNode() }
+        let buildings = neighborhood.buildings
         // Sans données OSM, la maison placeholder reste visible.
         coordinator.placeholderHouse?.isHidden = !buildings.isEmpty
         guard !buildings.isEmpty else { return }
@@ -208,6 +213,50 @@ struct SunRoadSceneView: NSViewRepresentable {
             node.position = SCNVector3(0, building.height / 2, 0)
             node.castsShadow = true
             container.addChildNode(node)
+        }
+    }
+
+    /// Les routes : rubans plats posés juste au-dessus du sol (pas d'ombre
+    /// portée), un disque à chaque sommet interne pour arrondir les virages.
+    private func rebuildRoads(coordinator: Coordinator) {
+        guard let container = coordinator.roadsNode else { return }
+        container.childNodes.forEach { $0.removeFromParentNode() }
+        guard !neighborhood.roads.isEmpty else { return }
+
+        let asphalt = SCNMaterial()
+        asphalt.diffuse.contents = NSColor(calibratedWhite: 0.32, alpha: 1)
+        let footpath = SCNMaterial()
+        footpath.diffuse.contents = NSColor(calibratedRed: 0.62, green: 0.58, blue: 0.50, alpha: 1)
+
+        for road in neighborhood.roads {
+            let material = road.footpath ? footpath : asphalt
+            // Les chaussées au ras du sol, les chemins un cheveu au-dessus
+            // pour éviter le z-fighting aux croisements.
+            let y = road.footpath ? 0.10 : 0.07
+            let projected = road.points.map {
+                GeoProjection.meters(lat: $0.lat, lon: $0.lon, originLat: latitude, originLon: longitude)
+            }
+            for (a, b) in zip(projected, projected.dropFirst()) {
+                let dx = b.east - a.east
+                let dz = -(b.north - a.north)
+                let length = (dx * dx + dz * dz).squareRoot()
+                guard length > 0.1 else { continue }
+                let slab = SCNBox(width: length, height: 0.06, length: road.width, chamferRadius: 0)
+                slab.materials = [material]
+                let node = SCNNode(geometry: slab)
+                node.position = SCNVector3((a.east + b.east) / 2, y, (-a.north - b.north) / 2)
+                node.eulerAngles.y = CGFloat(-atan2(dz, dx))
+                node.castsShadow = false
+                container.addChildNode(node)
+            }
+            for point in projected.dropFirst().dropLast() {
+                let disc = SCNCylinder(radius: road.width / 2, height: 0.06)
+                disc.materials = [material]
+                let node = SCNNode(geometry: disc)
+                node.position = SCNVector3(point.east, y, -point.north)
+                node.castsShadow = false
+                container.addChildNode(node)
+            }
         }
     }
 
@@ -359,9 +408,10 @@ struct SunRoadSceneView: NSViewRepresentable {
         var arcNode: SCNNode?
         var panelsNode: SCNNode?
         var buildingsNode: SCNNode?
+        var roadsNode: SCNNode?
         var placeholderHouse: SCNNode?
         var arcKey = ""
         var arraysKey: [PanelArray] = []
-        var buildingsKey: [SunRoadBuilding] = []
+        var neighborhoodKey = SunRoadNeighborhood.empty
     }
 }

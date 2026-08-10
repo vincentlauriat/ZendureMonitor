@@ -16,10 +16,10 @@ struct SunRoadView: View {
     /// Le quartier (Overpass/OSM) — cache disque d'abord, réseau sinon.
     enum NeighborhoodState: Equatable {
         case idle, loading
-        case loaded(Int)
+        case loaded(buildings: Int, roads: Int)
         case failed(String)
     }
-    @State private var buildings: [SunRoadBuilding] = []
+    @State private var district: SunRoadNeighborhood = .empty
     @State private var neighborhood: NeighborhoodState = .idle
 
     private var configured: Bool { latitude != 0 || longitude != 0 }
@@ -30,7 +30,7 @@ struct SunRoadView: View {
             if configured {
                 ZStack(alignment: .topLeading) {
                     SunRoadSceneView(latitude: latitude, longitude: longitude,
-                                    date: now, arrays: arrays, buildings: buildings)
+                                    date: now, arrays: arrays, neighborhood: district)
                         .ignoresSafeArea()
                     hud
                 }
@@ -89,9 +89,9 @@ struct SunRoadView: View {
             case .loading:
                 ProgressView().controlSize(.mini)
                 Text("Chargement du quartier (OpenStreetMap)…")
-            case .loaded(let count):
+            case .loaded(let buildings, let roads):
                 Image(systemName: "building.2")
-                Text("\(count) bâtiment(s) du quartier")
+                Text("\(buildings) bâtiment(s) · \(roads) route(s)")
             case .failed(let message):
                 Image(systemName: "wifi.exclamationmark")
                     .foregroundStyle(.orange)
@@ -118,8 +118,8 @@ struct SunRoadView: View {
             let result = try await OverpassService.neighborhood(latitude: latitude,
                                                                 longitude: longitude,
                                                                 force: force)
-            buildings = result
-            neighborhood = .loaded(result.count)
+            district = result
+            neighborhood = .loaded(buildings: result.buildings.count, roads: result.roads.count)
         } catch {
             // La scène reste utilisable avec la maison placeholder.
             neighborhood = .failed(error.localizedDescription)

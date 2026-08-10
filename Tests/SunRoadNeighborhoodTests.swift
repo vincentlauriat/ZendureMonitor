@@ -37,17 +37,33 @@ final class OverpassParserTests: XCTestCase {
        "geometry":[{"lat":48.2,"lon":2.2},{"lat":48.2001,"lon":2.2},{"lat":48.2001,"lon":2.2001}]},
       {"type":"way","id":3,"tags":{"building":"yes"},
        "geometry":[{"lat":48.3,"lon":2.3},{"lat":48.3001,"lon":2.3}]},
+      {"type":"way","id":5,"tags":{"highway":"residential"},
+       "geometry":[{"lat":48.5,"lon":2.5},{"lat":48.5001,"lon":2.5}]},
+      {"type":"way","id":6,"tags":{"highway":"footway"},
+       "geometry":[{"lat":48.6,"lon":2.6},{"lat":48.6001,"lon":2.6},{"lat":48.6002,"lon":2.6}]},
       {"type":"node","id":4,"lat":48.4,"lon":2.4}
     ]}
     """#
 
     func testParseFixture() throws {
-        let buildings = try OverpassParser.parse(Data(fixture.utf8))
-        // Le way à 2 points (dégénéré) et le node sont écartés.
-        XCTAssertEqual(buildings.count, 2)
-        XCTAssertEqual(buildings[0].points.count, 4)
-        XCTAssertEqual(buildings[0].height, 7.5)          // "7.5 m" nettoyé
-        XCTAssertEqual(buildings[1].height, 6)            // 2 niveaux × 3 m
+        let parsed = try OverpassParser.parse(Data(fixture.utf8))
+        // Le way bâtiment à 2 points (dégénéré) et le node sont écartés.
+        XCTAssertEqual(parsed.buildings.count, 2)
+        XCTAssertEqual(parsed.buildings[0].points.count, 4)
+        XCTAssertEqual(parsed.buildings[0].height, 7.5)   // "7.5 m" nettoyé
+        XCTAssertEqual(parsed.buildings[1].height, 6)     // 2 niveaux × 3 m
+        // Les routes : 2 points suffisent ; largeur et caractère piéton déduits.
+        XCTAssertEqual(parsed.roads.count, 2)
+        XCTAssertEqual(parsed.roads[0].width, 5)          // residential
+        XCTAssertFalse(parsed.roads[0].footpath)
+        XCTAssertTrue(parsed.roads[1].footpath)           // footway
+    }
+
+    func testRoadProfiles() {
+        XCTAssertEqual(OverpassParser.roadProfile(highway: "primary").width, 8)
+        XCTAssertEqual(OverpassParser.roadProfile(highway: "service").width, 3.5)
+        XCTAssertTrue(OverpassParser.roadProfile(highway: "cycleway").footpath)
+        XCTAssertEqual(OverpassParser.roadProfile(highway: "exotique").width, 4)  // défaut
     }
 
     func testHeightFallbacks() {
