@@ -314,8 +314,17 @@ struct SunRoadView: View {
             district = result
             neighborhood = .loaded(buildings: result.buildings.count, roads: result.roads.count)
         } catch {
-            // La scène reste utilisable avec la maison placeholder.
-            neighborhood = .failed(error.localizedDescription)
+            // Fetch échoué (Overpass throttle souvent) : retomber sur le
+            // cache voisin — typiquement celui des réglages quand la maison
+            // vient d'être désignée (nouvelle clé, données identiques : les
+            // coordonnées OSM sont absolues, seule la projection change).
+            if let fallback = SunRoadCache.load(latitude: latitude, longitude: longitude)
+                ?? SunRoadCache.load(latitude: effLat, longitude: effLon) {
+                district = fallback
+                neighborhood = .loaded(buildings: fallback.buildings.count, roads: fallback.roads.count)
+            } else {
+                neighborhood = .failed(error.localizedDescription)
+            }
         }
     }
 

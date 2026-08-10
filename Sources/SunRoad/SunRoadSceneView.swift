@@ -126,8 +126,13 @@ struct SunRoadSceneView: NSViewRepresentable {
             coordinator.arraysKey = arrays
             rebuildPanels(coordinator: coordinator)
         }
-        if coordinator.neighborhoodKey != neighborhood {
+        // Reconstruire aussi quand l'ORIGINE change (maison désignée au
+        // clic) : les données OSM restent valables, seule la projection
+        // bouge — sans ça, le quartier restait projeté sur l'ancien centre.
+        let originKey = "\(latitude),\(longitude)"
+        if coordinator.neighborhoodKey != neighborhood || coordinator.originKey != originKey {
             coordinator.neighborhoodKey = neighborhood
+            coordinator.originKey = originKey
             rebuildBuildings(coordinator: coordinator)
             rebuildRoads(coordinator: coordinator)
         }
@@ -644,6 +649,7 @@ struct SunRoadSceneView: NSViewRepresentable {
         var energyPropsNode: SCNNode?
         var ribbonNode: SCNNode?
         var arcKey = ""
+        var originKey = ""
         var arraysKey: [PanelArray] = []
         var neighborhoodKey = SunRoadNeighborhood.empty
         var flowsKey = SunRoadFlows()

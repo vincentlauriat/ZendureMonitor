@@ -28,6 +28,10 @@ final class HistoryService: ObservableObject {
     /// Journal de débogage : les derniers échanges HTTP avec l'API app
     /// (mot de passe masqué), affiché dans la fenêtre Historique.
     @Published private(set) var exchanges: [ZendureAppAPI.Exchange] = []
+    /// Appareils du compte sans historique d'énergie (ex. SmartMeter 3CT :
+    /// l'endpoint tdengine solarFlow ne le couvre pas) — masqués de la
+    /// fenêtre, et leurs 365 jours ne sont jamais demandés.
+    @Published private(set) var unsupported: Set<String> = []
 
     private var session: ZendureAppAPI.Session?
     private var exchangeCounter = 0
@@ -64,6 +68,7 @@ final class HistoryService: ObservableObject {
         devices = []
         days = [:]
         lifetime = [:]
+        unsupported = []
         phase = .notConfigured
     }
 
@@ -110,33 +115,56 @@ final class HistoryService: ObservableObject {
             var done = 0
             phase = .loading(done: done, total: total)
 
+            var lastDeviceError: String?
             for item in plan {
-                var stored = days[item.device.id] ?? []
-                for date in item.dates {
-                    let data = try await send(
-                        ZendureAppAPI.energyRequest(session: session, device: item.device, date: date),
-                        label: String(localized: "Énergie \(date)")
+                do {
+                    // Sonde d'abord les totaux vie entière : un appareil qui
+                    // n'en a pas (SmartMeter…) n'a pas d'historique — inutile
+                    // de lui demander 365 jours, et sa carte est masquée.
+                    let totalsData = try await send(
+                        ZendureAppAPI.energyRequest(session: session, device: item.device, date: nil),
+                        label: String(localized: "Totaux vie entière")
                     )
-                    let fields = try ZendureAppAPI.parseEnergyFields(data)
-                    stored.removeAll { $0.date == date }
-                    stored.append(EnergyDay(date: date, fields: fields))
+                    let totals = try ZendureAppAPI.parseEnergyFields(totalsData)
                     done += 1
+                    if totals.isEmpty, (days[item.device.id] ?? []).isEmpty {
+                        unsupported.insert(item.device.id)
+                        done += item.dates.count
+                        phase = .loading(done: done, total: total)
+                        continue
+                    }
+                    unsupported.remove(item.device.id)
+                    lifetime[item.device.id] = totals
                     phase = .loading(done: done, total: total)
-                    try? await Task.sleep(nanoseconds: Self.throttleNanoseconds)
-                }
-                stored.sort { $0.date < $1.date }
-                days[item.device.id] = stored
-                HistoryCache.save(stored, deviceId: item.device.id)
 
-                let totalsData = try await send(
-                    ZendureAppAPI.energyRequest(session: session, device: item.device, date: nil),
-                    label: String(localized: "Totaux vie entière")
-                )
-                lifetime[item.device.id] = try ZendureAppAPI.parseEnergyFields(totalsData)
-                done += 1
-                phase = .loading(done: done, total: total)
+                    var stored = days[item.device.id] ?? []
+                    for date in item.dates {
+                        let data = try await send(
+                            ZendureAppAPI.energyRequest(session: session, device: item.device, date: date),
+                            label: String(localized: "Énergie \(date)")
+                        )
+                        let fields = try ZendureAppAPI.parseEnergyFields(data)
+                        stored.removeAll { $0.date == date }
+                        stored.append(EnergyDay(date: date, fields: fields))
+                        done += 1
+                        phase = .loading(done: done, total: total)
+                        try? await Task.sleep(nanoseconds: Self.throttleNanoseconds)
+                    }
+                    stored.sort { $0.date < $1.date }
+                    days[item.device.id] = stored
+                    HistoryCache.save(stored, deviceId: item.device.id)
+                } catch {
+                    // Un appareil en échec ne condamne pas les autres.
+                    lastDeviceError = error.localizedDescription
+                    done += item.dates.count + 1
+                    phase = .loading(done: done, total: total)
+                }
             }
-            phase = .idle
+            if let lastDeviceError {
+                phase = .failed(lastDeviceError)
+            } else {
+                phase = .idle
+            }
         } catch {
             session = nil  // jeton possiblement expiré : re-login au prochain essai
             phase = .failed(error.localizedDescription)
