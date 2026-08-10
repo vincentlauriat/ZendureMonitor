@@ -168,8 +168,10 @@
     <div class="card">
       <h3>📊 The full panel</h3>
       <p>Battery state of charge, charge and discharge power, output to the home, grid input,
-      per-MPPT PV input, today's solar energy, per-pack SOC and temperature — with a
-      15 min / day / 14 days selector, daily peak and a vs-yesterday comparison.</p>
+      per-MPPT PV input, today's solar energy, per-pack SOC and temperature, the home's total
+      consumption — with a 15 min / day / 14 days selector, daily peak and a vs-yesterday
+      comparison. New in 1.11: every card <strong>collapses to one line</strong> (click its
+      header — the key value stays visible) and can be hidden entirely in Settings.</p>
     </div>
     <div class="card">
       <h3>🔀 Energy-flow dashboard</h3>
@@ -185,7 +187,9 @@
       mode</strong>: paste the app's Authorization Cloud Key (kept in the macOS Keychain) and the
       data arrives in real time over MQTT — read-only, the local API stays the default. And if a
       <strong>SmartMeter3CT</strong> sits in your electrical panel, the app polls it on the LAN
-      for the home's real grid draw and total consumption.</p>
+      for the home's real grid draw and total consumption. New in 1.11: an opt-in
+      <strong>automatic switch</strong> moves to Cloud when the battery stops answering locally,
+      and back to local as soon as it does again.</p>
     </div>
     <div class="card">
       <h3>🌅 Sun window</h3>
@@ -261,7 +265,8 @@
       <p>New in 1.10, and optional. When the local API isn't reachable at all, switch the data
       source to Zendure's servers: paste the mobile app's <em>Authorization Cloud Key</em> (kept
       in the macOS Keychain) and the reports arrive in real time over MQTT, from anywhere —
-      no VPN. Read-only by design: battery control stays local-only.</p>
+      no VPN. Read-only by design: battery control stays local-only. Since 1.11 the switch can
+      even be <strong>automatic</strong>, both ways.</p>
     </div>
   </div>
   <div class="panel" style="margin-top:24px">
@@ -269,6 +274,7 @@
       <li><strong>In the default local mode, nothing goes to Zendure's servers.</strong> The app never signs in anywhere, has nothing to host and no token to store.</li>
       <li><strong>Bonjour discovery.</strong> The app finds the device (and the Smart CT meter) on your network by itself — or you can simply type an IP address.</li>
       <li><strong>The Smart CT is always read locally.</strong> Zendure's cloud does not relay the meter's readings, so the real grid draw and total consumption appear whenever your Mac is on the home LAN — in either mode.</li>
+      <li><strong>Automatic switching (1.11, opt-in).</strong> With a Cloud Key saved, the app moves to Cloud by itself after two failed local polls — typically when your Mac leaves the house — probes the local host every minute, and comes back to local as soon as the battery answers. The footer says "bascule auto" so you always know.</li>
     </ul>
     <p class="warn"><strong>⚠️ A word on remote access:</strong> the zenSDK API has no authentication
     whatsoever. Never port-forward the device's port 80 to the internet — use a VPN into your home

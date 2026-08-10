@@ -37,6 +37,10 @@ L'énergie du jour et l'historique sont normalement accumulés par l'application
 - dans **Réglages → Distant**, renseignez **Serveur d'historique 24/7** au format `hôte:port` (par exemple `minicorse.local:8899`) ;
 - l'application affiche alors l'historique du collecteur (badge vert « collecteur 24/7 » sur la carte Historique du tableau de bord) et garde le meilleur des deux comptages pour chaque jour.
 
+## Et si le VPN tombe ?
+
+Depuis la 1.11, le [mode Cloud](cloud.md#la-bascule-automatique-nouveau-en-111) peut prendre le relais **automatiquement** : avec l'option « Basculer automatiquement » activée et une Cloud Key enregistrée, l'app passe seule en Cloud quand le SolarFlow ne répond plus en local (VPN coupé, passerelle endormie…) et revient en local dès qu'il répond à nouveau. Le VPN reste utile pour le contrôle de la batterie et le Smart CT, tous deux locaux uniquement.
+
 ---
 
 [← Alertes et économies](alertes.md) | [Index](../README.md) | [FAQ et dépannage →](faq.md)

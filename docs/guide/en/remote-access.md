@@ -37,6 +37,10 @@ Today's energy and the history are normally accumulated by the app: when the Mac
 - in **Settings → Remote**, fill in **24/7 history server** as `host:port` (e.g. `minicorse.local:8899`);
 - the app then displays the collector's history (green "24/7 collector" badge on the dashboard's History card) and keeps the best of both counts for each day.
 
+## What if the VPN goes down?
+
+Since 1.11, the [Cloud mode](cloud.md#automatic-switching-new-in-111) can take over **automatically**: with the "Basculer automatiquement" option enabled and a Cloud Key saved, the app switches itself to Cloud when the SolarFlow stops answering locally (VPN down, gateway asleep…) and comes back to local as soon as it answers again. The VPN remains useful for battery control and the Smart CT, both local-only.
+
 ---
 
 [← Alerts and savings](alerts.md) | [Index](../README.md) | [FAQ and troubleshooting →](faq.md)
