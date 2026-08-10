@@ -223,6 +223,7 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.10.3 — home consumption card in the menu bar panel (total = measured grid draw + SolarFlow output, per-source breakdown, honest fallback without a Smart CT)
 - [x] v1.10.4 — distinct UI state for an unreachable Smart CT (LAN-only meter, e.g. remote Cloud mode): partial value clearly flagged in the panel card and dashboard caption
 - [x] v1.11 — automatic local ⇄ cloud switching (failure-streak detection, 60 s local probe to come back, "bascule auto" footer note) and collapsible/configurable panel cards (per-card collapse with key value, per-card visibility toggles)
+- [x] v1.11.1 — clearer Cloud-mode MQTT diagnostics: session-takeover detection (one real-time session per Cloud Key), SUBACK refusal surfaced, malformed device-list entries filtered
 - [ ] v1.12 — cloud `outputPower` mapping (~3 s home flow), zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents), grid-draw daily history from the Smart CT
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
