@@ -42,4 +42,4 @@ If the widget seems stuck, see the [FAQ](faq.md#the-widget-does-not-update).
 
 ---
 
-[← The Sun window](sun.md) | [Index](../README.md) | [Battery control →](control.md)
+[← The History window](history.md) | [Index](../README.md) | [Battery control →](control.md)

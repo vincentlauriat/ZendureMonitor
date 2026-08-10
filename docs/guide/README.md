@@ -11,12 +11,13 @@ A macOS menu bar app showing the live solar production of a **Zendure SolarFlow*
 3. [Le panneau](fr/panneau.md) — cartes, graphiques, options de la barre de menu
 4. [Le tableau de bord](fr/tableau-de-bord.md) — schéma de flux animé et tous les indicateurs
 5. [La fenêtre Soleil](fr/soleil.md) — dôme céleste, compas solaire, orientation des champs, éphémérides, productible, météo
-6. [Les widgets](fr/widgets.md) — trois tailles, histogramme 14 jours
-7. [Contrôle de la batterie](fr/controle.md) — mode AC, limites de charge et de sortie
-8. [Alertes et économies](fr/alertes.md) — notifications, prix du kWh, CO₂
-9. [Accès distant](fr/acces-distant.md) — VPN, hôte de secours, collecteur 24/7
-10. [Mode Cloud et Smart CT](fr/cloud.md) — données via les serveurs Zendure, compteur en tableau, consommation totale
-11. [FAQ et dépannage](fr/faq.md)
+6. [La fenêtre Historique](fr/historique.md) — énergie quotidienne sur 365 jours, métriques par appareil, totaux vie entière
+7. [Les widgets](fr/widgets.md) — trois tailles, histogramme 14 jours
+8. [Contrôle de la batterie](fr/controle.md) — mode AC, limites de charge et de sortie
+9. [Alertes et économies](fr/alertes.md) — notifications, prix du kWh, CO₂
+10. [Accès distant](fr/acces-distant.md) — VPN, hôte de secours, collecteur 24/7
+11. [Mode Cloud et Smart CT](fr/cloud.md) — données via les serveurs Zendure, compteur en tableau, consommation totale
+12. [FAQ et dépannage](fr/faq.md)
 
 ## 🇬🇧 English guide
 
@@ -25,12 +26,13 @@ A macOS menu bar app showing the live solar production of a **Zendure SolarFlow*
 3. [The panel](en/panel.md) — cards, charts, menu bar options
 4. [The dashboard](en/dashboard.md) — animated energy-flow diagram and every indicator
 5. [The Sun window](en/sun.md) — sky dome, solar compass, array orientation, ephemerides, theoretical output, weather
-6. [Widgets](en/widgets.md) — three sizes, 14-day histogram
-7. [Battery control](en/control.md) — AC mode, charge and output limits
-8. [Alerts and savings](en/alerts.md) — notifications, kWh price, CO₂
-9. [Remote access](en/remote-access.md) — VPN, fallback host, 24/7 collector
-10. [Cloud mode and the Smart CT](en/cloud.md) — data through Zendure's servers, panel meter, total consumption
-11. [FAQ and troubleshooting](en/faq.md)
+6. [The History window](en/history.md) — daily energy over 365 days, per-device metrics, lifetime totals
+7. [Widgets](en/widgets.md) — three sizes, 14-day histogram
+8. [Battery control](en/control.md) — AC mode, charge and output limits
+9. [Alerts and savings](en/alerts.md) — notifications, kWh price, CO₂
+10. [Remote access](en/remote-access.md) — VPN, fallback host, 24/7 collector
+11. [Cloud mode and the Smart CT](en/cloud.md) — data through Zendure's servers, panel meter, total consumption
+12. [FAQ and troubleshooting](en/faq.md)
 
 ---
 

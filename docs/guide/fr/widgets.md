@@ -42,4 +42,4 @@ Si le widget semble bloqué, voir la [FAQ](faq.md#le-widget-ne-se-met-pas-à-jou
 
 ---
 
-[← La fenêtre Soleil](soleil.md) | [Index](../README.md) | [Contrôle de la batterie →](controle.md)
+[← La fenêtre Historique](historique.md) | [Index](../README.md) | [Contrôle de la batterie →](controle.md)

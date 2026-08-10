@@ -97,4 +97,4 @@ The weather comes from **Open-Meteo** (a free service, no account, no API key), 
 
 ---
 
-[← The dashboard](dashboard.md) | [Index](../README.md) | [Widgets →](widgets.md)
+[← The dashboard](dashboard.md) | [Index](../README.md) | [The History window →](history.md)
