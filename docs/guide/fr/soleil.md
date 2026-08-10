@@ -97,4 +97,4 @@ La météo vient d'**Open-Meteo** (service gratuit, sans compte ni clé d'API), 
 
 ---
 
-[← Le tableau de bord](tableau-de-bord.md) | [Index](../README.md) | [Les widgets →](widgets.md)
+[← Le tableau de bord](tableau-de-bord.md) | [Index](../README.md) | [La fenêtre Historique →](historique.md)

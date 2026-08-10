@@ -20,10 +20,11 @@ Depuis la 1.11, chaque carte se **replie d'un clic sur son en-tête** (chevron �
 
 ## L'en-tête
 
-En haut du panneau : le nom de l'application, l'heure de la dernière mise à jour, et quatre actions en icônes :
+En haut du panneau : le nom de l'application, l'heure de la dernière mise à jour, et cinq actions en icônes :
 
 - **Jauge bleue** — ouvre le [tableau de bord](tableau-de-bord.md) ;
 - **Soleil orange** — ouvre la [fenêtre Soleil](soleil.md) ;
+- **Horloge violette** — ouvre la [fenêtre Historique](historique.md) *(1.12)* ;
 - **Engrenage turquoise** — ouvre les Réglages ;
 - **⋯** — menu avec **Rechercher des mises à jour…** et **Quitter Zendure Monitor**.
 
