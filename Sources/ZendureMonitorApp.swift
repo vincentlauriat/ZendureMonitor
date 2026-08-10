@@ -25,14 +25,6 @@ struct ZendureMonitorApp: App {
         }
         .defaultSize(width: 820, height: 720)
 
-        Window("Soleil", id: "sun") {
-            SunView()
-                .environmentObject(monitor)
-        }
-        // Dimensionnée pour que la fenêtre tienne en entier sans défilement sur
-        // un portable 13" (1710×1026 points utiles).
-        .defaultSize(width: 1400, height: 980)
-
         Window("Historique", id: "history") {
             HistoryView()
                 .environmentObject(history)
@@ -43,7 +35,9 @@ struct ZendureMonitorApp: App {
             SunRoadView()
                 .environmentObject(monitor)
         }
-        .defaultSize(width: 1100, height: 760)
+        // Dimensionnée pour tenir en entier sur un portable 13" (1710×1026
+        // points utiles) : scène ≥ 1000 pt + panneau latéral 332 pt.
+        .defaultSize(width: 1400, height: 980)
     }
 }
 

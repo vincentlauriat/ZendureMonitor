@@ -54,4 +54,4 @@ L'histogramme des 14 derniers jours avec le **total**, le **record** de la péri
 
 ---
 
-[← Le panneau](panneau.md) | [Index](../README.md) | [La fenêtre Soleil →](soleil.md)
+[← Le panneau](panneau.md) | [Index](../README.md) | [La fenêtre Historique →](historique.md)

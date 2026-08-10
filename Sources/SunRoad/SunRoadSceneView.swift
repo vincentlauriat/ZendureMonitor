@@ -70,13 +70,17 @@ struct SunRoadSceneView: NSViewRepresentable {
     var showRibbon: Bool = true
     /// Couverture nuageuse 0…1 — assombrit lumière et ciel (Phase D).
     var cloudCover: Double = 0
+    /// Mode « Définir ma maison » : le prochain clic sur un bâtiment le
+    /// désigne comme centre exact (Phase E) au lieu d'orbiter.
+    var pickingHouse: Bool = false
+    var onPickBuilding: ((Int) -> Void)? = nil
 
     private static let domeRadius = 140.0
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     func makeNSView(context: Context) -> SCNView {
-        let view = SCNView()
+        let view = PickableSCNView()
         let scene = SCNScene()
         view.scene = scene
         view.antialiasingMode = .multisampling4X
@@ -105,6 +109,10 @@ struct SunRoadSceneView: NSViewRepresentable {
 
     func updateNSView(_ view: SCNView, context: Context) {
         let coordinator = context.coordinator
+        if let pickable = view as? PickableSCNView {
+            pickable.pickingEnabled = pickingHouse
+            pickable.onPickBuilding = onPickBuilding
+        }
 
         // L'arc du jour ne dépend que du jour et du lieu — reconstruit
         // uniquement quand l'un des deux change.
@@ -420,6 +428,7 @@ struct SunRoadSceneView: NSViewRepresentable {
             node.eulerAngles.x = -.pi / 2
             node.position = SCNVector3(0, building.height / 2, 0)
             node.castsShadow = true
+            node.name = "building-\(index)"   // hit-testing « Définir ma maison »
             container.addChildNode(node)
         }
     }
@@ -638,5 +647,35 @@ struct SunRoadSceneView: NSViewRepresentable {
         var neighborhoodKey = SunRoadNeighborhood.empty
         var flowsKey = SunRoadFlows()
         var ribbonKey = ""
+    }
+}
+
+/// SCNView qui sait désigner un bâtiment au clic (mode « Définir ma
+/// maison ») ; hors de ce mode, le clic revient à la caméra orbitale.
+final class PickableSCNView: SCNView {
+    var pickingEnabled = false
+    var onPickBuilding: ((Int) -> Void)?
+
+    override func mouseDown(with event: NSEvent) {
+        if pickingEnabled {
+            let point = convert(event.locationInWindow, from: nil)
+            if let node = hitTest(point, options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]).first?.node,
+               let name = buildingName(of: node),
+               let index = Int(name.dropFirst("building-".count)) {
+                onPickBuilding?(index)
+                return
+            }
+        }
+        super.mouseDown(with: event)
+    }
+
+    /// Remonte la hiérarchie jusqu'au nœud nommé `building-<i>`.
+    private func buildingName(of node: SCNNode) -> String? {
+        var current: SCNNode? = node
+        while let candidate = current {
+            if let name = candidate.name, name.hasPrefix("building-") { return name }
+            current = candidate.parent
+        }
+        return nil
     }
 }

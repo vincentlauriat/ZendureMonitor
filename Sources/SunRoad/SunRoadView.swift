@@ -5,7 +5,7 @@ import SwiftUI
 /// panneaux configurés dans la fenêtre Soleil.
 struct SunRoadView: View {
     @EnvironmentObject private var monitor: Monitor
-    @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
     @AppStorage("sunLatitude") private var latitude: Double = 0
     @AppStorage("sunLongitude") private var longitude: Double = 0
     @AppStorage(PanelArrayStore.key) private var arraysJSON: String = ""
@@ -15,6 +15,18 @@ struct SunRoadView: View {
     @State private var scrubHours: Double = 0
     /// Mode « mur » : l'interface s'efface, seule la scène reste.
     @State private var hudHidden = false
+    /// Panneau latéral (cartes héritées de la fenêtre Soleil), masquable.
+    @AppStorage("sunroadShowSidebar") private var showSidebar = true
+    /// Centre exact désigné par clic sur un bâtiment — prioritaire sur la
+    /// position des réglages quand défini (Phase E).
+    @AppStorage("sunroadHouseLat") private var houseLat: Double = 0
+    @AppStorage("sunroadHouseLon") private var houseLon: Double = 0
+    @State private var pickingHouse = false
+
+    private var houseDefined: Bool { houseLat != 0 || houseLon != 0 }
+    /// Coordonnées effectives : la maison désignée, sinon les réglages.
+    private var effLat: Double { houseDefined ? houseLat : latitude }
+    private var effLon: Double { houseDefined ? houseLon : longitude }
 
     /// L'heure courante, rafraîchie chaque minute (le soleil bouge d'~0,25°/min).
     @State private var now = Date()
@@ -54,38 +66,49 @@ struct SunRoadView: View {
     var body: some View {
         Group {
             if configured {
-                ZStack(alignment: .topLeading) {
-                    SunRoadSceneView(latitude: latitude, longitude: longitude,
-                                    date: sceneDate, arrays: arrays, neighborhood: district,
-                                    visibility: visibility,
-                                    flows: SunRoadFlows(state: monitor.state),
-                                    todayCurve: monitor.todayCurve,
-                                    curvePeak: max(monitor.peakTodayW, 1),
-                                    showRibbon: Calendar.current.isDate(sceneDate, inSameDayAs: now),
-                                    cloudCover: (weather.weather?.cloudCover ?? 0) / 100)
-                        .ignoresSafeArea()
-                    if hudHidden {
-                        // Mode mur : un seul bouton discret pour revenir.
-                        Button {
-                            hudHidden = false
-                        } label: {
-                            Image(systemName: "eye")
-                                .padding(8)
-                                .background(.ultraThinMaterial, in: Circle())
+                HStack(spacing: 0) {
+                    ZStack(alignment: .topLeading) {
+                        SunRoadSceneView(latitude: effLat, longitude: effLon,
+                                        date: sceneDate, arrays: arrays, neighborhood: district,
+                                        visibility: visibility,
+                                        flows: SunRoadFlows(state: monitor.state),
+                                        todayCurve: monitor.todayCurve,
+                                        curvePeak: max(monitor.peakTodayW, 1),
+                                        showRibbon: Calendar.current.isDate(sceneDate, inSameDayAs: now),
+                                        cloudCover: (weather.weather?.cloudCover ?? 0) / 100,
+                                        pickingHouse: pickingHouse,
+                                        onPickBuilding: { defineHouse($0) })
+                            .ignoresSafeArea()
+                        if hudHidden {
+                            // Mode mur : un seul bouton discret pour revenir.
+                            Button {
+                                hudHidden = false
+                            } label: {
+                                Image(systemName: "eye")
+                                    .padding(8)
+                                    .background(.ultraThinMaterial, in: Circle())
+                            }
+                            .buttonStyle(.borderless)
+                            .opacity(0.4)
+                            .padding(16)
+                            .help("Réafficher l'interface")
+                        } else {
+                            hud
                         }
-                        .buttonStyle(.borderless)
-                        .opacity(0.4)
-                        .padding(16)
-                        .help("Réafficher l'interface")
-                    } else {
-                        hud
+                    }
+                    .overlay(alignment: .bottom) {
+                        if !hudHidden { timelineBar }
+                    }
+                    // Panneau latéral hérité de la fenêtre Soleil — le mode
+                    // mur l'efface aussi.
+                    if showSidebar && !hudHidden {
+                        Divider()
+                        SunRoadSidebar(weather: weather, latitude: effLat,
+                                       longitude: effLon, date: sceneDate)
                     }
                 }
-                .overlay(alignment: .bottom) {
-                    if !hudHidden { timelineBar }
-                }
-                .task(id: "\(latitude),\(longitude)") {
-                    weather.refresh(latitude: latitude, longitude: longitude)
+                .task(id: "\(effLat),\(effLon)") {
+                    weather.refresh(latitude: effLat, longitude: effLon)
                     await loadNeighborhood(force: false)
                 }
             } else {
@@ -101,12 +124,36 @@ struct SunRoadView: View {
     // MARK: - HUD
 
     private var hud: some View {
-        let sun = SunCalc.compute(at: sceneDate, latitude: latitude, longitude: longitude)
+        let sun = SunCalc.compute(at: sceneDate, latitude: effLat, longitude: effLon)
         return VStack(alignment: .leading, spacing: 6) {
-            HStack {
+            HStack(spacing: 10) {
                 Text(sceneDate, format: .dateTime.weekday(.wide).day().month(.wide).hour().minute())
                     .font(.headline)
                 Spacer(minLength: 20)
+                Menu {
+                    Button(pickingHouse ? "Annuler la désignation" : "Définir ma maison (clic sur un bâtiment)") {
+                        pickingHouse.toggle()
+                    }
+                    if houseDefined {
+                        Button("Revenir à la position des réglages") {
+                            houseLat = 0
+                            houseLon = 0
+                        }
+                    }
+                } label: {
+                    Image(systemName: houseDefined ? "house.fill" : "house")
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .help(houseDefined ? "Centre : la maison désignée dans la scène" : "Définir ma maison — le centre exact de la scène")
+                Button {
+                    showSidebar.toggle()
+                } label: {
+                    Image(systemName: showSidebar ? "sidebar.right" : "sidebar.left")
+                }
+                .buttonStyle(.borderless)
+                .help(showSidebar ? "Masquer le panneau latéral" : "Afficher le panneau latéral")
                 Button {
                     hudHidden = true
                 } label: {
@@ -114,6 +161,12 @@ struct SunRoadView: View {
                 }
                 .buttonStyle(.borderless)
                 .help("Mode mur : masquer l'interface, ne garder que la scène")
+            }
+            if pickingHouse {
+                Label("Clique sur ta maison dans la scène — son emprise devient le centre exact.",
+                      systemImage: "scope")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(.orange)
             }
             HStack(spacing: 14) {
                 Label(String(format: "%.1f°", sun.elevation), systemImage: "arrow.up.to.line")
@@ -240,12 +293,23 @@ struct SunRoadView: View {
         .padding(.bottom, 14)
     }
 
+    /// Clic sur un bâtiment en mode désignation : son centroïde devient le
+    /// centre exact — projection, détection de la maison et éphémérides se
+    /// recalent dessus (le quartier se recharge autour, cache compris).
+    private func defineHouse(_ index: Int) {
+        guard district.buildings.indices.contains(index) else { return }
+        let centroid = GeoProjection.centroid(of: district.buildings[index])
+        houseLat = centroid.lat
+        houseLon = centroid.lon
+        pickingHouse = false
+    }
+
     private func loadNeighborhood(force: Bool) async {
         guard configured else { return }
         neighborhood = .loading
         do {
-            let result = try await OverpassService.neighborhood(latitude: latitude,
-                                                                longitude: longitude,
+            let result = try await OverpassService.neighborhood(latitude: effLat,
+                                                                longitude: effLon,
                                                                 force: force)
             district = result
             neighborhood = .loaded(buildings: result.buildings.count, roads: result.roads.count)
@@ -262,13 +326,14 @@ struct SunRoadView: View {
                 .foregroundStyle(.secondary)
             Text("SunRoad a besoin de la position de la maison")
                 .font(.headline)
-            Text("Renseigne la latitude et la longitude dans la fenêtre Soleil — SunRoad réutilise la même localisation et les mêmes champs de panneaux.")
+            Text("Renseigne la latitude et la longitude dans Réglages → Soleil — SunRoad utilise cette localisation et les champs de panneaux qui y sont décrits. Tu pourras ensuite cliquer sur ta maison dans la scène pour affiner le centre exact.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: 420)
-            Button("Ouvrir la fenêtre Soleil") {
-                openWindow(id: "sun")
+                .frame(maxWidth: 460)
+            Button("Ouvrir les Réglages") {
+                openSettings()
+                NSApp.activate(ignoringOtherApps: true)
             }
         }
         .padding(40)

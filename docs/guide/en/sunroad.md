@@ -4,7 +4,7 @@
 
 SunRoad puts **your house, your neighborhood and the sun in a real 3D scene** — inspired by the [Helios](https://github.com/ReikanYsora/helios) Home Assistant card, but in native 3D: the sun is an actual light source, and the cast shadows are real.
 
-Open it with the **indigo cube** in the panel header. The window reuses the location and panel arrays configured in the [Sun window](sun.md).
+Open it with the **orange sun** in the panel header. Since 2.0, SunRoad **replaces the former Sun window**: the sky dome and solar compass give way to the 3D scene, and everything else (ephemerides, theoretical output, weather, orientation sliders) lives in a collapsible **sidebar**. Location and panel arrays are configured in *Settings → Sun*.
 
 ## The scene
 
@@ -20,6 +20,22 @@ Open it with the **indigo cube** in the panel header. The window reuses the loca
 ## ±48 h timeline
 
 The slider at the bottom moves time up to two days backward or forward: sun, shadows, sky and arc follow. The **Now** button returns to real time (the scene then follows the clock, minute by minute).
+
+## The sidebar (inherited from the Sun window)
+
+To the right of the scene, collapsible cards:
+
+- **Panel arrays** — each array with its **azimuth and tilt sliders**: the panel pivots in the 3D scene as you drag, and incidence, theoretical output and best hour follow.
+- **Production** — today's total and the **14-day histogram**.
+- **Ephemerides** and **Light & twilights** — sunrise/sunset, solar noon, day length, dawns and dusks, golden hours, next solstice or equinox.
+- **Theoretical output** — instant and daily clear-sky output, estimated efficiency against the measured production, air mass, shadow length.
+- **Local weather** — conditions, cloud cover and the cloud-adjusted output.
+
+The sidebar button in the HUD hides the whole panel for a full-bleed scene.
+
+## Defining your house with a click
+
+The scene's center is the configured location — often approximate. The **house** menu in the HUD offers **"Define my house"**: click the right building in the scene and its footprint becomes the exact center — detection, projection and ephemerides recalibrate on it (and the neighborhood reloads around it). "Back to the settings location" undoes it at any time.
 
 ## Layers and wall mode
 

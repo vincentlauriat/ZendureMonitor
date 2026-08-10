@@ -4,7 +4,7 @@
 
 SunRoad met **ta maison, ton quartier et le soleil dans une vraie scène 3D** — inspirée de l'extension Home Assistant [Helios](https://github.com/ReikanYsora/helios), mais en 3D native : le soleil y est une véritable source de lumière, et les ombres portées sont réelles.
 
-Ouvre-la avec le **cube indigo** dans l'en-tête du panneau. La fenêtre réutilise la position et les champs de panneaux configurés dans la [fenêtre Soleil](soleil.md).
+Ouvre-la avec le **soleil orange** dans l'en-tête du panneau. Depuis la 2.0, SunRoad **remplace l'ancienne fenêtre Soleil** : le dôme céleste et le compas solaire cèdent la place à la scène 3D, et tout le reste (éphémérides, productible, météo, sliders d'orientation) vit dans un **panneau latéral** repliable. La position et les champs de panneaux se configurent dans *Réglages → Soleil*.
 
 ## La scène
 
@@ -20,6 +20,22 @@ Des **billes animées** montrent les flux au rythme des watts mesurés : panneau
 ## Timeline ±48 heures
 
 Le curseur en bas de la fenêtre déplace le temps de deux jours en arrière ou en avant : le soleil, les ombres, le ciel et l'arc suivent. Le bouton **Maintenant** revient au temps réel (la scène suit alors l'horloge, minute par minute).
+
+## Le panneau latéral (hérité de la fenêtre Soleil)
+
+À droite de la scène, des cartes repliables :
+
+- **Champs de panneaux** — chaque champ avec ses **curseurs d'azimut et d'inclinaison** : le panneau pivote dans la scène 3D pendant le geste, l'incidence, le productible et la meilleure heure suivent.
+- **Production** — le total du jour et l'**histogramme des 14 derniers jours**.
+- **Éphémérides** et **Lumière et crépuscules** — lever/coucher, midi solaire, durée du jour, aubes et crépuscules, heures dorées, prochain solstice ou équinoxe.
+- **Productible théorique** — ciel clair instantané et du jour, rendement estimé face à la production mesurée, masse d'air, longueur d'ombre.
+- **Météo locale** — conditions, couverture nuageuse et productible ajusté nuages.
+
+Le bouton de barre latérale dans le HUD masque tout le panneau pour une scène plein cadre.
+
+## Définir ta maison au clic
+
+Le centre de la scène est la position des réglages — souvent approximative. Le menu **maison** du HUD propose **« Définir ma maison »** : clique sur le bon bâtiment dans la scène, son emprise devient le centre exact — la détection, la projection et les éphémérides se recalent dessus (et le quartier se recharge autour). « Revenir à la position des réglages » annule à tout moment.
 
 ## Couches et mode mur
 
