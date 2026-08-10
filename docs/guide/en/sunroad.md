@@ -2,6 +2,8 @@
 
 *New in 2.0.*
 
+![The SunRoad window: the OpenStreetMap neighborhood in 3D, the house in amber, the sun's arc, the ±48 h timeline and the sidebar](../images/sunroad.png)
+
 SunRoad puts **your house, your neighborhood and the sun in a real 3D scene** — inspired by the [Helios](https://github.com/ReikanYsora/helios) Home Assistant card, but in native 3D: the sun is an actual light source, and the cast shadows are real.
 
 Open it with the **orange sun** in the panel header. Since 2.0, SunRoad **replaces the former Sun window**: the sky dome and solar compass give way to the 3D scene, and everything else (ephemerides, theoretical output, weather, orientation sliders) lives in a collapsible **sidebar**. Location and panel arrays are configured in *Settings → Sun*.

@@ -2,6 +2,8 @@
 
 *Nouveau en 2.0.*
 
+![La fenêtre SunRoad : le quartier OpenStreetMap en 3D, la maison en ambre, l'arc du soleil, la timeline ±48 h et le panneau latéral](../images/sunroad.png)
+
 SunRoad met **ta maison, ton quartier et le soleil dans une vraie scène 3D** — inspirée de l'extension Home Assistant [Helios](https://github.com/ReikanYsora/helios), mais en 3D native : le soleil y est une véritable source de lumière, et les ombres portées sont réelles.
 
 Ouvre-la avec le **soleil orange** dans l'en-tête du panneau. Depuis la 2.0, SunRoad **remplace l'ancienne fenêtre Soleil** : le dôme céleste et le compas solaire cèdent la place à la scène 3D, et tout le reste (éphémérides, productible, météo, sliders d'orientation) vit dans un **panneau latéral** repliable. La position et les champs de panneaux se configurent dans *Réglages → Soleil*.
