@@ -118,6 +118,12 @@ final class Monitor: ObservableObject {
     /// Dernière mesure du Smart CT — nil dès que le compteur ne répond plus
     /// (le schéma de flux repasse alors en « non mesuré »).
     @Published var ctReport: CTReport?
+    /// Un Smart CT est-il configuré (hôte renseigné) ? Permet à l'interface de
+    /// distinguer « pas de compteur » de « compteur injoignable » — typiquement
+    /// à distance en mode Cloud, le CT n'étant lisible que sur le réseau local.
+    var ctConfigured: Bool {
+        !ctHost.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
     /// Optional second host tried when the primary is unreachable (e.g. a
     /// Tailscale/VPN address for remote access).
     @Published var fallbackHost: String {

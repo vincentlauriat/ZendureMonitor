@@ -194,14 +194,22 @@ struct MenuView: View {
                             .font(.system(.title, design: .rounded).weight(.semibold))
                             .monospacedDigit()
                         Spacer()
-                        Text("via SolarFlow")
+                        Text("via SolarFlow seulement")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
-                    Text("Soutirage réseau direct non mesuré — renseignez le Smart CT dans Réglages → Réseau pour la consommation totale.")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+                    if monitor.ctConfigured {
+                        Label("Smart CT injoignable — il n'est lisible que depuis le réseau local, pas via le cloud. Le soutirage réseau de la maison n'est pas compté : cette valeur est partielle.",
+                              systemImage: "wifi.slash")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    } else {
+                        Text("Soutirage réseau direct non mesuré — renseignez le Smart CT dans Réglages → Réseau pour la consommation totale.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
         }
