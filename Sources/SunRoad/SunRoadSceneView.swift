@@ -1,6 +1,15 @@
 import SceneKit
 import SwiftUI
 
+/// Ce que la scène SunRoad affiche — piloté par les checkboxes du HUD.
+struct SunRoadVisibility: Equatable {
+    var buildings = true
+    var roads = true
+    var arc = true
+    var panels = true
+    var compass = true
+}
+
 /// La scène 3D « SunRoad » : sol, boussole, maison, champs de panneaux, arc du
 /// soleil du jour et soleil-lumière directionnelle (ombres portées réelles).
 /// Phase A du plan v2.0 — le quartier OSM et les flux d'énergie arrivent en
@@ -13,6 +22,7 @@ struct SunRoadSceneView: NSViewRepresentable {
     /// Le quartier (Overpass/OSM : bâtiments + routes) — vide tant que non
     /// chargé : la maison placeholder assure l'intérim.
     var neighborhood: SunRoadNeighborhood
+    var visibility: SunRoadVisibility
 
     private static let domeRadius = 140.0
 
@@ -65,6 +75,14 @@ struct SunRoadSceneView: NSViewRepresentable {
             rebuildBuildings(coordinator: coordinator)
             rebuildRoads(coordinator: coordinator)
         }
+        // Visibilité par couche (checkboxes du HUD). La maison placeholder
+        // ne vaut que sans données OSM ; le soleil-lumière reste toujours là.
+        coordinator.buildingsNode?.isHidden = !visibility.buildings
+        coordinator.placeholderHouse?.isHidden = !visibility.buildings || !neighborhood.buildings.isEmpty
+        coordinator.roadsNode?.isHidden = !visibility.roads
+        coordinator.arcNode?.isHidden = !visibility.arc
+        coordinator.panelsNode?.isHidden = !visibility.panels
+        coordinator.compassNode?.isHidden = !visibility.compass
         updateSun(coordinator: coordinator)
     }
 
@@ -81,12 +99,16 @@ struct SunRoadSceneView: NSViewRepresentable {
         groundNode.position = SCNVector3(0, -0.2, 0)
         root.addChildNode(groundNode)
 
-        // Anneau de boussole au bord de la voûte + lettres cardinales.
+        // Anneau de boussole au bord de la voûte + lettres cardinales,
+        // regroupés pour être masquables d'un bloc.
+        let compass = SCNNode()
+        root.addChildNode(compass)
+        coordinator.compassNode = compass
         let ring = SCNTorus(ringRadius: Self.domeRadius, pipeRadius: 0.4)
         ring.firstMaterial?.diffuse.contents = NSColor.white.withAlphaComponent(0.35)
         let ringNode = SCNNode(geometry: ring)
         ringNode.position = SCNVector3(0, 0.1, 0)
-        root.addChildNode(ringNode)
+        compass.addChildNode(ringNode)
 
         let cardinals: [(String, Double)] = [("N", 0), ("E", 90), ("S", 180), ("O", 270)]
         for (letter, azimuth) in cardinals {
@@ -100,7 +122,7 @@ struct SunRoadSceneView: NSViewRepresentable {
             node.pivot = SCNMatrix4MakeTranslation((minB.x + maxB.x) / 2, minB.y, 0)
             node.position = SCNVector3(p.x, 0.3, p.z)
             node.eulerAngles.y = CGFloat(-azimuth * .pi / 180)
-            root.addChildNode(node)
+            compass.addChildNode(node)
         }
 
         // La maison (placeholder Phase A — remplacée par le bâtiment OSM réel
@@ -173,8 +195,6 @@ struct SunRoadSceneView: NSViewRepresentable {
         guard let container = coordinator.buildingsNode else { return }
         container.childNodes.forEach { $0.removeFromParentNode() }
         let buildings = neighborhood.buildings
-        // Sans données OSM, la maison placeholder reste visible.
-        coordinator.placeholderHouse?.isHidden = !buildings.isEmpty
         guard !buildings.isEmpty else { return }
 
         // La maison = le bâtiment dont le centre est le plus proche de la
@@ -409,6 +429,7 @@ struct SunRoadSceneView: NSViewRepresentable {
         var panelsNode: SCNNode?
         var buildingsNode: SCNNode?
         var roadsNode: SCNNode?
+        var compassNode: SCNNode?
         var placeholderHouse: SCNNode?
         var arcKey = ""
         var arraysKey: [PanelArray] = []

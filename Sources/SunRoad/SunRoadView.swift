@@ -22,6 +22,18 @@ struct SunRoadView: View {
     @State private var district: SunRoadNeighborhood = .empty
     @State private var neighborhood: NeighborhoodState = .idle
 
+    /// Couches visibles de la scène (checkboxes du HUD, persistées).
+    @AppStorage("sunroadShowBuildings") private var showBuildings = true
+    @AppStorage("sunroadShowRoads") private var showRoads = true
+    @AppStorage("sunroadShowArc") private var showArc = true
+    @AppStorage("sunroadShowPanels") private var showPanels = true
+    @AppStorage("sunroadShowCompass") private var showCompass = true
+
+    private var visibility: SunRoadVisibility {
+        SunRoadVisibility(buildings: showBuildings, roads: showRoads,
+                          arc: showArc, panels: showPanels, compass: showCompass)
+    }
+
     private var configured: Bool { latitude != 0 || longitude != 0 }
     private var arrays: [PanelArray] { PanelArrayStore.decode(arraysJSON) }
 
@@ -30,7 +42,8 @@ struct SunRoadView: View {
             if configured {
                 ZStack(alignment: .topLeading) {
                     SunRoadSceneView(latitude: latitude, longitude: longitude,
-                                    date: now, arrays: arrays, neighborhood: district)
+                                    date: now, arrays: arrays, neighborhood: district,
+                                    visibility: visibility)
                         .ignoresSafeArea()
                     hud
                 }
@@ -70,6 +83,7 @@ struct SunRoadView: View {
             }
             .font(.callout.monospacedDigit())
             neighborhoodRow
+            visibilityRow
             Text("Glisser pour orbiter · molette pour zoomer")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -109,6 +123,20 @@ struct SunRoadView: View {
         }
         .font(.caption)
         .foregroundStyle(.secondary)
+    }
+
+    /// Les couches affichables de la scène, à cocher/décocher.
+    private var visibilityRow: some View {
+        HStack(spacing: 10) {
+            Toggle("Bâtiments", isOn: $showBuildings)
+            Toggle("Routes", isOn: $showRoads)
+            Toggle("Arc du soleil", isOn: $showArc)
+            Toggle("Panneaux", isOn: $showPanels)
+            Toggle("Boussole", isOn: $showCompass)
+        }
+        .toggleStyle(.checkbox)
+        .controlSize(.small)
+        .font(.caption)
     }
 
     private func loadNeighborhood(force: Bool) async {
