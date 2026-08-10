@@ -12,6 +12,8 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
+New in 1.11: **automatic local ⇄ cloud switching** (opt-in — the app moves to Cloud mode by itself when the SolarFlow stops answering locally, typically away from home, and comes back to local as soon as it answers again, with an explicit "bascule auto" note in the connection footer) and **collapsible, configurable panel cards** (click a card header to collapse it to one line with its key value — Juicy style — and toggle each card on/off in Settings → Display).
+
 New in 1.10.3: a **Home consumption card** in the menu bar panel — with a Smart CT configured it shows the house's total draw (grid + SolarFlow output, the SolarFlow's own AC charging deducted) with a per-source breakdown; without a CT it shows the measurable part only. 1.10.4 makes the card honest when the meter is **out of reach** (the CT is LAN-only — typically away from home in Cloud mode): the value is clearly marked "via SolarFlow only, partial" instead of suggesting no meter is configured.
 
 New in 1.10: an optional **Zendure Cloud mode** (real-time MQTT through Zendure's servers, configured with the app's *Authorization Cloud Key* stored in the Keychain — read-only, and the local API remains the default), **Smart CT support** (the SmartMeter3CT is polled on the LAN, giving the flow diagram the home's real grid draw and total consumption), a **redesigned energy-flow diagram** (aligned diamond layout, per-pack SOC chips, an explicit grid→home arc that is measured with the CT and honestly marked "not measured" without it), a **connection footer** in the panel (local primary / local fallback / cloud), and reorganized Settings with a **Network** tab.
@@ -220,7 +222,8 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.10 — optional Zendure Cloud mode (Cloud Key → signed deviceList → real-time MQTT, Keychain, read-only), Smart CT support (real grid draw + home total consumption on the LAN), redesigned energy-flow diagram (aligned diamond, measured grid→home arc, per-pack chips), connection footer, Network settings tab (tested Cloud layer + Smart CT parser)
 - [x] v1.10.3 — home consumption card in the menu bar panel (total = measured grid draw + SolarFlow output, per-source breakdown, honest fallback without a Smart CT)
 - [x] v1.10.4 — distinct UI state for an unreachable Smart CT (LAN-only meter, e.g. remote Cloud mode): partial value clearly flagged in the panel card and dashboard caption
-- [ ] v1.11 — zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents), grid-draw daily history from the Smart CT
+- [x] v1.11 — automatic local ⇄ cloud switching (failure-streak detection, 60 s local probe to come back, "bascule auto" footer note) and collapsible/configurable panel cards (per-card collapse with key value, per-card visibility toggles)
+- [ ] v1.12 — cloud `outputPower` mapping (~3 s home flow), zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents), grid-draw daily history from the Smart CT
 - [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements
