@@ -9,6 +9,12 @@ struct MenuView: View {
     @Environment(\.openWindow) private var openWindow
     /// Période du graphe principal : "recent" (15 min), "today", "14d".
     @AppStorage("chartPeriod") private var chartPeriod = "recent"
+    /// Visibilité des cartes du panneau (Réglages → Affichage → Cartes du panneau).
+    @AppStorage("showSolarCard") private var showSolarCard = true
+    @AppStorage("showBatteryCard") private var showBatteryCard = true
+    @AppStorage("showFlowsCard") private var showFlowsCard = true
+    @AppStorage("showConsumptionCard") private var showConsumptionCard = true
+    @AppStorage("showHistoryCard") private var showHistoryCard = true
 
     private let solarColor = Color.yellow
     private let homeColor = Color.blue
@@ -21,11 +27,11 @@ struct MenuView: View {
             header
             if let state = monitor.state {
                 Group {
-                    solarCard(state)
-                    batteryCard(state)
-                    flowsCard(state)
-                    consumptionCard(state)
-                    historyCard()
+                    if showSolarCard { solarCard(state) }
+                    if showBatteryCard { batteryCard(state) }
+                    if showFlowsCard { flowsCard(state) }
+                    if showConsumptionCard { consumptionCard(state) }
+                    if showHistoryCard { historyCard() }
                 }
                 .opacity(isStale ? 0.55 : 1)
             } else {
@@ -47,7 +53,9 @@ struct MenuView: View {
     // MARK: - Cartes
 
     private func solarCard(_ state: DeviceState) -> some View {
-        MetricCard(title: "Production solaire", systemImage: "sun.max.fill") {
+        MetricCard(title: "Production solaire", systemImage: "sun.max.fill",
+                   collapseKey: "collapseSolarCard",
+                   collapsedSummary: Format.watts(state.solarInputPower)) {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .firstTextBaseline) {
                     Text(Format.watts(state.solarInputPower))
@@ -100,7 +108,9 @@ struct MenuView: View {
     }
 
     private func batteryCard(_ state: DeviceState) -> some View {
-        MetricCard(title: "Batterie", systemImage: "battery.100percent") {
+        MetricCard(title: "Batterie", systemImage: "battery.100percent",
+                   collapseKey: "collapseBatteryCard",
+                   collapsedSummary: "\(Int(state.electricLevel ?? 0)) %") {
             HStack(alignment: .center, spacing: 16) {
                 let soc = state.electricLevel ?? 0
                 CircularGauge(
@@ -142,7 +152,9 @@ struct MenuView: View {
     }
 
     private func flowsCard(_ state: DeviceState) -> some View {
-        MetricCard(title: "Flux", systemImage: "arrow.left.arrow.right") {
+        MetricCard(title: "Flux", systemImage: "arrow.left.arrow.right",
+                   collapseKey: "collapseFlowsCard",
+                   collapsedSummary: Format.watts(state.outputHomePower)) {
             VStack(alignment: .leading, spacing: 8) {
                 LegendRow(color: homeColor, label: "Vers la maison", value: Format.watts(state.outputHomePower))
                 LegendRow(color: gridColor, label: "Depuis le réseau", value: Format.watts(state.gridInputPower))
@@ -170,7 +182,14 @@ struct MenuView: View {
     /// soutirage réseau (hors charge secteur du SolarFlow) + l'injection du
     /// SolarFlow ; sans compteur, seule l'injection est connue.
     private func consumptionCard(_ state: DeviceState) -> some View {
-        MetricCard(title: "Consommation maison", systemImage: "house.fill") {
+        let summary: Double = monitor.ctReport.map {
+            EnergyMath.homeTotal(ctTotal: $0.totalPower,
+                                 gridIn: state.gridInputPower,
+                                 outputHome: state.outputHomePower)
+        } ?? state.outputHomePower
+        return MetricCard(title: "Consommation maison", systemImage: "house.fill",
+                          collapseKey: "collapseConsumptionCard",
+                          collapsedSummary: Format.watts(summary)) {
             VStack(alignment: .leading, spacing: 8) {
                 if let ct = monitor.ctReport {
                     let gridToHome = EnergyMath.gridToHome(ctTotal: ct.totalPower,
@@ -216,7 +235,9 @@ struct MenuView: View {
     }
 
     private func historyCard() -> some View {
-        MetricCard(title: "Historique", systemImage: "calendar") {
+        MetricCard(title: "Historique", systemImage: "calendar",
+                   collapseKey: "collapseHistoryCard",
+                   collapsedSummary: Format.kilowattHours(monitor.dailyEnergy.reduce(0) { $0 + $1.wh })) {
             VStack(alignment: .leading, spacing: 8) {
                 if monitor.dailyEnergy.count > 1 {
                     DailyBarChart(days: monitor.dailyEnergy, color: solarColor)
@@ -397,7 +418,9 @@ struct MenuView: View {
 
     private var connectionText: String {
         if monitor.connectionMode == .cloud {
-            return String(localized: "Connexion : Cloud Zendure")
+            return monitor.autoSwitchedToCloud
+                ? String(localized: "Connexion : Cloud Zendure — bascule auto")
+                : String(localized: "Connexion : Cloud Zendure")
         }
         return monitor.usingFallback
             ? String(localized: "Connexion : locale — hôte de secours")
