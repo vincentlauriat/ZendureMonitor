@@ -1,0 +1,304 @@
+import SceneKit
+import SwiftUI
+
+/// La scène 3D « Hélios » : sol, boussole, maison, champs de panneaux, arc du
+/// soleil du jour et soleil-lumière directionnelle (ombres portées réelles).
+/// Phase A du plan v2.0 — le quartier OSM et les flux d'énergie arrivent en
+/// phases B/C.
+struct HeliosSceneView: NSViewRepresentable {
+    var latitude: Double
+    var longitude: Double
+    var date: Date
+    var arrays: [PanelArray]
+
+    private static let domeRadius = 50.0
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> SCNView {
+        let view = SCNView()
+        let scene = SCNScene()
+        view.scene = scene
+        view.antialiasingMode = .multisampling4X
+        view.autoenablesDefaultLighting = false
+
+        // Caméra orbitale native (drag pour tourner, molette pour zoomer),
+        // centrée sur la maison.
+        view.allowsCameraControl = true
+        view.defaultCameraController.interactionMode = .orbitTurntable
+        view.defaultCameraController.target = SCNVector3(0, 2, 0)
+
+        let camera = SCNCamera()
+        camera.zFar = 400
+        let cameraNode = SCNNode()
+        cameraNode.camera = camera
+        cameraNode.position = SCNVector3(28, 22, 42)   // sud-est, en hauteur
+        cameraNode.look(at: SCNVector3(0, 2, 0))
+        scene.rootNode.addChildNode(cameraNode)
+
+        buildStaticNodes(in: scene, coordinator: context.coordinator)
+        context.coordinator.view = view
+        updateNSView(view, context: context)
+        return view
+    }
+
+    func updateNSView(_ view: SCNView, context: Context) {
+        let coordinator = context.coordinator
+
+        // L'arc du jour ne dépend que du jour et du lieu — reconstruit
+        // uniquement quand l'un des deux change.
+        let dayKey = "\(Calendar.current.startOfDay(for: date).timeIntervalSince1970)-\(latitude)-\(longitude)"
+        if coordinator.arcKey != dayKey {
+            coordinator.arcKey = dayKey
+            rebuildSunArc(coordinator: coordinator)
+        }
+        if coordinator.arraysKey != arrays {
+            coordinator.arraysKey = arrays
+            rebuildPanels(coordinator: coordinator)
+        }
+        updateSun(coordinator: coordinator)
+    }
+
+    // MARK: - Décor fixe
+
+    private func buildStaticNodes(in scene: SCNScene, coordinator: Coordinator) {
+        let root = scene.rootNode
+        coordinator.scene = scene
+
+        // Sol : large galette verte, réceptrice d'ombres.
+        let ground = SCNCylinder(radius: 65, height: 0.4)
+        ground.firstMaterial?.diffuse.contents = NSColor(calibratedRed: 0.36, green: 0.48, blue: 0.32, alpha: 1)
+        let groundNode = SCNNode(geometry: ground)
+        groundNode.position = SCNVector3(0, -0.2, 0)
+        root.addChildNode(groundNode)
+
+        // Anneau de boussole au bord de la voûte + lettres cardinales.
+        let ring = SCNTorus(ringRadius: Self.domeRadius, pipeRadius: 0.15)
+        ring.firstMaterial?.diffuse.contents = NSColor.white.withAlphaComponent(0.35)
+        let ringNode = SCNNode(geometry: ring)
+        ringNode.position = SCNVector3(0, 0.1, 0)
+        root.addChildNode(ringNode)
+
+        let cardinals: [(String, Double)] = [("N", 0), ("E", 90), ("S", 180), ("O", 270)]
+        for (letter, azimuth) in cardinals {
+            let text = SCNText(string: letter, extrusionDepth: 0.3)
+            text.font = NSFont.systemFont(ofSize: 4, weight: .bold)
+            text.firstMaterial?.diffuse.contents = NSColor.white.withAlphaComponent(0.85)
+            let node = SCNNode(geometry: text)
+            let p = HeliosGeometry.domePoint(azimuth: azimuth, elevation: 0, radius: Self.domeRadius + 3)
+            // Centrer le glyphe sur son point d'ancrage.
+            let (minB, maxB) = text.boundingBox
+            node.pivot = SCNMatrix4MakeTranslation((minB.x + maxB.x) / 2, minB.y, 0)
+            node.position = SCNVector3(p.x, 0.3, p.z)
+            node.eulerAngles.y = CGFloat(-azimuth * .pi / 180)
+            root.addChildNode(node)
+        }
+
+        // La maison (placeholder Phase A — remplacée par le bâtiment OSM réel
+        // en phase B) : murs + toit à deux pentes.
+        let house = SCNNode()
+        let walls = SCNBox(width: 9, height: 5, length: 7, chamferRadius: 0)
+        walls.firstMaterial?.diffuse.contents = NSColor(calibratedWhite: 0.92, alpha: 1)
+        let wallsNode = SCNNode(geometry: walls)
+        wallsNode.position = SCNVector3(0, 2.5, 0)
+        house.addChildNode(wallsNode)
+        let roof = SCNPyramid(width: 10, height: 2.6, length: 8)
+        roof.firstMaterial?.diffuse.contents = NSColor(calibratedRed: 0.55, green: 0.28, blue: 0.22, alpha: 1)
+        let roofNode = SCNNode(geometry: roof)
+        roofNode.position = SCNVector3(0, 5, 0)
+        house.addChildNode(roofNode)
+        house.enumerateChildNodes { node, _ in node.castsShadow = true }
+        root.addChildNode(house)
+
+        // Lumière ambiante (relevée/abaissée selon l'heure dans updateSun).
+        let ambient = SCNLight()
+        ambient.type = .ambient
+        ambient.intensity = 300
+        let ambientNode = SCNNode()
+        ambientNode.light = ambient
+        root.addChildNode(ambientNode)
+        coordinator.ambientLight = ambient
+
+        // Le soleil : sphère émissive + lumière directionnelle qui la suit.
+        let sunSphere = SCNSphere(radius: 1.6)
+        sunSphere.firstMaterial?.diffuse.contents = NSColor.yellow
+        sunSphere.firstMaterial?.emission.contents = NSColor(calibratedRed: 1, green: 0.85, blue: 0.3, alpha: 1)
+        let sunNode = SCNNode(geometry: sunSphere)
+        sunNode.castsShadow = false
+        root.addChildNode(sunNode)
+        coordinator.sunNode = sunNode
+
+        let sunLight = SCNLight()
+        sunLight.type = .directional
+        sunLight.castsShadow = true
+        sunLight.shadowMapSize = CGSize(width: 2048, height: 2048)
+        sunLight.shadowSampleCount = 8
+        sunLight.shadowRadius = 3
+        sunLight.shadowColor = NSColor.black.withAlphaComponent(0.55)
+        let lightNode = SCNNode()
+        lightNode.light = sunLight
+        lightNode.constraints = [SCNLookAtConstraint(target: house)]
+        root.addChildNode(lightNode)
+        coordinator.sunLight = sunLight
+        coordinator.sunLightNode = lightNode
+
+        // Conteneurs reconstruits à la volée.
+        let arc = SCNNode()
+        root.addChildNode(arc)
+        coordinator.arcNode = arc
+        let panels = SCNNode()
+        root.addChildNode(panels)
+        coordinator.panelsNode = panels
+    }
+
+    // MARK: - Arc du jour
+
+    private func rebuildSunArc(coordinator: Coordinator) {
+        guard let arc = coordinator.arcNode else { return }
+        arc.childNodes.forEach { $0.removeFromParentNode() }
+
+        let track = SunCalc.track(on: date, latitude: latitude, longitude: longitude, stepMinutes: 10)
+            .filter { $0.elevation > -1 }
+        guard track.count > 1 else { return }
+
+        let material = SCNMaterial()
+        material.diffuse.contents = NSColor(calibratedRed: 1, green: 0.75, blue: 0.2, alpha: 1)
+        material.emission.contents = NSColor(calibratedRed: 0.9, green: 0.6, blue: 0.1, alpha: 1)
+
+        // Polyline en segments cylindriques (les primitives .line font 1 px).
+        var previous = HeliosGeometry.domePoint(azimuth: track[0].azimuth,
+                                                elevation: track[0].elevation,
+                                                radius: Self.domeRadius)
+        for position in track.dropFirst() {
+            let current = HeliosGeometry.domePoint(azimuth: position.azimuth,
+                                                   elevation: position.elevation,
+                                                   radius: Self.domeRadius)
+            arc.addChildNode(Self.segment(from: previous, to: current, radius: 0.18, material: material))
+            previous = current
+        }
+
+        // Un repère par heure pleine, pour lire l'échelle du temps.
+        let calendar = Calendar.current
+        for position in track where calendar.component(.minute, from: position.date) < 10 {
+            let dot = SCNSphere(radius: 0.45)
+            dot.firstMaterial?.emission.contents = NSColor.white
+            let node = SCNNode(geometry: dot)
+            let p = HeliosGeometry.domePoint(azimuth: position.azimuth,
+                                             elevation: position.elevation,
+                                             radius: Self.domeRadius)
+            node.position = SCNVector3(p.x, p.y, p.z)
+            node.castsShadow = false
+            arc.addChildNode(node)
+        }
+    }
+
+    private static func segment(from a: HeliosGeometry.Point3, to b: HeliosGeometry.Point3,
+                                radius: Double, material: SCNMaterial) -> SCNNode {
+        let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z
+        let length = (dx * dx + dy * dy + dz * dz).squareRoot()
+        let cylinder = SCNCylinder(radius: radius, height: length)
+        cylinder.materials = [material]
+        let node = SCNNode(geometry: cylinder)
+        node.position = SCNVector3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2)
+        // Orienter l'axe Y du cylindre le long du segment.
+        let up = SCNVector3(0, 1, 0)
+        let dir = SCNVector3(dx / length, dy / length, dz / length)
+        let dot = max(-1, min(1, Double(up.x * dir.x + up.y * dir.y + up.z * dir.z)))
+        let axis = SCNVector3(up.y * dir.z - up.z * dir.y,
+                              up.z * dir.x - up.x * dir.z,
+                              up.x * dir.y - up.y * dir.x)
+        let axisLength = Double(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z).squareRoot()
+        if axisLength > 1e-6 {
+            node.rotation = SCNVector4(axis.x / CGFloat(axisLength),
+                                       axis.y / CGFloat(axisLength),
+                                       axis.z / CGFloat(axisLength),
+                                       CGFloat(acos(dot)))
+        }
+        node.castsShadow = false
+        return node
+    }
+
+    // MARK: - Champs de panneaux
+
+    private func rebuildPanels(coordinator: Coordinator) {
+        guard let container = coordinator.panelsNode else { return }
+        container.childNodes.forEach { $0.removeFromParentNode() }
+
+        // Une rangée au sud de la maison, espacée d'après la taille des champs.
+        var offsetX = -Double(arrays.count - 1)
+        for array in arrays {
+            let area = HeliosGeometry.panelArea(peakWatts: array.peakWatts)
+            let width = (area * 1.7).squareRoot()
+            let depth = area / width
+
+            let panel = SCNBox(width: CGFloat(width), height: 0.12, length: CGFloat(depth), chamferRadius: 0.02)
+            panel.firstMaterial?.diffuse.contents = NSColor(calibratedRed: 0.10, green: 0.16, blue: 0.32, alpha: 1)
+            panel.firstMaterial?.specular.contents = NSColor.white
+            let node = SCNNode(geometry: panel)
+
+            // Orientation réelle : posé à plat, penché de `tilt` vers son
+            // azimut. Pivot en pied de panneau pour qu'il repose au sol.
+            let holder = SCNNode()
+            holder.eulerAngles.y = CGFloat(-(array.azimuth - 180) * .pi / 180)
+            node.eulerAngles.x = CGFloat(-array.tilt * .pi / 180)
+            node.pivot = SCNMatrix4MakeTranslation(0, 0, CGFloat(-depth / 2))
+            node.position = SCNVector3(0, 0.4, 0)
+            node.castsShadow = true
+            holder.addChildNode(node)
+            holder.position = SCNVector3(offsetX, 0, 10 + depth / 2)
+            container.addChildNode(holder)
+
+            offsetX += width + 1.5
+        }
+    }
+
+    // MARK: - Position du soleil et lumière
+
+    private func updateSun(coordinator: Coordinator) {
+        let ephemeris = SunCalc.compute(at: date, latitude: latitude, longitude: longitude)
+        let elevation = ephemeris.elevation
+        let factor = HeliosGeometry.daylightFactor(elevation: elevation)
+
+        let p = HeliosGeometry.domePoint(azimuth: ephemeris.azimuth,
+                                         elevation: max(elevation, 0),
+                                         radius: Self.domeRadius)
+        coordinator.sunNode?.position = SCNVector3(p.x, p.y, p.z)
+        coordinator.sunNode?.isHidden = elevation <= 0
+        coordinator.sunLightNode?.position = SCNVector3(p.x, p.y, p.z)
+        coordinator.sunLight?.intensity = elevation > 0 ? 400 + 700 * factor : 0
+        coordinator.ambientLight?.intensity = 120 + 280 * factor
+
+        // Ciel : nuit → aube/crépuscule → plein jour, interpolation simple.
+        let night = (r: 0.05, g: 0.07, b: 0.15)
+        let dusk = (r: 0.85, g: 0.55, b: 0.35)
+        let day = (r: 0.42, g: 0.65, b: 0.90)
+        let sky: (r: Double, g: Double, b: Double)
+        if factor < 0.5 {
+            let t = factor * 2
+            sky = (night.r + (dusk.r - night.r) * t,
+                   night.g + (dusk.g - night.g) * t,
+                   night.b + (dusk.b - night.b) * t)
+        } else {
+            let t = (factor - 0.5) * 2
+            sky = (dusk.r + (day.r - dusk.r) * t,
+                   dusk.g + (day.g - dusk.g) * t,
+                   dusk.b + (day.b - dusk.b) * t)
+        }
+        coordinator.scene?.background.contents = NSColor(calibratedRed: sky.r, green: sky.g, blue: sky.b, alpha: 1)
+    }
+
+    // MARK: - Coordinator
+
+    final class Coordinator {
+        weak var view: SCNView?
+        var scene: SCNScene?
+        var sunNode: SCNNode?
+        var sunLight: SCNLight?
+        var sunLightNode: SCNNode?
+        var ambientLight: SCNLight?
+        var arcNode: SCNNode?
+        var panelsNode: SCNNode?
+        var arcKey = ""
+        var arraysKey: [PanelArray] = []
+    }
+}

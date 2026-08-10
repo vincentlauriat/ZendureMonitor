@@ -38,6 +38,11 @@ struct ZendureMonitorApp: App {
                 .environmentObject(history)
         }
         .defaultSize(width: 820, height: 720)
+
+        Window("Hélios", id: "helios") {
+            HeliosView()
+        }
+        .defaultSize(width: 1100, height: 760)
     }
 }
 
