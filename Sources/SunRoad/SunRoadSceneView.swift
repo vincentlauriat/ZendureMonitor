@@ -25,18 +25,19 @@ struct SunRoadSceneView: NSViewRepresentable {
         view.antialiasingMode = .multisampling4X
         view.autoenablesDefaultLighting = false
 
-        // Caméra orbitale native (drag pour tourner, molette pour zoomer),
-        // centrée sur la maison.
+        // Caméra orbitale native (drag pour tourner, molette pour zoomer).
+        // L'orbite est centrée à mi-hauteur : on embrasse d'emblée la maison
+        // ET le chemin du soleil, qui culmine vers 120 m sur le dôme.
         view.allowsCameraControl = true
         view.defaultCameraController.interactionMode = .orbitTurntable
-        view.defaultCameraController.target = SCNVector3(0, 2, 0)
+        view.defaultCameraController.target = SCNVector3(0, 30, 0)
 
         let camera = SCNCamera()
         camera.zFar = 900
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(60, 45, 95)   // sud-est, en hauteur
-        cameraNode.look(at: SCNVector3(0, 2, 0))
+        cameraNode.position = SCNVector3(115, 95, 190)   // sud-est, haut et reculé
+        cameraNode.look(at: SCNVector3(0, 35, 0))
         scene.rootNode.addChildNode(cameraNode)
 
         buildStaticNodes(in: scene, coordinator: context.coordinator)
