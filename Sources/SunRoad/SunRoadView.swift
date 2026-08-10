@@ -80,7 +80,7 @@ struct SunRoadView: View {
                                         onPickBuilding: { defineHouse($0) })
                             .ignoresSafeArea()
                         if hudHidden {
-                            // Mode mur : un seul bouton discret pour revenir.
+                            // Bandeau masqué : un seul bouton discret pour revenir.
                             Button {
                                 hudHidden = false
                             } label: {
@@ -91,17 +91,17 @@ struct SunRoadView: View {
                             .buttonStyle(.borderless)
                             .opacity(0.4)
                             .padding(16)
-                            .help("Réafficher l'interface")
+                            .help("Réafficher le bandeau d'informations")
                         } else {
                             hud
                         }
                     }
                     .overlay(alignment: .bottom) {
-                        if !hudHidden { timelineBar }
+                        timelineBar
                     }
-                    // Panneau latéral hérité de la fenêtre Soleil — le mode
-                    // mur l'efface aussi.
-                    if showSidebar && !hudHidden {
+                    // Panneau latéral hérité de la fenêtre Soleil — l'œil ne
+                    // masque que le bandeau sur la 3D, pas les cartes.
+                    if showSidebar {
                         Divider()
                         SunRoadSidebar(weather: weather, latitude: effLat,
                                        longitude: effLon, date: sceneDate)
@@ -160,7 +160,7 @@ struct SunRoadView: View {
                     Image(systemName: "eye.slash")
                 }
                 .buttonStyle(.borderless)
-                .help("Mode mur : masquer l'interface, ne garder que la scène")
+                .help("Masquer le bandeau d'informations sur la scène")
             }
             if pickingHouse {
                 Label("Clique sur ta maison dans la scène — son emprise devient le centre exact.",

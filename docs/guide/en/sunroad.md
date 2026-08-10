@@ -39,7 +39,7 @@ The scene's center is the configured location — often approximate. The **house
 
 ## Layers and wall mode
 
-Every layer toggles on demand (checkboxes): buildings, roads, sun arc, panels, compass, energy. The **crossed-eye** button hides the whole interface — great on a spare display — and a discreet eye brings it back.
+Every layer toggles on demand (checkboxes): buildings, roads, sun arc, panels, compass, energy. The **crossed-eye** button hides the info banner overlaid on the scene (the sidebar cards stay) — a discreet eye brings it back.
 
 ## Good to know
 

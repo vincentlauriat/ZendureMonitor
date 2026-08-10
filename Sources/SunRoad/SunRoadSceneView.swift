@@ -81,6 +81,7 @@ struct SunRoadSceneView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> SCNView {
         let view = PickableSCNView()
+        view.installClickRecognizer()
         let scene = SCNScene()
         view.scene = scene
         view.antialiasingMode = .multisampling4X
@@ -651,22 +652,28 @@ struct SunRoadSceneView: NSViewRepresentable {
 }
 
 /// SCNView qui sait désigner un bâtiment au clic (mode « Définir ma
-/// maison ») ; hors de ce mode, le clic revient à la caméra orbitale.
+/// maison »). Avec `allowsCameraControl`, les gesture recognizers internes
+/// de SCNView passent avant `mouseDown` — on ajoute donc notre propre
+/// NSClickGestureRecognizer, qui coexiste avec l'orbite (elle utilise le
+/// drag, pas le clic).
 final class PickableSCNView: SCNView {
     var pickingEnabled = false
     var onPickBuilding: ((Int) -> Void)?
+    private var clickInstalled = false
 
-    override func mouseDown(with event: NSEvent) {
-        if pickingEnabled {
-            let point = convert(event.locationInWindow, from: nil)
-            if let node = hitTest(point, options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]).first?.node,
-               let name = buildingName(of: node),
-               let index = Int(name.dropFirst("building-".count)) {
-                onPickBuilding?(index)
-                return
-            }
-        }
-        super.mouseDown(with: event)
+    func installClickRecognizer() {
+        guard !clickInstalled else { return }
+        clickInstalled = true
+        addGestureRecognizer(NSClickGestureRecognizer(target: self, action: #selector(handleClick(_:))))
+    }
+
+    @objc private func handleClick(_ recognizer: NSClickGestureRecognizer) {
+        guard pickingEnabled else { return }
+        let point = recognizer.location(in: self)
+        guard let node = hitTest(point, options: [.searchMode: SCNHitTestSearchMode.closest.rawValue]).first?.node,
+              let name = buildingName(of: node),
+              let index = Int(name.dropFirst("building-".count)) else { return }
+        onPickBuilding?(index)
     }
 
     /// Remonte la hiérarchie jusqu'au nœud nommé `building-<i>`.

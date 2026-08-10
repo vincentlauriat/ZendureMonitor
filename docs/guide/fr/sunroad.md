@@ -39,7 +39,7 @@ Le centre de la scène est la position des réglages — souvent approximative. 
 
 ## Couches et mode mur
 
-Chaque couche s'active à la carte (checkboxes) : bâtiments, routes, arc du soleil, panneaux, boussole, énergie. Le bouton **œil barré** efface toute l'interface — idéal sur un écran d'appoint — et un œil discret la fait revenir.
+Chaque couche s'active à la carte (checkboxes) : bâtiments, routes, arc du soleil, panneaux, boussole, énergie. Le bouton **œil barré** masque le bandeau d'informations posé sur la scène (les cartes du panneau latéral restent) — un œil discret le fait revenir.
 
 ## Bon à savoir
 
