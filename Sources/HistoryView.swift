@@ -8,7 +8,9 @@ import SwiftUI
 struct HistoryView: View {
     @EnvironmentObject private var history: HistoryService
     @State private var rangeDays = 30
-    @State private var metric = "solar"
+    /// Métrique choisie par appareil (id → clé) — chaque source renvoie sa
+    /// propre liste de champs (Hub 2000 : 4, Hyper : 5…).
+    @State private var metricByDevice: [String: String] = [:]
 
     var body: some View {
         ScrollView {
@@ -52,13 +54,6 @@ struct HistoryView: View {
             .frame(maxWidth: 260)
             .onChange(of: rangeDays) { loadIfNeeded() }
 
-            Picker("Métrique", selection: $metric) {
-                ForEach(availableMetrics, id: \.self) { key in
-                    Text(EnergyMetricCatalog.label(for: key)).tag(key)
-                }
-            }
-            .frame(maxWidth: 240)
-
             Spacer()
 
             Button {
@@ -75,14 +70,28 @@ struct HistoryView: View {
         }
     }
 
-    /// Union des clés vues dans les données, sinon les métriques usuelles.
-    private var availableMetrics: [String] {
+    /// Clés vues dans les données de CET appareil, sinon les métriques
+    /// usuelles — chaque source a sa propre liste.
+    private func availableMetrics(for device: ZendureAppAPI.AppDevice) -> [String] {
         var keys = Set<String>()
-        for days in history.days.values {
-            for day in days { keys.formUnion(day.fields.keys) }
-        }
+        for day in history.days[device.id] ?? [] { keys.formUnion(day.fields.keys) }
         if keys.isEmpty { return ["solar", "home", "batteryInput", "batteryOutput"] }
         return keys.sorted { EnergyMetricCatalog.label(for: $0) < EnergyMetricCatalog.label(for: $1) }
+    }
+
+    /// Métrique effective pour un appareil : le choix mémorisé s'il est
+    /// toujours proposé par cette source, sinon « solar », sinon la première.
+    private func selectedMetric(for device: ZendureAppAPI.AppDevice) -> String {
+        let available = availableMetrics(for: device)
+        if let chosen = metricByDevice[device.id], available.contains(chosen) { return chosen }
+        return available.contains("solar") ? "solar" : (available.first ?? "solar")
+    }
+
+    private func metricBinding(for device: ZendureAppAPI.AppDevice) -> Binding<String> {
+        Binding(
+            get: { selectedMetric(for: device) },
+            set: { metricByDevice[device.id] = $0 }
+        )
     }
 
     private var isLoading: Bool {
@@ -125,15 +134,23 @@ struct HistoryView: View {
     private func deviceSection(_ device: ZendureAppAPI.AppDevice) -> some View {
         let days = history.range(rangeDays, deviceId: device.id)
         let totals = history.lifetime[device.id]
-        return MetricCard(title: "\(device.displayName) — \(EnergyMetricCatalog.label(for: metric))", systemImage: "chart.bar.fill") {
+        let metric = selectedMetric(for: device)
+        return MetricCard(title: "\(device.displayName)", systemImage: "chart.bar.fill") {
             VStack(alignment: .leading, spacing: 12) {
+                Picker("Métrique", selection: metricBinding(for: device)) {
+                    ForEach(availableMetrics(for: device), id: \.self) { key in
+                        Text(EnergyMetricCatalog.label(for: key)).tag(key)
+                    }
+                }
+                .frame(maxWidth: 320, alignment: .leading)
+
                 if days.isEmpty {
                     Text("Pas encore de données — lance une actualisation.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
-                    chart(days)
-                    summaryRow(days)
+                    chart(days, metric: metric)
+                    summaryRow(days, metric: metric)
                 }
                 if let totals, !totals.isEmpty {
                     lifetimeRow(totals)
@@ -142,7 +159,7 @@ struct HistoryView: View {
         }
     }
 
-    private func chart(_ days: [EnergyDay]) -> some View {
+    private func chart(_ days: [EnergyDay], metric: String) -> some View {
         Chart(days) { day in
             if let date = day.dateValue {
                 BarMark(
@@ -156,7 +173,7 @@ struct HistoryView: View {
         .frame(height: 220)
     }
 
-    private func summaryRow(_ days: [EnergyDay]) -> some View {
+    private func summaryRow(_ days: [EnergyDay], metric: String) -> some View {
         let values = days.compactMap { $0.fields[metric] }
         let total = values.reduce(0, +)
         let average = values.isEmpty ? 0 : total / Double(values.count)
