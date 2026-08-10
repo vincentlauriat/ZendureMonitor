@@ -77,7 +77,10 @@ final class CloudService: @unchecked Sendable {
                 DispatchQueue.main.async { self.onDevicesChanged?(usable) }
                 self.connectMQTT(credentials: mqtt, devices: usable)
             } catch {
-                self.setPhase(.failed(error.localizedDescription))
+                // Réseau pas encore remonté (typique juste après un réveil de
+                // veille) ou cloud indisponible : sans nouvel essai planifié,
+                // la session resterait morte jusqu'à un geste manuel.
+                self.scheduleRetry(message: String(localized: "Cloud injoignable : \(error.localizedDescription) — nouvel essai dans 15 s…"))
             }
         }
     }
@@ -156,13 +159,19 @@ final class CloudService: @unchecked Sendable {
     /// Reconnexion : les credentials MQTT peuvent avoir expiré, donc on repart
     /// du deviceList complet (qui re-fournit aussi les credentials MQTT).
     private func scheduleReconnect(reason: String?, suspectedTakeover: Bool = false) {
-        guard reconnectTask == nil else { return }
         if suspectedTakeover {
-            setPhase(.failed(String(localized: "Le serveur coupe la connexion en boucle — une autre intégration utilise probablement la même Cloud Key (Home Assistant, ioBroker, l'app sur un autre Mac…). Le cloud Zendure n'accepte qu'une session temps réel par clé. Nouvel essai dans 15 s…")))
+            scheduleRetry(message: String(localized: "Le serveur coupe la connexion en boucle — une autre intégration utilise probablement la même Cloud Key (Home Assistant, ioBroker, l'app sur un autre Mac…). Le cloud Zendure n'accepte qu'une session temps réel par clé. Nouvel essai dans 15 s…"))
         } else {
             let detail = reason.map { " : \($0)" } ?? ""
-            setPhase(.failed(String(localized: "Connexion MQTT perdue\(detail) — reconnexion dans 15 s…")))
+            scheduleRetry(message: String(localized: "Connexion MQTT perdue\(detail) — reconnexion dans 15 s…"))
         }
+    }
+
+    /// Affiche l'erreur et replanifie un `start()` complet dans 15 s — chemin
+    /// commun aux coupures MQTT et aux échecs HTTP du deviceList.
+    private func scheduleRetry(message: String) {
+        guard reconnectTask == nil else { return }
+        setPhase(.failed(message))
         reconnectTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(15))
             guard let self, !Task.isCancelled else { return }

@@ -312,6 +312,30 @@ final class Monitor: ObservableObject {
         applyConnectionMode()
         restart()
         refreshNotificationsStatus()
+
+        // Réveil de veille : le socket MQTT est mort (parfois silencieusement)
+        // et le Wi-Fi met quelques secondes à remonter — relancer la session
+        // cloud et le poll sans attendre le timeout du keepalive.
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didWakeNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.handleWake() }
+        }
+    }
+
+    /// Petit délai pour laisser le Wi-Fi se rattacher, puis redémarrage franc
+    /// de la session cloud (si mode Cloud) et du cycle de poll. Si le réseau
+    /// n'est toujours pas prêt, CloudService ré-essaie désormais tout seul
+    /// toutes les 15 s.
+    private func handleWake() {
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            guard let self else { return }
+            if self.connectionMode == .cloud {
+                self.startCloudService()
+            }
+            self.scheduleRestart()
+        }
     }
 
     /// Vérification au démarrage (et au changement du réglage d'alerte) pour

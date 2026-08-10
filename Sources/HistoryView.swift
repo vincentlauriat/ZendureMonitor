@@ -8,6 +8,8 @@ import SwiftUI
 struct HistoryView: View {
     @EnvironmentObject private var history: HistoryService
     @State private var rangeDays = 30
+    /// Affichage de la carte Débogage (échanges HTTP), masquée par défaut.
+    @AppStorage("historyShowDebug") private var showDebug = false
     /// Métrique choisie par appareil (id → clé) — chaque source renvoie sa
     /// propre liste de champs (Hub 2000 : 4, Hyper : 5…).
     @State private var metricByDevice: [String: String] = [:]
@@ -26,7 +28,12 @@ struct HistoryView: View {
                     HistorySetupCard()
                 }
                 if !history.exchanges.isEmpty {
-                    HistoryDebugCard()
+                    Toggle("Afficher le débogage (échanges HTTP)", isOn: $showDebug)
+                        .toggleStyle(.checkbox)
+                        .font(.caption)
+                    if showDebug {
+                        HistoryDebugCard()
+                    }
                 }
             }
             .padding(20)
