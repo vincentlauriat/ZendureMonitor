@@ -42,6 +42,8 @@ Options: choose what the menu bar shows (solar W, battery %, home W — or icon 
 |:---:|:---:|
 | ![Panel, light theme](docs/panel-light.png) | ![Panel, dark theme](docs/panel-dark.png) |
 
+![SunRoad — the neighborhood in 3D under the sun's real arc, with the sidebar](docs/sunroad.png)
+
 **Dashboard window** — hub-centric animated energy-flow diagram and every indicator the local API exposes:
 
 ![Dashboard](docs/dashboard.png)
