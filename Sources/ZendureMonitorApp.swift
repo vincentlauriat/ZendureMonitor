@@ -39,8 +39,8 @@ struct ZendureMonitorApp: App {
         }
         .defaultSize(width: 820, height: 720)
 
-        Window("Hélios", id: "helios") {
-            HeliosView()
+        Window("SunRoad", id: "sunroad") {
+            SunRoadView()
         }
         .defaultSize(width: 1100, height: 760)
     }

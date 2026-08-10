@@ -1,17 +1,20 @@
 import SceneKit
 import SwiftUI
 
-/// La scène 3D « Hélios » : sol, boussole, maison, champs de panneaux, arc du
+/// La scène 3D « SunRoad » : sol, boussole, maison, champs de panneaux, arc du
 /// soleil du jour et soleil-lumière directionnelle (ombres portées réelles).
 /// Phase A du plan v2.0 — le quartier OSM et les flux d'énergie arrivent en
 /// phases B/C.
-struct HeliosSceneView: NSViewRepresentable {
+struct SunRoadSceneView: NSViewRepresentable {
     var latitude: Double
     var longitude: Double
     var date: Date
     var arrays: [PanelArray]
+    /// Bâtiments du quartier (Overpass/OSM) — vide tant que non chargés :
+    /// la maison placeholder assure l'intérim.
+    var buildings: [SunRoadBuilding]
 
-    private static let domeRadius = 50.0
+    private static let domeRadius = 140.0
 
     func makeCoordinator() -> Coordinator { Coordinator() }
 
@@ -29,10 +32,10 @@ struct HeliosSceneView: NSViewRepresentable {
         view.defaultCameraController.target = SCNVector3(0, 2, 0)
 
         let camera = SCNCamera()
-        camera.zFar = 400
+        camera.zFar = 900
         let cameraNode = SCNNode()
         cameraNode.camera = camera
-        cameraNode.position = SCNVector3(28, 22, 42)   // sud-est, en hauteur
+        cameraNode.position = SCNVector3(60, 45, 95)   // sud-est, en hauteur
         cameraNode.look(at: SCNVector3(0, 2, 0))
         scene.rootNode.addChildNode(cameraNode)
 
@@ -56,6 +59,10 @@ struct HeliosSceneView: NSViewRepresentable {
             coordinator.arraysKey = arrays
             rebuildPanels(coordinator: coordinator)
         }
+        if coordinator.buildingsKey != buildings {
+            coordinator.buildingsKey = buildings
+            rebuildBuildings(coordinator: coordinator)
+        }
         updateSun(coordinator: coordinator)
     }
 
@@ -66,14 +73,14 @@ struct HeliosSceneView: NSViewRepresentable {
         coordinator.scene = scene
 
         // Sol : large galette verte, réceptrice d'ombres.
-        let ground = SCNCylinder(radius: 65, height: 0.4)
+        let ground = SCNCylinder(radius: 150, height: 0.4)
         ground.firstMaterial?.diffuse.contents = NSColor(calibratedRed: 0.36, green: 0.48, blue: 0.32, alpha: 1)
         let groundNode = SCNNode(geometry: ground)
         groundNode.position = SCNVector3(0, -0.2, 0)
         root.addChildNode(groundNode)
 
         // Anneau de boussole au bord de la voûte + lettres cardinales.
-        let ring = SCNTorus(ringRadius: Self.domeRadius, pipeRadius: 0.15)
+        let ring = SCNTorus(ringRadius: Self.domeRadius, pipeRadius: 0.4)
         ring.firstMaterial?.diffuse.contents = NSColor.white.withAlphaComponent(0.35)
         let ringNode = SCNNode(geometry: ring)
         ringNode.position = SCNVector3(0, 0.1, 0)
@@ -82,10 +89,10 @@ struct HeliosSceneView: NSViewRepresentable {
         let cardinals: [(String, Double)] = [("N", 0), ("E", 90), ("S", 180), ("O", 270)]
         for (letter, azimuth) in cardinals {
             let text = SCNText(string: letter, extrusionDepth: 0.3)
-            text.font = NSFont.systemFont(ofSize: 4, weight: .bold)
+            text.font = NSFont.systemFont(ofSize: 10, weight: .bold)
             text.firstMaterial?.diffuse.contents = NSColor.white.withAlphaComponent(0.85)
             let node = SCNNode(geometry: text)
-            let p = HeliosGeometry.domePoint(azimuth: azimuth, elevation: 0, radius: Self.domeRadius + 3)
+            let p = SunRoadGeometry.domePoint(azimuth: azimuth, elevation: 0, radius: Self.domeRadius + 8)
             // Centrer le glyphe sur son point d'ancrage.
             let (minB, maxB) = text.boundingBox
             node.pivot = SCNMatrix4MakeTranslation((minB.x + maxB.x) / 2, minB.y, 0)
@@ -109,6 +116,7 @@ struct HeliosSceneView: NSViewRepresentable {
         house.addChildNode(roofNode)
         house.enumerateChildNodes { node, _ in node.castsShadow = true }
         root.addChildNode(house)
+        coordinator.placeholderHouse = house
 
         // Lumière ambiante (relevée/abaissée selon l'heure dans updateSun).
         let ambient = SCNLight()
@@ -120,7 +128,7 @@ struct HeliosSceneView: NSViewRepresentable {
         coordinator.ambientLight = ambient
 
         // Le soleil : sphère émissive + lumière directionnelle qui la suit.
-        let sunSphere = SCNSphere(radius: 1.6)
+        let sunSphere = SCNSphere(radius: 3.5)
         sunSphere.firstMaterial?.diffuse.contents = NSColor.yellow
         sunSphere.firstMaterial?.emission.contents = NSColor(calibratedRed: 1, green: 0.85, blue: 0.3, alpha: 1)
         let sunNode = SCNNode(geometry: sunSphere)
@@ -149,6 +157,57 @@ struct HeliosSceneView: NSViewRepresentable {
         let panels = SCNNode()
         root.addChildNode(panels)
         coordinator.panelsNode = panels
+        let buildingsContainer = SCNNode()
+        root.addChildNode(buildingsContainer)
+        coordinator.buildingsNode = buildingsContainer
+    }
+
+    // MARK: - Le quartier (Overpass/OSM)
+
+    private func rebuildBuildings(coordinator: Coordinator) {
+        guard let container = coordinator.buildingsNode else { return }
+        container.childNodes.forEach { $0.removeFromParentNode() }
+        // Sans données OSM, la maison placeholder reste visible.
+        coordinator.placeholderHouse?.isHidden = !buildings.isEmpty
+        guard !buildings.isEmpty else { return }
+
+        // La maison = le bâtiment dont le centre est le plus proche de la
+        // position configurée (dans un rayon plausible).
+        let houseIndex = buildings.indices.min(by: {
+            GeoProjection.distance(from: buildings[$0], originLat: latitude, originLon: longitude)
+                < GeoProjection.distance(from: buildings[$1], originLat: latitude, originLon: longitude)
+        }).flatMap { index in
+            GeoProjection.distance(from: buildings[index], originLat: latitude, originLon: longitude) < 25
+                ? index : nil
+        }
+
+        let neighborMaterial = SCNMaterial()
+        neighborMaterial.diffuse.contents = NSColor(calibratedWhite: 0.82, alpha: 1)
+        let houseMaterial = SCNMaterial()
+        houseMaterial.diffuse.contents = NSColor(calibratedRed: 0.98, green: 0.80, blue: 0.35, alpha: 1)
+        houseMaterial.emission.contents = NSColor(calibratedRed: 0.25, green: 0.18, blue: 0.03, alpha: 1)
+
+        for (index, building) in buildings.enumerated() {
+            let path = NSBezierPath()
+            path.flatness = 0.1
+            for (i, point) in building.points.enumerated() {
+                let m = GeoProjection.meters(lat: point.lat, lon: point.lon,
+                                             originLat: latitude, originLon: longitude)
+                let p = NSPoint(x: m.east, y: m.north)
+                i == 0 ? path.move(to: p) : path.line(to: p)
+            }
+            path.close()
+
+            let shape = SCNShape(path: path, extrusionDepth: CGFloat(building.height))
+            shape.materials = [index == houseIndex ? houseMaterial : neighborMaterial]
+            let node = SCNNode(geometry: shape)
+            // L'extrusion SCNShape est le long de Z, centrée : basculer le plan
+            // (est, nord) au sol — (e, n, t) → (e, t, -n) — puis poser au sol.
+            node.eulerAngles.x = -.pi / 2
+            node.position = SCNVector3(0, building.height / 2, 0)
+            node.castsShadow = true
+            container.addChildNode(node)
+        }
     }
 
     // MARK: - Arc du jour
@@ -166,24 +225,24 @@ struct HeliosSceneView: NSViewRepresentable {
         material.emission.contents = NSColor(calibratedRed: 0.9, green: 0.6, blue: 0.1, alpha: 1)
 
         // Polyline en segments cylindriques (les primitives .line font 1 px).
-        var previous = HeliosGeometry.domePoint(azimuth: track[0].azimuth,
+        var previous = SunRoadGeometry.domePoint(azimuth: track[0].azimuth,
                                                 elevation: track[0].elevation,
                                                 radius: Self.domeRadius)
         for position in track.dropFirst() {
-            let current = HeliosGeometry.domePoint(azimuth: position.azimuth,
+            let current = SunRoadGeometry.domePoint(azimuth: position.azimuth,
                                                    elevation: position.elevation,
                                                    radius: Self.domeRadius)
-            arc.addChildNode(Self.segment(from: previous, to: current, radius: 0.18, material: material))
+            arc.addChildNode(Self.segment(from: previous, to: current, radius: 0.5, material: material))
             previous = current
         }
 
         // Un repère par heure pleine, pour lire l'échelle du temps.
         let calendar = Calendar.current
         for position in track where calendar.component(.minute, from: position.date) < 10 {
-            let dot = SCNSphere(radius: 0.45)
+            let dot = SCNSphere(radius: 1.1)
             dot.firstMaterial?.emission.contents = NSColor.white
             let node = SCNNode(geometry: dot)
-            let p = HeliosGeometry.domePoint(azimuth: position.azimuth,
+            let p = SunRoadGeometry.domePoint(azimuth: position.azimuth,
                                              elevation: position.elevation,
                                              radius: Self.domeRadius)
             node.position = SCNVector3(p.x, p.y, p.z)
@@ -192,7 +251,7 @@ struct HeliosSceneView: NSViewRepresentable {
         }
     }
 
-    private static func segment(from a: HeliosGeometry.Point3, to b: HeliosGeometry.Point3,
+    private static func segment(from a: SunRoadGeometry.Point3, to b: SunRoadGeometry.Point3,
                                 radius: Double, material: SCNMaterial) -> SCNNode {
         let dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z
         let length = (dx * dx + dy * dy + dz * dz).squareRoot()
@@ -227,7 +286,7 @@ struct HeliosSceneView: NSViewRepresentable {
         // Une rangée au sud de la maison, espacée d'après la taille des champs.
         var offsetX = -Double(arrays.count - 1)
         for array in arrays {
-            let area = HeliosGeometry.panelArea(peakWatts: array.peakWatts)
+            let area = SunRoadGeometry.panelArea(peakWatts: array.peakWatts)
             let width = (area * 1.7).squareRoot()
             let depth = area / width
 
@@ -257,9 +316,9 @@ struct HeliosSceneView: NSViewRepresentable {
     private func updateSun(coordinator: Coordinator) {
         let ephemeris = SunCalc.compute(at: date, latitude: latitude, longitude: longitude)
         let elevation = ephemeris.elevation
-        let factor = HeliosGeometry.daylightFactor(elevation: elevation)
+        let factor = SunRoadGeometry.daylightFactor(elevation: elevation)
 
-        let p = HeliosGeometry.domePoint(azimuth: ephemeris.azimuth,
+        let p = SunRoadGeometry.domePoint(azimuth: ephemeris.azimuth,
                                          elevation: max(elevation, 0),
                                          radius: Self.domeRadius)
         coordinator.sunNode?.position = SCNVector3(p.x, p.y, p.z)
@@ -298,7 +357,10 @@ struct HeliosSceneView: NSViewRepresentable {
         var ambientLight: SCNLight?
         var arcNode: SCNNode?
         var panelsNode: SCNNode?
+        var buildingsNode: SCNNode?
+        var placeholderHouse: SCNNode?
         var arcKey = ""
         var arraysKey: [PanelArray] = []
+        var buildingsKey: [SunRoadBuilding] = []
     }
 }

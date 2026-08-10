@@ -1,9 +1,9 @@
 import SwiftUI
 
-/// Fenêtre « Hélios » : la maison, les panneaux et la course du soleil en
+/// Fenêtre « SunRoad » : la maison, les panneaux et la course du soleil en
 /// vraie 3D (Phase A du plan v2.0). Reprend la localisation et les champs de
 /// panneaux configurés dans la fenêtre Soleil.
-struct HeliosView: View {
+struct SunRoadView: View {
     @Environment(\.openWindow) private var openWindow
     @AppStorage("sunLatitude") private var latitude: Double = 0
     @AppStorage("sunLongitude") private var longitude: Double = 0
@@ -13,6 +13,15 @@ struct HeliosView: View {
     @State private var now = Date()
     private let clock = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
 
+    /// Le quartier (Overpass/OSM) — cache disque d'abord, réseau sinon.
+    enum NeighborhoodState: Equatable {
+        case idle, loading
+        case loaded(Int)
+        case failed(String)
+    }
+    @State private var buildings: [SunRoadBuilding] = []
+    @State private var neighborhood: NeighborhoodState = .idle
+
     private var configured: Bool { latitude != 0 || longitude != 0 }
     private var arrays: [PanelArray] { PanelArrayStore.decode(arraysJSON) }
 
@@ -20,10 +29,13 @@ struct HeliosView: View {
         Group {
             if configured {
                 ZStack(alignment: .topLeading) {
-                    HeliosSceneView(latitude: latitude, longitude: longitude,
-                                    date: now, arrays: arrays)
+                    SunRoadSceneView(latitude: latitude, longitude: longitude,
+                                    date: now, arrays: arrays, buildings: buildings)
                         .ignoresSafeArea()
                     hud
+                }
+                .task(id: "\(latitude),\(longitude)") {
+                    await loadNeighborhood(force: false)
                 }
             } else {
                 notConfigured
@@ -57,6 +69,7 @@ struct HeliosView: View {
                 }
             }
             .font(.callout.monospacedDigit())
+            neighborhoodRow
             Text("Glisser pour orbiter · molette pour zoomer")
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -66,14 +79,61 @@ struct HeliosView: View {
         .padding(16)
     }
 
+    /// État du quartier OSM + rechargement forcé (les bâtiments ne bougent
+    /// pas : le cache disque suffit en temps normal).
+    private var neighborhoodRow: some View {
+        HStack(spacing: 8) {
+            switch neighborhood {
+            case .idle:
+                EmptyView()
+            case .loading:
+                ProgressView().controlSize(.mini)
+                Text("Chargement du quartier (OpenStreetMap)…")
+            case .loaded(let count):
+                Image(systemName: "building.2")
+                Text("\(count) bâtiment(s) du quartier")
+            case .failed(let message):
+                Image(systemName: "wifi.exclamationmark")
+                    .foregroundStyle(.orange)
+                Text("Quartier indisponible : \(message)")
+                    .lineLimit(1)
+            }
+            Button {
+                Task { await loadNeighborhood(force: true) }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+            }
+            .buttonStyle(.borderless)
+            .help("Recharger le quartier depuis OpenStreetMap")
+            .disabled(neighborhood == .loading)
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+    }
+
+    private func loadNeighborhood(force: Bool) async {
+        guard configured else { return }
+        neighborhood = .loading
+        do {
+            let result = try await OverpassService.neighborhood(latitude: latitude,
+                                                                longitude: longitude,
+                                                                force: force)
+            buildings = result
+            neighborhood = .loaded(result.count)
+        } catch {
+            // La scène reste utilisable avec la maison placeholder.
+            neighborhood = .failed(error.localizedDescription)
+        }
+    }
+
     private var notConfigured: some View {
         VStack(spacing: 14) {
             Image(systemName: "cube.transparent")
                 .font(.system(size: 44))
                 .foregroundStyle(.secondary)
-            Text("Hélios a besoin de la position de la maison")
+            Text("SunRoad a besoin de la position de la maison")
                 .font(.headline)
-            Text("Renseigne la latitude et la longitude dans la fenêtre Soleil — Hélios réutilise la même localisation et les mêmes champs de panneaux.")
+            Text("Renseigne la latitude et la longitude dans la fenêtre Soleil — SunRoad réutilise la même localisation et les mêmes champs de panneaux.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

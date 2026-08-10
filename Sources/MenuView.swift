@@ -331,8 +331,8 @@ struct MenuView: View {
                 openWindow(id: "history")
                 NSApp.activate(ignoringOtherApps: true)
             }
-            headerButton("cube.transparent", color: .indigo, help: "Hélios (3D)") {
-                openWindow(id: "helios")
+            headerButton("cube.transparent", color: .indigo, help: "SunRoad (3D)") {
+                openWindow(id: "sunroad")
                 NSApp.activate(ignoringOtherApps: true)
             }
             headerButton("gearshape.fill", color: .teal, help: "R\u{00e9}glages") {

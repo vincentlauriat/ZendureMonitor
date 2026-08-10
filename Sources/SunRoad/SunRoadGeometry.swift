@@ -1,14 +1,14 @@
 import Foundation
 
 /// Passage des coordonnées solaires (azimut/élévation, convention SunCalc :
-/// 0° = nord, 90° = est) vers le repère 3D de la scène Hélios.
+/// 0° = nord, 90° = est) vers le repère 3D de la scène SunRoad.
 ///
 /// Repère SceneKit : Y vers le haut, nord = -Z, est = +X — ainsi une caméra
 /// placée au sud et regardant l'origine voit le nord au fond, l'est à droite,
 /// comme sur une carte.
 ///
 /// Fonctions pures, testées sans SceneKit.
-enum HeliosGeometry {
+enum SunRoadGeometry {
     struct Point3: Equatable {
         var x: Double
         var y: Double
