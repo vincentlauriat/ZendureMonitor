@@ -37,6 +37,11 @@ struct DashboardContent: View {
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                                 .fixedSize(horizontal: false, vertical: true)
+                        } else if monitor.ctConfigured {
+                            Text("Flux mesurés par le SolarFlow. Smart CT injoignable — il n'est lisible que depuis le réseau local, pas via le cloud : le soutirage direct de la maison (liaison grise) n'est pas mesuré pour l'instant.")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                                .fixedSize(horizontal: false, vertical: true)
                         } else {
                             Text("Flux mesurés par le SolarFlow. Le soutirage direct de la maison sur le réseau public (liaison grise) n'est pas mesuré : renseignez le Smart CT dans Réglages → Réseau pour l'afficher en réel.")
                                 .font(.caption2)
