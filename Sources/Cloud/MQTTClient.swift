@@ -145,7 +145,14 @@ final class MQTTClient: @unchecked Sendable {
                 send(MQTTPacket.puback(packetId: packetId))
             }
             onMessage?(topic, payload)
-        case .suback, .puback, .pingresp:
+        case .suback(let returnCodes):
+            // Tous les abonnements refusés : sans eux, aucune donnée n'arrivera
+            // jamais — remonter une erreur explicite plutôt que rester « live »
+            // sur un flux vide.
+            if !returnCodes.isEmpty, returnCodes.allSatisfy({ $0 == 0x80 }) {
+                teardown(reason: String(localized: "abonnements refusés par le serveur"))
+            }
+        case .puback, .pingresp:
             break
         }
     }
@@ -177,7 +184,9 @@ final class MQTTClient: @unchecked Sendable {
 enum MQTTPacket {
     enum Incoming: Equatable {
         case connack(returnCode: UInt8)
-        case suback
+        /// Un code par topic demandé : 0x00/0x01/0x02 = QoS accordée,
+        /// 0x80 = abonnement refusé par le broker.
+        case suback(returnCodes: [UInt8])
         case puback
         case pingresp
         case publish(topic: String, payload: Data, packetId: UInt16?)
@@ -277,7 +286,8 @@ enum MQTTPacket {
         case 0x20:
             return .connack(returnCode: body.count >= 2 ? body[body.startIndex + 1] : 0xFF)
         case 0x90:
-            return .suback
+            // Corps : packet identifier (2 octets) puis un code de retour par topic.
+            return .suback(returnCodes: body.count > 2 ? Array(body.dropFirst(2)) : [])
         case 0x40:
             return .puback
         case 0xD0:

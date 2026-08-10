@@ -30,6 +30,14 @@ final class CloudService: @unchecked Sendable {
     private var pollTimer: DispatchSourceTimer?
     private var reconnectTask: Task<Void, Never>?
     private var messageCounter = 0
+    /// Détection de « session takeover » : le broker Zendure n'accepte qu'une
+    /// session temps réel par Cloud Key (clientId fourni par le serveur, lié au
+    /// compte). Deux clients avec la même clé s'éjectent mutuellement — le
+    /// symptôme est une fermeture serveur quelques secondes après chaque
+    /// connexion réussie. Ces deux champs ne sont touchés que depuis les
+    /// callbacks MQTT (queue série du client).
+    private var lastConnectAt: Date?
+    private var rapidDropCount = 0
     private let stateQueue = DispatchQueue(label: "fr.lauriat.ZendureMonitor.cloud-state")
     private let pollQueue = DispatchQueue(label: "fr.lauriat.ZendureMonitor.cloud-poll")
 
@@ -61,9 +69,13 @@ final class CloudService: @unchecked Sendable {
             guard let self else { return }
             do {
                 let (devices, mqtt) = try await ZendureAPI.fetchDeviceList(cloudKey: cloudKey)
-                self.stateQueue.sync { self.devices = devices }
-                DispatchQueue.main.async { self.onDevicesChanged?(devices) }
-                self.connectMQTT(credentials: mqtt, devices: devices)
+                // Un deviceList réel peut contenir des entrées aux clés vides ;
+                // les garder produirait des topics malformés (`iot//…/#`) que
+                // certains brokers sanctionnent en fermant la connexion.
+                let usable = devices.filter { !$0.deviceKey.isEmpty && !$0.productKey.isEmpty }
+                self.stateQueue.sync { self.devices = usable }
+                DispatchQueue.main.async { self.onDevicesChanged?(usable) }
+                self.connectMQTT(credentials: mqtt, devices: usable)
             } catch {
                 self.setPhase(.failed(error.localizedDescription))
             }
@@ -103,6 +115,7 @@ final class CloudService: @unchecked Sendable {
             guard let self else { return }
             switch state {
             case .connected:
+                self.lastConnectAt = Date()
                 // Les deux formes de topic : selon le firmware, les appareils
                 // publient sur l'une ou l'autre.
                 var topics: [String] = []
@@ -117,7 +130,17 @@ final class CloudService: @unchecked Sendable {
             case .disconnected(let reason):
                 self.pollTimer?.cancel()
                 self.pollTimer = nil
-                self.scheduleReconnect(reason: reason)
+                // Fermeture < 10 s après une connexion réussie : compter les
+                // occurrences consécutives pour diagnostiquer un takeover.
+                if let connectedAt = self.lastConnectAt,
+                   Date().timeIntervalSince(connectedAt) < 10 {
+                    self.rapidDropCount += 1
+                } else {
+                    self.rapidDropCount = 0
+                }
+                self.lastConnectAt = nil
+                self.scheduleReconnect(reason: reason,
+                                       suspectedTakeover: self.rapidDropCount >= 3)
             case .idle, .connecting:
                 break
             }
@@ -132,10 +155,14 @@ final class CloudService: @unchecked Sendable {
 
     /// Reconnexion : les credentials MQTT peuvent avoir expiré, donc on repart
     /// du deviceList complet (qui re-fournit aussi les credentials MQTT).
-    private func scheduleReconnect(reason: String?) {
+    private func scheduleReconnect(reason: String?, suspectedTakeover: Bool = false) {
         guard reconnectTask == nil else { return }
-        let detail = reason.map { " : \($0)" } ?? ""
-        setPhase(.failed(String(localized: "Connexion MQTT perdue\(detail) — reconnexion dans 15 s…")))
+        if suspectedTakeover {
+            setPhase(.failed(String(localized: "Le serveur coupe la connexion en boucle — une autre intégration utilise probablement la même Cloud Key (Home Assistant, ioBroker, l'app sur un autre Mac…). Le cloud Zendure n'accepte qu'une session temps réel par clé. Nouvel essai dans 15 s…")))
+        } else {
+            let detail = reason.map { " : \($0)" } ?? ""
+            setPhase(.failed(String(localized: "Connexion MQTT perdue\(detail) — reconnexion dans 15 s…")))
+        }
         reconnectTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(15))
             guard let self, !Task.isCancelled else { return }
