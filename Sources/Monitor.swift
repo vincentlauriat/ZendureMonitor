@@ -99,6 +99,19 @@ final class Monitor: ObservableObject {
             scheduleRestart()
         }
     }
+    /// Bascule automatique local ⇄ cloud : passe en Cloud après 2 polls locaux
+    /// en échec (plus sur le réseau domestique) si une Cloud Key est
+    /// enregistrée, et revient en local dès que le SolarFlow répond à une
+    /// sonde périodique — voir autoSwitchBackIfLocalReachable().
+    @Published var autoSwitchMode: Bool {
+        didSet {
+            UserDefaults.standard.set(autoSwitchMode, forKey: "autoSwitchMode")
+            if !autoSwitchMode { autoSwitchedToCloud = false }
+        }
+    }
+    /// True quand le mode Cloud courant résulte d'une bascule automatique
+    /// (le pied de connexion du panneau l'indique).
+    @Published var autoSwitchedToCloud = false
     /// Appareil cloud suivi (deviceKey) — vide tant que la liste n'est pas connue.
     @Published var cloudDeviceKey: String {
         didSet {
@@ -220,6 +233,11 @@ final class Monitor: ObservableObject {
     private var restartDebounce: Task<Void, Never>?
     /// Dernier essai de l'hôte principal quand on est passé sur le secours.
     private var lastPrimaryAttempt: Date = .distantPast
+    /// Échecs locaux consécutifs (hôte principal ET secours) — la bascule
+    /// automatique vers le cloud se déclenche au deuxième.
+    private var localFailureStreak = 0
+    /// Dernière sonde de l'hôte local en mode Cloud (bascule auto retour).
+    private var lastLocalProbe: Date = .distantPast
     private let session: URLSession
     /// Logique pure des cumuls du jour (Wh, courbe, pic) — voir DailyAccumulator.
     private var accumulator: DailyAccumulator
@@ -244,6 +262,7 @@ final class Monitor: ObservableObject {
 
         let defaults = UserDefaults.standard
         connectionMode = ConnectionMode(rawValue: defaults.string(forKey: "connectionMode") ?? "local") ?? .local
+        autoSwitchMode = defaults.bool(forKey: "autoSwitchMode")
         cloudDeviceKey = defaults.string(forKey: "cloudDeviceKey") ?? ""
         host = defaults.string(forKey: "deviceHost") ?? ""
         ctHost = defaults.string(forKey: "ctHost") ?? ""
@@ -334,6 +353,7 @@ final class Monitor: ObservableObject {
     }
 
     func refresh() async {
+        if connectionMode == .cloud { await autoSwitchBackIfLocalReachable() }
         do {
             let fresh: DeviceState
             let viaFallback: Bool
@@ -347,6 +367,7 @@ final class Monitor: ObservableObject {
             usingFallback = viaFallback
             lastError = nil
             localNetworkDenied = false
+            localFailureStreak = 0
             append(fresh.solarInputPower, to: &solarHistory)
             append(fresh.outputHomePower, to: &homeHistory)
             append(fresh.batteryFlow, to: &flowHistory)
@@ -364,6 +385,19 @@ final class Monitor: ObservableObject {
             lastError = error.localizedDescription
             accumulator.resetSampleClock()
             localNetworkDenied = connectionMode == .local && Self.looksLikeLocalNetworkDenial(error)
+            if connectionMode == .local {
+                localFailureStreak += 1
+                // Bascule automatique : après 2 échecs consécutifs (hôte
+                // principal et secours compris), passer en Cloud si une
+                // Cloud Key est enregistrée — typiquement quand le Mac a
+                // quitté le réseau domestique.
+                if autoSwitchMode, localFailureStreak >= 2, loadCloudKey() != nil {
+                    localFailureStreak = 0
+                    lastLocalProbe = .now
+                    autoSwitchedToCloud = true
+                    connectionMode = .cloud
+                }
+            }
             // Le Smart CT est un appareil distinct : sa mesure reste suivie
             // (ou invalidée) même quand le SolarFlow ne répond pas.
             await refreshSmartCT()
@@ -534,6 +568,22 @@ final class Monitor: ObservableObject {
     }
 
     // MARK: - Fetching
+
+    /// Bascule auto retour : en mode Cloud avec l'option active, sonde l'hôte
+    /// local toutes les 60 s (timeout 5 s, hors du réseau domestique la sonde
+    /// échoue vite) et repasse en local dès que le SolarFlow répond.
+    private func autoSwitchBackIfLocalReachable() async {
+        guard autoSwitchMode, connectionMode == .cloud else { return }
+        let target = host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !target.isEmpty,
+              Date.now.timeIntervalSince(lastLocalProbe) >= 60 else { return }
+        lastLocalProbe = .now
+        if (try? await fetchReport(host: target)) != nil {
+            localFailureStreak = 0
+            autoSwitchedToCloud = false
+            connectionMode = .local
+        }
+    }
 
     private func fetchWithFallback() async throws -> (DeviceState, viaFallback: Bool) {
         let fallback = fallbackHost.trimmingCharacters(in: .whitespacesAndNewlines)

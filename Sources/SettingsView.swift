@@ -54,6 +54,11 @@ private struct DeviceSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                Toggle("Basculer automatiquement", isOn: $monitor.autoSwitchMode)
+                Text("Passe en Cloud quand le SolarFlow ne répond plus en local (typiquement hors du réseau domestique) et revient en local dès qu'il répond à nouveau. Nécessite une Cloud Key enregistrée.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             if monitor.connectionMode == .cloud {
                 CloudSettingsSection()
@@ -323,6 +328,11 @@ private struct CloudSettingsSection: View {
 
 private struct DisplaySettingsTab: View {
     @EnvironmentObject var monitor: Monitor
+    @AppStorage("showSolarCard") private var showSolarCard = true
+    @AppStorage("showBatteryCard") private var showBatteryCard = true
+    @AppStorage("showFlowsCard") private var showFlowsCard = true
+    @AppStorage("showConsumptionCard") private var showConsumptionCard = true
+    @AppStorage("showHistoryCard") private var showHistoryCard = true
 
     var body: some View {
         Form {
@@ -333,6 +343,17 @@ private struct DisplaySettingsTab: View {
                 Text("Tout décocher n'affiche que l'icône ☀️.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+            }
+            Section("Cartes du panneau") {
+                Toggle("Production solaire", isOn: $showSolarCard)
+                Toggle("Batterie", isOn: $showBatteryCard)
+                Toggle("Flux", isOn: $showFlowsCard)
+                Toggle("Consommation maison", isOn: $showConsumptionCard)
+                Toggle("Historique", isOn: $showHistoryCard)
+                Text("Chaque carte visible peut aussi être repliée d'un clic sur son en-tête dans le panneau — repliée, elle n'affiche que sa valeur clé.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Section("Thème") {
                 Picker("Thème", selection: $monitor.appearance) {
