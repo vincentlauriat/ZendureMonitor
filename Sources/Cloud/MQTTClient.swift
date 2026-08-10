@@ -28,6 +28,11 @@ final class MQTTClient: @unchecked Sendable {
     private var buffer = Data()
     private var packetIdentifier: UInt16 = 0
     private var pingTimer: DispatchSourceTimer?
+    /// Vrai entre l'envoi d'un PINGREQ et le paquet suivant reçu. Si le timer
+    /// de keepalive retombe dessus, la connexion est à moitié morte (typique
+    /// après une mise en veille : le socket ne signale aucune erreur mais plus
+    /// rien n'arrive) — on coupe pour déclencher la reconnexion.
+    private var awaitingPingResponse = false
 
     /// Callbacks — appelés sur la queue interne ; l'appelant re-dispatch.
     var onMessage: ((_ topic: String, _ payload: Data) -> Void)?
@@ -132,6 +137,7 @@ final class MQTTClient: @unchecked Sendable {
     }
 
     private func handle(_ packet: MQTTPacket.Incoming) {
+        awaitingPingResponse = false  // tout trafic entrant prouve que le lien vit
         switch packet {
         case .connack(let returnCode):
             if returnCode == 0 {
@@ -159,10 +165,17 @@ final class MQTTClient: @unchecked Sendable {
 
     private func startPingTimer() {
         pingTimer?.cancel()
+        awaitingPingResponse = false
         let timer = DispatchSource.makeTimerSource(queue: queue)
         timer.schedule(deadline: .now() + .seconds(Int(keepAlive) / 2), repeating: .seconds(Int(keepAlive) / 2))
         timer.setEventHandler { [weak self] in
-            self?.send(Data([0xC0, 0x00]))  // PINGREQ
+            guard let self else { return }
+            if self.awaitingPingResponse {
+                self.teardown(reason: String(localized: "pas de réponse au ping (connexion silencieuse)"))
+                return
+            }
+            self.awaitingPingResponse = true
+            self.send(Data([0xC0, 0x00]))  // PINGREQ
         }
         timer.resume()
         pingTimer = timer
@@ -171,6 +184,7 @@ final class MQTTClient: @unchecked Sendable {
     private func teardown(reason: String?) {
         pingTimer?.cancel()
         pingTimer = nil
+        awaitingPingResponse = false
         connection?.cancel()
         connection = nil
         buffer.removeAll()
