@@ -41,6 +41,7 @@ struct ZendureMonitorApp: App {
 
         Window("SunRoad", id: "sunroad") {
             SunRoadView()
+                .environmentObject(monitor)
         }
         .defaultSize(width: 1100, height: 760)
     }

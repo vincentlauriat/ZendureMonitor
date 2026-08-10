@@ -20,11 +20,12 @@ Since 1.11, every card **collapses with a click on its header** (chevron on the 
 
 ## The header
 
-At the top of the panel: the app name, the time of the last update, and five icon actions:
+At the top of the panel: the app name, the time of the last update, and six icon actions:
 
 - **Blue gauge** — opens the [dashboard](dashboard.md);
 - **Orange sun** — opens the [Sun window](sun.md);
 - **Purple clock** — opens the [History window](history.md) *(1.12)*;
+- **Indigo cube** — opens the 3D [SunRoad window](sunroad.md) *(2.0)*;
 - **Teal gear** — opens Settings;
 - **⋯** — a menu with **Check for updates…** and **Quit Zendure Monitor**.
 

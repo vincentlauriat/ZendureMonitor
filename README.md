@@ -12,6 +12,8 @@ A tiny macOS menu bar app that shows the **live solar production of a Zendure So
 
 Click the icon for the details: battery state of charge, charge/discharge power, per-pack SOC/temperature, output to home, grid input, per-MPPT PV input, and today's solar energy.
 
+New in 2.0: **SunRoad** — your house, your neighborhood and the sun in a real 3D scene (native SceneKit, inspired by the Helios card for Home Assistant): OpenStreetMap building footprints and roads with your house auto-detected and highlighted, the sun as an actual directional light casting **real shadows** that sweep across the day, your panel arrays at their true azimuth/tilt, animated energy-flow beads paced by the live watts, a production ribbon along the sun's arc, real cloud cover veiling the light, a **±48 h timeline**, per-layer visibility checkboxes and a wall mode.
+
 New in 1.12: an **energy history window** (up to 365 days) — daily kWh bar charts per device with per-device metric lists (solar, home, battery charge/discharge…), lifetime totals, and a local disk cache so past days are only fetched once. Data comes from the private API of the Zendure mobile app (main-account credentials, Keychain-only storage, fully separate from the Cloud Key path); works in both local and cloud modes.
 
 New in 1.11: **automatic local ⇄ cloud switching** (opt-in — the app moves to Cloud mode by itself when the SolarFlow stops answering locally, typically away from home, and comes back to local as soon as it answers again, with an explicit "bascule auto" note in the connection footer) and **collapsible, configurable panel cards** (click a card header to collapse it to one line with its key value — Juicy style — and toggle each card on/off in Settings → Display).
@@ -227,8 +229,9 @@ open build/Build/Products/Debug/ZendureMonitor.app
 - [x] v1.11 — automatic local ⇄ cloud switching (failure-streak detection, 60 s local probe to come back, "bascule auto" footer note) and collapsible/configurable panel cards (per-card collapse with key value, per-card visibility toggles)
 - [x] v1.11.1 — clearer Cloud-mode MQTT diagnostics: session-takeover detection (one real-time session per Cloud Key), SUBACK refusal surfaced, malformed device-list entries filtered
 - [x] v1.12 — energy history window: daily kWh bars over 7/30/90/365 days per device, per-device metric lists, lifetime totals, local disk cache, HTTP debug log (private Zendure app API, Keychain credentials, tested request builders/parsers)
-- [ ] v1.13 — cloud `outputPower` mapping (~3 s home flow), zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents), grid-draw daily history from the Smart CT
-- [ ] v2.0 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
+- [x] v2.0 — SunRoad: house, OSM neighborhood (buildings + roads) and sun in native 3D, real cast shadows, auto-detected house, animated energy flows, production ribbon on the sun arc, weather-veiled light, ±48 h timeline, layer toggles, wall mode (tested geo projection + Overpass parser)
+- [ ] v2.1 — SunRoad polish (street names, vegetation/water, neighborhood radius setting), cloud `outputPower` mapping (~3 s home flow), zenSDK fault/error fields in the dashboard, Chinese localization, reorderable cards, widget refresh button (AppIntents), grid-draw daily history from the Smart CT
+- [ ] v2.2 — off-peak/peak-hours optimizer (local scheduler via `POST /properties/write`)
 
 ## Acknowledgements
 

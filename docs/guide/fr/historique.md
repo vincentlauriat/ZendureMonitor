@@ -37,4 +37,4 @@ Cette API n'est **pas contractuelle** : les noms des champs et les unités (supp
 
 ---
 
-[← La fenêtre Soleil](soleil.md) | [Index](../README.md) | [Les widgets →](widgets.md)
+[← La fenêtre Soleil](soleil.md) | [Index](../README.md) | [La fenêtre SunRoad →](sunroad.md)

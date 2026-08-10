@@ -8,6 +8,44 @@ struct SunRoadVisibility: Equatable {
     var arc = true
     var panels = true
     var compass = true
+    var energy = true
+}
+
+/// Flux d'énergie quantifiés en « nombre de billes » (0–4) — la cadence des
+/// billes montre l'intensité sans reconstruire la scène à chaque watt.
+struct SunRoadFlows: Equatable {
+    var solar = 0
+    var grid = 0
+    var batteryCharge = 0
+    var batteryDischarge = 0
+
+    /// 0 W → rien ; puis 4 paliers (≤150, ≤500, ≤1200, au-delà).
+    static func bucket(_ watts: Double) -> Int {
+        switch watts {
+        case ..<20: 0
+        case ..<150: 1
+        case ..<500: 2
+        case ..<1200: 3
+        default: 4
+        }
+    }
+
+    init(solar: Int = 0, grid: Int = 0, batteryCharge: Int = 0, batteryDischarge: Int = 0) {
+        self.solar = solar
+        self.grid = grid
+        self.batteryCharge = batteryCharge
+        self.batteryDischarge = batteryDischarge
+    }
+
+    init(state: DeviceState?) {
+        guard let state else { self.init(); return }
+        self.init(
+            solar: Self.bucket(state.solarInputPower),
+            grid: Self.bucket(state.gridInputPower),
+            batteryCharge: Self.bucket(max(state.batteryFlow, 0)),
+            batteryDischarge: Self.bucket(max(-state.batteryFlow, 0))
+        )
+    }
 }
 
 /// La scène 3D « SunRoad » : sol, boussole, maison, champs de panneaux, arc du
@@ -23,6 +61,15 @@ struct SunRoadSceneView: NSViewRepresentable {
     /// chargé : la maison placeholder assure l'intérim.
     var neighborhood: SunRoadNeighborhood
     var visibility: SunRoadVisibility
+    /// Flux en direct (billes animées) — .init() quand pas de données.
+    var flows: SunRoadFlows = SunRoadFlows()
+    /// Courbe de production du jour (max 5 min, W) pour le ruban sur l'arc,
+    /// et son pic pour l'échelle. Vide ou `showRibbon == false` → pas de ruban.
+    var todayCurve: [Double] = []
+    var curvePeak: Double = 0
+    var showRibbon: Bool = true
+    /// Couverture nuageuse 0…1 — assombrit lumière et ciel (Phase D).
+    var cloudCover: Double = 0
 
     private static let domeRadius = 140.0
 
@@ -75,6 +122,15 @@ struct SunRoadSceneView: NSViewRepresentable {
             rebuildBuildings(coordinator: coordinator)
             rebuildRoads(coordinator: coordinator)
         }
+        if coordinator.flowsKey != flows {
+            coordinator.flowsKey = flows
+            rebuildFlows(coordinator: coordinator)
+        }
+        let ribbonKey = "\(todayCurve.count)-\(showRibbon)-\(Int(curvePeak))"
+        if coordinator.ribbonKey != ribbonKey {
+            coordinator.ribbonKey = ribbonKey
+            rebuildRibbon(coordinator: coordinator)
+        }
         // Visibilité par couche (checkboxes du HUD). La maison placeholder
         // ne vaut que sans données OSM ; le soleil-lumière reste toujours là.
         coordinator.buildingsNode?.isHidden = !visibility.buildings
@@ -83,6 +139,9 @@ struct SunRoadSceneView: NSViewRepresentable {
         coordinator.arcNode?.isHidden = !visibility.arc
         coordinator.panelsNode?.isHidden = !visibility.panels
         coordinator.compassNode?.isHidden = !visibility.compass
+        coordinator.flowsNode?.isHidden = !visibility.energy
+        coordinator.energyPropsNode?.isHidden = !visibility.energy
+        coordinator.ribbonNode?.isHidden = !visibility.energy
         updateSun(coordinator: coordinator)
     }
 
@@ -187,6 +246,135 @@ struct SunRoadSceneView: NSViewRepresentable {
         let roadsContainer = SCNNode()
         root.addChildNode(roadsContainer)
         coordinator.roadsNode = roadsContainer
+
+        // Ancres des flux d'énergie : pylône réseau au nord-est, bloc
+        // batterie contre la maison. Masquables avec la couche Énergie.
+        let props = SCNNode()
+        root.addChildNode(props)
+        coordinator.energyPropsNode = props
+
+        let pylonMaterial = SCNMaterial()
+        pylonMaterial.diffuse.contents = NSColor(calibratedWhite: 0.30, alpha: 1)
+        let mast = SCNNode(geometry: SCNBox(width: 0.8, height: 9, length: 0.8, chamferRadius: 0))
+        mast.geometry?.materials = [pylonMaterial]
+        mast.position = SCNVector3(Self.pylonAnchor.x, 4.5, Self.pylonAnchor.z)
+        mast.castsShadow = true
+        props.addChildNode(mast)
+        let crossarm = SCNNode(geometry: SCNBox(width: 4.5, height: 0.5, length: 0.5, chamferRadius: 0))
+        crossarm.geometry?.materials = [pylonMaterial]
+        crossarm.position = SCNVector3(Self.pylonAnchor.x, 7.8, Self.pylonAnchor.z)
+        crossarm.castsShadow = true
+        props.addChildNode(crossarm)
+
+        let batteryGeometry = SCNBox(width: 2.6, height: 1.6, length: 1.6, chamferRadius: 0.15)
+        batteryGeometry.firstMaterial?.diffuse.contents = NSColor(calibratedRed: 0.10, green: 0.35, blue: 0.35, alpha: 1)
+        let battery = SCNNode(geometry: batteryGeometry)
+        battery.position = SCNVector3(Self.batteryAnchor.x, 0.8, Self.batteryAnchor.z)
+        battery.castsShadow = true
+        props.addChildNode(battery)
+
+        let flowsContainer = SCNNode()
+        root.addChildNode(flowsContainer)
+        coordinator.flowsNode = flowsContainer
+        let ribbonContainer = SCNNode()
+        root.addChildNode(ribbonContainer)
+        coordinator.ribbonNode = ribbonContainer
+    }
+
+    // MARK: - Flux d'énergie (billes animées, à la Helios)
+
+    private static let pylonAnchor = SCNVector3(28, 0, -22)
+    private static let batteryAnchor = SCNVector3(8.5, 0, 4)
+
+    private func rebuildFlows(coordinator: Coordinator) {
+        guard let container = coordinator.flowsNode else { return }
+        container.childNodes.forEach { $0.removeFromParentNode() }
+
+        // Panneaux → maison (production solaire).
+        addBeads(to: container, count: flows.solar,
+                 color: NSColor(calibratedRed: 1, green: 0.82, blue: 0.15, alpha: 1),
+                 path: [SCNVector3(0, 1.2, 12), SCNVector3(0, 4.5, 7), SCNVector3(0, 2.2, 3.8)])
+        // Pylône → maison (soutirage réseau / charge secteur).
+        addBeads(to: container, count: flows.grid,
+                 color: NSColor(calibratedRed: 1, green: 0.55, blue: 0.15, alpha: 1),
+                 path: [SCNVector3(Self.pylonAnchor.x, 7.5, Self.pylonAnchor.z),
+                        SCNVector3(14, 8.5, -10), SCNVector3(4.8, 2.5, 0)])
+        // Maison ↔ batterie (charge / décharge).
+        addBeads(to: container, count: flows.batteryCharge,
+                 color: NSColor(calibratedRed: 0.30, green: 0.85, blue: 0.35, alpha: 1),
+                 path: [SCNVector3(4.8, 1.6, 2), SCNVector3(Self.batteryAnchor.x, 1.4, Self.batteryAnchor.z)])
+        addBeads(to: container, count: flows.batteryDischarge,
+                 color: NSColor(calibratedRed: 1, green: 0.45, blue: 0.25, alpha: 1),
+                 path: [SCNVector3(Self.batteryAnchor.x, 1.4, Self.batteryAnchor.z), SCNVector3(4.8, 1.6, 2)])
+    }
+
+    /// `count` billes émissives qui parcourent `path` en boucle, décalées
+    /// dans le temps pour former un chapelet régulier.
+    private func addBeads(to container: SCNNode, count: Int, color: NSColor, path: [SCNVector3]) {
+        guard count > 0, path.count >= 2 else { return }
+        // Durées proportionnelles aux longueurs de segment (vitesse constante).
+        var lengths: [Double] = []
+        for (a, b) in zip(path, path.dropFirst()) {
+            lengths.append(Double(
+                ((b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y) + (b.z - a.z) * (b.z - a.z))
+            ).squareRoot())
+        }
+        let total = lengths.reduce(0, +)
+        guard total > 0 else { return }
+        let tripDuration = 2.4
+
+        for index in 0..<count {
+            let sphere = SCNSphere(radius: 0.45)
+            sphere.firstMaterial?.diffuse.contents = color
+            sphere.firstMaterial?.emission.contents = color
+            let bead = SCNNode(geometry: sphere)
+            bead.castsShadow = false
+            bead.position = path[0]
+            bead.opacity = 0
+
+            var trip: [SCNAction] = [.fadeIn(duration: 0.1)]
+            for (segment, length) in zip(path.dropFirst(), lengths) {
+                trip.append(.move(to: segment, duration: tripDuration * length / total))
+            }
+            trip.append(.fadeOut(duration: 0.1))
+            trip.append(.move(to: path[0], duration: 0))
+            let loop = SCNAction.repeatForever(.sequence(trip))
+            // Décalage initial pour répartir les billes le long du chemin.
+            bead.runAction(.sequence([.wait(duration: tripDuration * Double(index) / Double(count)), loop]))
+            container.addChildNode(bead)
+        }
+    }
+
+    // MARK: - Ruban de production sur l'arc
+
+    /// Un bâton vertical sous l'arc tous les quarts d'heure de production :
+    /// la journée solaire se lit le long de la course du soleil (à la Helios).
+    private func rebuildRibbon(coordinator: Coordinator) {
+        guard let container = coordinator.ribbonNode else { return }
+        container.childNodes.forEach { $0.removeFromParentNode() }
+        guard showRibbon, curvePeak > 0, !todayCurve.isEmpty else { return }
+
+        let material = SCNMaterial()
+        material.diffuse.contents = NSColor(calibratedRed: 0.15, green: 0.75, blue: 0.70, alpha: 1)
+        material.emission.contents = NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.28, alpha: 1)
+
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        for index in stride(from: 0, to: todayCurve.count, by: 3) {  // pas de 15 min
+            let watts = todayCurve[index]
+            guard watts > 1 else { continue }
+            let instant = startOfDay.addingTimeInterval(Double(index) * 300)
+            let sun = SunCalc.compute(at: instant, latitude: latitude, longitude: longitude)
+            guard sun.elevation > 0 else { continue }
+            let p = SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: sun.elevation,
+                                             radius: Self.domeRadius - 5)
+            let height = 1 + 16 * watts / curvePeak
+            let bar = SCNCylinder(radius: 0.35, height: height)
+            bar.materials = [material]
+            let node = SCNNode(geometry: bar)
+            node.position = SCNVector3(p.x, p.y - height / 2, p.z)
+            node.castsShadow = false
+            container.addChildNode(node)
+        }
     }
 
     // MARK: - Le quartier (Overpass/OSM)
@@ -394,8 +582,11 @@ struct SunRoadSceneView: NSViewRepresentable {
         coordinator.sunNode?.position = SCNVector3(p.x, p.y, p.z)
         coordinator.sunNode?.isHidden = elevation <= 0
         coordinator.sunLightNode?.position = SCNVector3(p.x, p.y, p.z)
-        coordinator.sunLight?.intensity = elevation > 0 ? 400 + 700 * factor : 0
-        coordinator.ambientLight?.intensity = 120 + 280 * factor
+        // Les nuages voilent la lumière directe (ombres plus douces via
+        // l'intensité) et grisent légèrement l'ambiance.
+        let cloud = min(max(cloudCover, 0), 1)
+        coordinator.sunLight?.intensity = elevation > 0 ? (400 + 700 * factor) * (1 - 0.55 * cloud) : 0
+        coordinator.ambientLight?.intensity = (120 + 280 * factor) * (1 - 0.20 * cloud)
 
         // Ciel : nuit → aube/crépuscule → plein jour, interpolation simple.
         let night = (r: 0.05, g: 0.07, b: 0.15)
@@ -413,7 +604,15 @@ struct SunRoadSceneView: NSViewRepresentable {
                    dusk.g + (day.g - dusk.g) * t,
                    dusk.b + (day.b - dusk.b) * t)
         }
-        coordinator.scene?.background.contents = NSColor(calibratedRed: sky.r, green: sky.g, blue: sky.b, alpha: 1)
+        // Voile gris proportionnel à la couverture nuageuse.
+        let gray = (r: 0.55, g: 0.58, b: 0.62)
+        let veil = 0.45 * cloud * factor  // la nuit reste la nuit
+        coordinator.scene?.background.contents = NSColor(
+            calibratedRed: sky.r + (gray.r - sky.r) * veil,
+            green: sky.g + (gray.g - sky.g) * veil,
+            blue: sky.b + (gray.b - sky.b) * veil,
+            alpha: 1
+        )
     }
 
     // MARK: - Coordinator
@@ -431,8 +630,13 @@ struct SunRoadSceneView: NSViewRepresentable {
         var roadsNode: SCNNode?
         var compassNode: SCNNode?
         var placeholderHouse: SCNNode?
+        var flowsNode: SCNNode?
+        var energyPropsNode: SCNNode?
+        var ribbonNode: SCNNode?
         var arcKey = ""
         var arraysKey: [PanelArray] = []
         var neighborhoodKey = SunRoadNeighborhood.empty
+        var flowsKey = SunRoadFlows()
+        var ribbonKey = ""
     }
 }
