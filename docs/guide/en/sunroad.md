@@ -17,7 +17,7 @@ Open it with the **orange sun** in the panel header. Since 2.0, SunRoad **replac
 
 ## Live energy
 
-**Animated beads** show the flows at the pace of the measured watts: panels → house (yellow), grid pylon → house (orange), house ↔ battery (green charging, orange discharging). Along the arc, a teal **production ribbon** draws your solar day: one bar per quarter hour, exactly where the sun stood. **Home consumption** is a continuous **blue curve** running the full circle of the scene — position on the circle is the hour (night passes on the north side), height is the watts; vertical pins mark the quarter hours, and a **“⌂ n W”** badge above the house shows the live consumption. Consumption comes from the Smart CT (whole-home total) when it responds, from the SolarFlow feed-in otherwise.
+**Animated beads** show the flows at the pace of the measured watts: panels → house (yellow), grid pylon → house (orange), house ↔ battery (green charging, orange discharging). Along the arc, a teal **production ribbon** draws your solar day: one bar per quarter hour, exactly where the sun stood. A translucent **yellow curve** accompanies it: the **expected clear-sky production** for your panel arrays (it follows the ±48 h timeline and the orientation sliders), on the same scale — the gap between expected and actual reads at a glance. **Home consumption** is a continuous **blue curve** running the full circle of the scene — position on the circle is the hour (night passes on the north side), height is the watts; vertical pins mark the quarter hours, and a **“⌂ n W”** badge above the house shows the live consumption. Consumption comes from the Smart CT (whole-home total) when it responds, from the SolarFlow feed-in otherwise.
 
 ## ±48 h timeline
 
