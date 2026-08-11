@@ -74,6 +74,8 @@ struct SunRoadView: View {
                                         flows: SunRoadFlows(state: monitor.state),
                                         todayCurve: monitor.todayCurve,
                                         curvePeak: max(monitor.peakTodayW, 1),
+                                        homeCurve: monitor.todayHomeCurve,
+                                        homePeak: monitor.homePeakTodayW,
                                         showRibbon: Calendar.current.isDate(sceneDate, inSameDayAs: now),
                                         cloudCover: (weather.weather?.cloudCover ?? 0) / 100,
                                         pickingHouse: pickingHouse,

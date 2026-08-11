@@ -67,6 +67,10 @@ struct SunRoadSceneView: NSViewRepresentable {
     /// et son pic pour l'échelle. Vide ou `showRibbon == false` → pas de ruban.
     var todayCurve: [Double] = []
     var curvePeak: Double = 0
+    /// Courbe de consommation maison du jour (même granularité) — second
+    /// ruban, en retrait sous celui de production (à la Helios).
+    var homeCurve: [Double] = []
+    var homePeak: Double = 0
     var showRibbon: Bool = true
     /// Couverture nuageuse 0…1 — assombrit lumière et ciel (Phase D).
     var cloudCover: Double = 0
@@ -140,7 +144,7 @@ struct SunRoadSceneView: NSViewRepresentable {
             coordinator.flowsKey = flows
             rebuildFlows(coordinator: coordinator)
         }
-        let ribbonKey = "\(todayCurve.count)-\(showRibbon)-\(Int(curvePeak))"
+        let ribbonKey = "\(todayCurve.count)-\(showRibbon)-\(Int(curvePeak))-\(homeCurve.count)-\(Int(homePeak))"
         if coordinator.ribbonKey != ribbonKey {
             coordinator.ribbonKey = ribbonKey
             rebuildRibbon(coordinator: coordinator)
@@ -361,27 +365,43 @@ struct SunRoadSceneView: NSViewRepresentable {
 
     // MARK: - Ruban de production sur l'arc
 
-    /// Un bâton vertical sous l'arc tous les quarts d'heure de production :
-    /// la journée solaire se lit le long de la course du soleil (à la Helios).
+    /// Un bâton vertical sous l'arc tous les quarts d'heure : la journée se
+    /// lit le long de la course du soleil (à la Helios) — production en
+    /// turquoise, consommation maison en retrait sur un rayon plus court, en
+    /// orange. Échelle commune (le plus haut des deux pics) pour comparer.
     private func rebuildRibbon(coordinator: Coordinator) {
         guard let container = coordinator.ribbonNode else { return }
         container.childNodes.forEach { $0.removeFromParentNode() }
-        guard showRibbon, curvePeak > 0, !todayCurve.isEmpty else { return }
+        guard showRibbon else { return }
+        let scale = max(curvePeak, homePeak)
+        guard scale > 0 else { return }
 
-        let material = SCNMaterial()
-        material.diffuse.contents = NSColor(calibratedRed: 0.15, green: 0.75, blue: 0.70, alpha: 1)
-        material.emission.contents = NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.28, alpha: 1)
+        let production = SCNMaterial()
+        production.diffuse.contents = NSColor(calibratedRed: 0.15, green: 0.75, blue: 0.70, alpha: 1)
+        production.emission.contents = NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.28, alpha: 1)
+        addRibbonBars(todayCurve, scale: scale, radius: Self.domeRadius - 5,
+                      material: production, to: container)
 
+        let consumption = SCNMaterial()
+        consumption.diffuse.contents = NSColor(calibratedRed: 0.95, green: 0.55, blue: 0.20, alpha: 1)
+        consumption.emission.contents = NSColor(calibratedRed: 0.38, green: 0.20, blue: 0.05, alpha: 1)
+        addRibbonBars(homeCurve, scale: scale, radius: Self.domeRadius - 10,
+                      material: consumption, to: container)
+    }
+
+    private func addRibbonBars(_ curve: [Double], scale: Double, radius: Double,
+                               material: SCNMaterial, to container: SCNNode) {
+        guard !curve.isEmpty else { return }
         let startOfDay = Calendar.current.startOfDay(for: date)
-        for index in stride(from: 0, to: todayCurve.count, by: 3) {  // pas de 15 min
-            let watts = todayCurve[index]
+        for index in stride(from: 0, to: curve.count, by: 3) {  // pas de 15 min
+            let watts = curve[index]
             guard watts > 1 else { continue }
             let instant = startOfDay.addingTimeInterval(Double(index) * 300)
             let sun = SunCalc.compute(at: instant, latitude: latitude, longitude: longitude)
             guard sun.elevation > 0 else { continue }
             let p = SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: sun.elevation,
-                                             radius: Self.domeRadius - 5)
-            let height = 1 + 16 * watts / curvePeak
+                                             radius: radius)
+            let height = 1 + 16 * watts / scale
             let bar = SCNCylinder(radius: 0.35, height: height)
             bar.materials = [material]
             let node = SCNNode(geometry: bar)

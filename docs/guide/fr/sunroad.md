@@ -17,7 +17,7 @@ Ouvre-la avec le **soleil orange** dans l'en-tête du panneau. Depuis la 2.0, Su
 
 ## L'énergie en direct
 
-Des **billes animées** montrent les flux au rythme des watts mesurés : panneaux → maison (jaune), pylône réseau → maison (orange), maison ↔ batterie (vert en charge, orange en décharge). Le long de l'arc, un **ruban de production** dessine ta journée solaire : un bâton par quart d'heure, à l'endroit exact où le soleil se trouvait.
+Des **billes animées** montrent les flux au rythme des watts mesurés : panneaux → maison (jaune), pylône réseau → maison (orange), maison ↔ batterie (vert en charge, orange en décharge). Le long de l'arc, deux **rubans** dessinent ta journée : la **production** en turquoise et la **consommation de la maison** en orange, en retrait — un bâton par quart d'heure, à l'endroit exact où le soleil se trouvait, à la même échelle pour comparer d'un coup d'œil ce que la maison consomme et ce que les panneaux produisent. La consommation vient du Smart CT (total maison) quand il répond, de l'injection du SolarFlow sinon.
 
 ## Timeline ±48 heures
 

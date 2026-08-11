@@ -17,7 +17,7 @@ Open it with the **orange sun** in the panel header. Since 2.0, SunRoad **replac
 
 ## Live energy
 
-**Animated beads** show the flows at the pace of the measured watts: panels → house (yellow), grid pylon → house (orange), house ↔ battery (green charging, orange discharging). Along the arc, a **production ribbon** draws your solar day: one bar per quarter hour, exactly where the sun stood.
+**Animated beads** show the flows at the pace of the measured watts: panels → house (yellow), grid pylon → house (orange), house ↔ battery (green charging, orange discharging). Along the arc, two **ribbons** draw your day: **production** in teal and **home consumption** in orange, set slightly inward — one bar per quarter hour, exactly where the sun stood, on a shared scale so you can compare at a glance what the house consumes against what the panels produce. Consumption comes from the Smart CT (whole-home total) when it responds, from the SolarFlow feed-in otherwise.
 
 ## ±48 h timeline
 
