@@ -11,22 +11,30 @@ struct DailyAccumulator: Equatable {
     private(set) var gridWh: Double
     private(set) var curve: [Double]      // max par tranche de 5 min
     private(set) var peakW: Double
+    /// Consommation maison (W) : même granularité 5 min que `curve` — alimente
+    /// le ruban de consommation de SunRoad.
+    private(set) var homeCurve: [Double]
+    private(set) var homePeakW: Double
     private(set) var lastSampleAt: Date?
 
     init(day: String, solarWh: Double = 0, storedWh: Double = 0, gridWh: Double = 0,
-         curve: [Double] = [], peakW: Double = 0) {
+         curve: [Double] = [], peakW: Double = 0,
+         homeCurve: [Double] = [], homePeakW: Double = 0) {
         self.day = day
         self.solarWh = solarWh
         self.storedWh = storedWh
         self.gridWh = gridWh
         self.curve = curve
         self.peakW = peakW
+        self.homeCurve = homeCurve
+        self.homePeakW = homePeakW
     }
 
     /// Intègre un échantillon de flux. Retourne true si le jour a basculé
     /// (l'appelant remet alors ses compteurs persistés à zéro).
     @discardableResult
     mutating func ingest(solar: Double, charge: Double, gridIn: Double,
+                         home: Double = 0,
                          at date: Date, dayKey: String, minuteOfDay: Int,
                          maxDt: TimeInterval) -> Bool {
         var rolled = false
@@ -52,6 +60,11 @@ struct DailyAccumulator: Equatable {
         }
         curve[bucket] = max(curve[bucket], solar)
         peakW = max(peakW, solar)
+        if homeCurve.count <= bucket {
+            homeCurve.append(contentsOf: Array(repeating: 0, count: bucket + 1 - homeCurve.count))
+        }
+        homeCurve[bucket] = max(homeCurve[bucket], home)
+        homePeakW = max(homePeakW, home)
         return rolled
     }
 

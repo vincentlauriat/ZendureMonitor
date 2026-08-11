@@ -71,6 +71,11 @@ final class Monitor: ObservableObject {
     @Published var todayCurve: [Double] = []
     /// Pic de puissance solaire du jour (W), persisté (`peakW-<day>`).
     @Published var peakTodayW: Double = 0
+    /// Courbe de consommation maison du jour (même granularité 5 min) pour le
+    /// ruban SunRoad — CT + injection quand le Smart CT répond, injection
+    /// SolarFlow seule sinon. Persistée (`homeCurve-<day>`/`homePeakW-<day>`).
+    @Published var todayHomeCurve: [Double] = []
+    @Published var homePeakTodayW: Double = 0
     /// Part de la production du jour partie charger la batterie (Wh),
     /// persistée (`storedWh-<day>`) — voir EnergyMath.solarToBattery.
     @Published var storedTodayWh: Double = 0
@@ -296,11 +301,15 @@ final class Monitor: ObservableObject {
             storedWh: defaults.double(forKey: "storedWh-\(energyDay)"),
             gridWh: defaults.double(forKey: "gridWh-\(energyDay)"),
             curve: defaults.array(forKey: "solarCurve-\(energyDay)") as? [Double] ?? [],
-            peakW: defaults.double(forKey: "peakW-\(energyDay)")
+            peakW: defaults.double(forKey: "peakW-\(energyDay)"),
+            homeCurve: defaults.array(forKey: "homeCurve-\(energyDay)") as? [Double] ?? [],
+            homePeakW: defaults.double(forKey: "homePeakW-\(energyDay)")
         )
         energyTodayWh = accumulator.solarWh
         todayCurve = accumulator.curve
         peakTodayW = accumulator.peakW
+        todayHomeCurve = accumulator.homeCurve
+        homePeakTodayW = accumulator.homePeakW
         storedTodayWh = accumulator.storedWh
         gridTodayWh = accumulator.gridWh
         pruneAuxKeys()
@@ -804,9 +813,17 @@ final class Monitor: ObservableObject {
         // peuvent être espacés jusqu'au cycle getAll (60 s) — un maxDt calé sur
         // pollInterval*3 (15 s par défaut) ne créditerait presque rien.
         let maxDt = connectionMode == .cloud ? Self.cloudStaleAfter : pollInterval * 3
+        // Consommation maison : CT + injection quand le compteur répond,
+        // injection SolarFlow seule sinon (même convention qu'EnergyFlowView).
+        let home = ctReport.map {
+            EnergyMath.homeTotal(ctTotal: $0.totalPower, gridIn: state.gridInputPower,
+                                 outputHome: state.outputHomePower)
+        } ?? state.outputHomePower
+        let homePeakBefore = accumulator.homePeakW
         accumulator.ingest(solar: state.solarInputPower,
                            charge: state.outputPackPower,
                            gridIn: state.gridInputPower,
+                           home: home,
                            at: date, dayKey: day,
                            minuteOfDay: (comps.hour ?? 0) * 60 + (comps.minute ?? 0),
                            maxDt: maxDt)
@@ -817,6 +834,8 @@ final class Monitor: ObservableObject {
         gridTodayWh = accumulator.gridWh
         todayCurve = accumulator.curve
         peakTodayW = accumulator.peakW
+        todayHomeCurve = accumulator.homeCurve
+        homePeakTodayW = accumulator.homePeakW
 
         UserDefaults.standard.set(energyTodayWh, forKey: "energyWh-\(day)")
         UserDefaults.standard.set(storedTodayWh, forKey: "storedWh-\(day)")
@@ -824,9 +843,13 @@ final class Monitor: ObservableObject {
         if peakTodayW > peakBefore {
             UserDefaults.standard.set(peakTodayW, forKey: "peakW-\(day)")
         }
+        if homePeakTodayW > homePeakBefore {
+            UserDefaults.standard.set(homePeakTodayW, forKey: "homePeakW-\(day)")
+        }
         if date.timeIntervalSince(lastCurveSave) >= 60 {
             lastCurveSave = date
             UserDefaults.standard.set(todayCurve, forKey: "solarCurve-\(day)")
+            UserDefaults.standard.set(todayHomeCurve, forKey: "homeCurve-\(day)")
         }
 
         // Keep today's bar in the history card live.
@@ -953,7 +976,8 @@ final class Monitor: ObservableObject {
         let keep = Set(collectDailyEnergy().suffix(15).map(\.day))
         for key in defaults.dictionaryRepresentation().keys
         where key.hasPrefix("solarCurve-") || key.hasPrefix("peakW-")
-            || key.hasPrefix("storedWh-") || key.hasPrefix("gridWh-") {
+            || key.hasPrefix("storedWh-") || key.hasPrefix("gridWh-")
+            || key.hasPrefix("homeCurve-") || key.hasPrefix("homePeakW-") {
             let day = String(key.split(separator: "-", maxSplits: 1)[1])
             if !keep.contains(day), day != energyDay {
                 defaults.removeObject(forKey: key)

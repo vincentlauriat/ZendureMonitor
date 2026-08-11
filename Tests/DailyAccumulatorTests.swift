@@ -82,6 +82,21 @@ final class DailyAccumulatorTests: XCTestCase {
         XCTAssertEqual(acc.gridWh, 200, accuracy: 0.001)
     }
 
+    func testHomeCurveBucketsKeepMax() {
+        var acc = DailyAccumulator(day: day)
+        acc.ingest(solar: 300, charge: 0, gridIn: 0, home: 450, at: t0, dayKey: day,
+                   minuteOfDay: 7, maxDt: 15)
+        acc.ingest(solar: 500, charge: 0, gridIn: 0, home: 380,
+                   at: t0.addingTimeInterval(5), dayKey: day, minuteOfDay: 8, maxDt: 15)
+        XCTAssertEqual(acc.homeCurve, [0, 450])
+        XCTAssertEqual(acc.homePeakW, 450)
+        // Le rollover remet aussi la courbe maison à zéro.
+        acc.ingest(solar: 0, charge: 0, gridIn: 0, home: 120, at: t0,
+                   dayKey: "2026-08-07", minuteOfDay: 0, maxDt: 15)
+        XCTAssertEqual(acc.homeCurve, [120])
+        XCTAssertEqual(acc.homePeakW, 120)
+    }
+
     func testMergeSolarWhKeepsBest() {
         var acc = DailyAccumulator(day: day, solarWh: 1000)
         acc.mergeSolarWh(800)
