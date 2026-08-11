@@ -131,6 +131,9 @@ struct SunRoadSceneView: NSViewRepresentable {
         if coordinator.arraysKey != arrays {
             coordinator.arraysKey = arrays
             rebuildPanels(coordinator: coordinator)
+            // La courbe de production prévue dépend de l'orientation des
+            // champs : la refaire quand un slider bouge.
+            coordinator.ribbonKey = ""
         }
         // Reconstruire aussi quand l'ORIGINE change (maison désignée au
         // clic) : les données OSM restent valables, seule la projection
@@ -146,7 +149,9 @@ struct SunRoadSceneView: NSViewRepresentable {
             coordinator.flowsKey = flows
             rebuildFlows(coordinator: coordinator)
         }
-        let ribbonKey = "\(todayCurve.count)-\(showRibbon)-\(Int(curvePeak))-\(homeCurve.count)-\(Int(homePeak))"
+        // dayKey inclus : la prévision se recalcule quand la timeline change
+        // de jour (elle se trace aussi hors du jour courant, sans le réel).
+        let ribbonKey = "\(dayKey)-\(todayCurve.count)-\(showRibbon)-\(Int(curvePeak))-\(homeCurve.count)-\(Int(homePeak))"
         if coordinator.ribbonKey != ribbonKey {
             coordinator.ribbonKey = ribbonKey
             rebuildRibbon(coordinator: coordinator)
@@ -320,9 +325,14 @@ struct SunRoadSceneView: NSViewRepresentable {
 
     private static let pylonAnchor = SCNVector3(28, 0, -22)
     private static let batteryAnchor = SCNVector3(8.5, 0, 4)
-    /// Rayon du cercle horaire de la courbe de consommation — en retrait de
-    /// l'arc pour ne pas se mélanger au ruban de production.
+    /// Rayons des cercles horaires au sol : production (réel + prévu) côté
+    /// arc, consommation en retrait — deux anneaux voisins qui ne se
+    /// mélangent pas.
+    private static let productionRadius = domeRadius - 8
     private static let consumptionRadius = domeRadius - 14
+    /// Hauteur (m) du pic des courbes au sol — commune aux trois séries pour
+    /// que l'œil compare des hauteurs comparables.
+    private static let curveMaxHeight = 26.0
 
     private func rebuildFlows(coordinator: Coordinator) {
         guard let container = coordinator.flowsNode else { return }
@@ -385,32 +395,64 @@ struct SunRoadSceneView: NSViewRepresentable {
 
     // MARK: - Ruban de production sur l'arc
 
-    /// Production : un bâton vertical sous l'arc tous les quarts d'heure — la
-    /// journée solaire se lit le long de la course du soleil (à la Helios).
+    /// Production au sol, à la Helios : la RÉELLE en bâtons turquoise (un par
+    /// quart d'heure), la PRÉVUE (ciel clair, SolarGeometry sur les champs
+    /// configurés — suit la timeline et les sliders d'orientation) en courbe
+    /// jaune translucide. Même cercle, même base au sol, même échelle (le
+    /// plus haut des deux pics) : les hauteurs se comparent directement —
+    /// chaque bâton devrait toucher la courbe si la journée tient sa
+    /// promesse.
     private func rebuildRibbon(coordinator: Coordinator) {
         guard let container = coordinator.ribbonNode else { return }
         container.childNodes.forEach { $0.removeFromParentNode() }
-        defer { rebuildConsumptionCurve(coordinator: coordinator) }
-        guard showRibbon, curvePeak > 0, !todayCurve.isEmpty else { return }
+        rebuildConsumptionCurve(coordinator: coordinator)
 
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        var forecast: [(anchor: SunRoadGeometry.Point3, watts: Double)] = []
+        for index in stride(from: 0, to: 288, by: 3) {  // pas de 15 min
+            let instant = startOfDay.addingTimeInterval(Double(index) * 300)
+            let sun = SunCalc.compute(at: instant, latitude: latitude, longitude: longitude)
+            guard sun.elevation > 0 else { continue }
+            let watts = SolarGeometry.clearSkyWatts(for: arrays, sunElevation: sun.elevation,
+                                                    sunAzimuth: sun.azimuth)
+            forecast.append((SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: 0,
+                                                       radius: Self.productionRadius), watts))
+        }
+        let forecastPeak = forecast.map(\.watts).max() ?? 0
+        let scale = max(curvePeak, forecastPeak, 1)
+
+        if forecastPeak > 1 {
+            let expected = SCNMaterial()
+            expected.diffuse.contents = NSColor(calibratedRed: 1, green: 0.80, blue: 0.30, alpha: 0.55)
+            expected.emission.contents = NSColor(calibratedRed: 0.45, green: 0.33, blue: 0.08, alpha: 1)
+            let points = forecast.map {
+                SunRoadGeometry.Point3(x: $0.anchor.x,
+                                       y: 0.5 + Self.curveMaxHeight * $0.watts / scale,
+                                       z: $0.anchor.z)
+            }
+            for (a, b) in zip(points, points.dropFirst()) {
+                container.addChildNode(Self.segment(from: a, to: b, radius: 0.24, material: expected))
+            }
+        }
+
+        guard showRibbon, curvePeak > 0, !todayCurve.isEmpty else { return }
         let material = SCNMaterial()
         material.diffuse.contents = NSColor(calibratedRed: 0.15, green: 0.75, blue: 0.70, alpha: 1)
         material.emission.contents = NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.28, alpha: 1)
 
-        let startOfDay = Calendar.current.startOfDay(for: date)
         for index in stride(from: 0, to: todayCurve.count, by: 3) {  // pas de 15 min
             let watts = todayCurve[index]
             guard watts > 1 else { continue }
             let instant = startOfDay.addingTimeInterval(Double(index) * 300)
             let sun = SunCalc.compute(at: instant, latitude: latitude, longitude: longitude)
             guard sun.elevation > 0 else { continue }
-            let p = SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: sun.elevation,
-                                             radius: Self.domeRadius - 5)
-            let height = 1 + 16 * watts / curvePeak
+            let p = SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: 0,
+                                             radius: Self.productionRadius)
+            let height = max(0.5 + Self.curveMaxHeight * watts / scale, 0.8)
             let bar = SCNCylinder(radius: 0.35, height: height)
             bar.materials = [material]
             let node = SCNNode(geometry: bar)
-            node.position = SCNVector3(p.x, p.y - height / 2, p.z)
+            node.position = SCNVector3(p.x, height / 2, p.z)
             node.castsShadow = false
             container.addChildNode(node)
         }
@@ -440,7 +482,7 @@ struct SunRoadSceneView: NSViewRepresentable {
             let ground = SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: 0,
                                                    radius: Self.consumptionRadius)
             return SunRoadGeometry.Point3(x: ground.x,
-                                          y: 0.5 + 13 * max(watts, 0) / homePeak,
+                                          y: 0.5 + Self.curveMaxHeight * max(watts, 0) / homePeak,
                                           z: ground.z)
         }
         for (a, b) in zip(points, points.dropFirst()) {
