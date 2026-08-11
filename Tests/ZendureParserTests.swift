@@ -75,4 +75,27 @@ final class ZendureParserTests: XCTestCase {
         XCTAssertThrowsError(try ZendureParser.parse(Data("[1,2,3]".utf8)))
         XCTAssertThrowsError(try ZendureParser.parse(Data("not json".utf8)))
     }
+
+    func testSmartCTPayloadIsRejected() {
+        // Payload réel d'un SmartMeter 3CT sur la même API zenSDK — avant le
+        // garde-fou, il « réussissait » en DeviceState tout à zéro.
+        let json = """
+        {"sn": "61u1m6E3", "properties": {"a_aprt_power": 0, "b_aprt_power": 0,
+         "c_aprt_power": 767, "total_power": 767}}
+        """
+        XCTAssertThrowsError(try ZendureParser.parse(Data(json.utf8))) { error in
+            guard case ZendureError.notASolarFlow = error else {
+                return XCTFail("attendu notASolarFlow, reçu \(error)")
+            }
+        }
+    }
+
+    func testPayloadWithoutSolarFlowSignatureIsRejected() {
+        let json = #"{"sn": "X", "rssi": -50, "foo": 1}"#
+        XCTAssertThrowsError(try ZendureParser.parse(Data(json.utf8))) { error in
+            guard case ZendureError.badPayload = error else {
+                return XCTFail("attendu badPayload, reçu \(error)")
+            }
+        }
+    }
 }
