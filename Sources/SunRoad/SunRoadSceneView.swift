@@ -67,10 +67,12 @@ struct SunRoadSceneView: NSViewRepresentable {
     /// et son pic pour l'échelle. Vide ou `showRibbon == false` → pas de ruban.
     var todayCurve: [Double] = []
     var curvePeak: Double = 0
-    /// Courbe de consommation maison du jour (même granularité) — second
-    /// ruban, en retrait sous celui de production (à la Helios).
+    /// Courbe de consommation maison du jour (même granularité) — tracée en
+    /// courbe continue sur le cercle horaire complet (à la Helios).
     var homeCurve: [Double] = []
     var homePeak: Double = 0
+    /// Consommation maison instantanée (W) — badge au-dessus de la maison.
+    var homeWatts: Double = 0
     var showRibbon: Bool = true
     /// Couverture nuageuse 0…1 — assombrit lumière et ciel (Phase D).
     var cloudCover: Double = 0
@@ -149,6 +151,13 @@ struct SunRoadSceneView: NSViewRepresentable {
             coordinator.ribbonKey = ribbonKey
             rebuildRibbon(coordinator: coordinator)
         }
+        // Le badge ne se reconstruit que par pas de 10 W — pas de rebuild de
+        // texte à chaque poll.
+        let badgeKey = Int(homeWatts / 10)
+        if coordinator.badgeKey != badgeKey {
+            coordinator.badgeKey = badgeKey
+            rebuildBadge(coordinator: coordinator)
+        }
         // Visibilité par couche (checkboxes du HUD). La maison placeholder
         // ne vaut que sans données OSM ; le soleil-lumière reste toujours là.
         coordinator.buildingsNode?.isHidden = !visibility.buildings
@@ -160,6 +169,8 @@ struct SunRoadSceneView: NSViewRepresentable {
         coordinator.flowsNode?.isHidden = !visibility.energy
         coordinator.energyPropsNode?.isHidden = !visibility.energy
         coordinator.ribbonNode?.isHidden = !visibility.energy
+        coordinator.consumptionNode?.isHidden = !visibility.energy
+        coordinator.badgeNode?.isHidden = !visibility.energy
         updateSun(coordinator: coordinator)
     }
 
@@ -297,12 +308,21 @@ struct SunRoadSceneView: NSViewRepresentable {
         let ribbonContainer = SCNNode()
         root.addChildNode(ribbonContainer)
         coordinator.ribbonNode = ribbonContainer
+        let consumptionContainer = SCNNode()
+        root.addChildNode(consumptionContainer)
+        coordinator.consumptionNode = consumptionContainer
+        let badgeContainer = SCNNode()
+        root.addChildNode(badgeContainer)
+        coordinator.badgeNode = badgeContainer
     }
 
     // MARK: - Flux d'énergie (billes animées, à la Helios)
 
     private static let pylonAnchor = SCNVector3(28, 0, -22)
     private static let batteryAnchor = SCNVector3(8.5, 0, 4)
+    /// Rayon du cercle horaire de la courbe de consommation — en retrait de
+    /// l'arc pour ne pas se mélanger au ruban de production.
+    private static let consumptionRadius = domeRadius - 14
 
     private func rebuildFlows(coordinator: Coordinator) {
         guard let container = coordinator.flowsNode else { return }
@@ -365,43 +385,28 @@ struct SunRoadSceneView: NSViewRepresentable {
 
     // MARK: - Ruban de production sur l'arc
 
-    /// Un bâton vertical sous l'arc tous les quarts d'heure : la journée se
-    /// lit le long de la course du soleil (à la Helios) — production en
-    /// turquoise, consommation maison en retrait sur un rayon plus court, en
-    /// orange. Échelle commune (le plus haut des deux pics) pour comparer.
+    /// Production : un bâton vertical sous l'arc tous les quarts d'heure — la
+    /// journée solaire se lit le long de la course du soleil (à la Helios).
     private func rebuildRibbon(coordinator: Coordinator) {
         guard let container = coordinator.ribbonNode else { return }
         container.childNodes.forEach { $0.removeFromParentNode() }
-        guard showRibbon else { return }
-        let scale = max(curvePeak, homePeak)
-        guard scale > 0 else { return }
+        defer { rebuildConsumptionCurve(coordinator: coordinator) }
+        guard showRibbon, curvePeak > 0, !todayCurve.isEmpty else { return }
 
-        let production = SCNMaterial()
-        production.diffuse.contents = NSColor(calibratedRed: 0.15, green: 0.75, blue: 0.70, alpha: 1)
-        production.emission.contents = NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.28, alpha: 1)
-        addRibbonBars(todayCurve, scale: scale, radius: Self.domeRadius - 5,
-                      material: production, to: container)
+        let material = SCNMaterial()
+        material.diffuse.contents = NSColor(calibratedRed: 0.15, green: 0.75, blue: 0.70, alpha: 1)
+        material.emission.contents = NSColor(calibratedRed: 0.05, green: 0.30, blue: 0.28, alpha: 1)
 
-        let consumption = SCNMaterial()
-        consumption.diffuse.contents = NSColor(calibratedRed: 0.95, green: 0.55, blue: 0.20, alpha: 1)
-        consumption.emission.contents = NSColor(calibratedRed: 0.38, green: 0.20, blue: 0.05, alpha: 1)
-        addRibbonBars(homeCurve, scale: scale, radius: Self.domeRadius - 10,
-                      material: consumption, to: container)
-    }
-
-    private func addRibbonBars(_ curve: [Double], scale: Double, radius: Double,
-                               material: SCNMaterial, to container: SCNNode) {
-        guard !curve.isEmpty else { return }
         let startOfDay = Calendar.current.startOfDay(for: date)
-        for index in stride(from: 0, to: curve.count, by: 3) {  // pas de 15 min
-            let watts = curve[index]
+        for index in stride(from: 0, to: todayCurve.count, by: 3) {  // pas de 15 min
+            let watts = todayCurve[index]
             guard watts > 1 else { continue }
             let instant = startOfDay.addingTimeInterval(Double(index) * 300)
             let sun = SunCalc.compute(at: instant, latitude: latitude, longitude: longitude)
             guard sun.elevation > 0 else { continue }
             let p = SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: sun.elevation,
-                                             radius: radius)
-            let height = 1 + 16 * watts / scale
+                                             radius: Self.domeRadius - 5)
+            let height = 1 + 16 * watts / curvePeak
             let bar = SCNCylinder(radius: 0.35, height: height)
             bar.materials = [material]
             let node = SCNNode(geometry: bar)
@@ -409,6 +414,64 @@ struct SunRoadSceneView: NSViewRepresentable {
             node.castsShadow = false
             container.addChildNode(node)
         }
+    }
+
+    /// Consommation maison : courbe CONTINUE sur le cercle horaire complet, à
+    /// la Helios — chaque tranche de 5 min est placée à l'azimut du soleil de
+    /// cet instant (le cercle continue côté nord la nuit), près du sol,
+    /// hauteur ∝ watts sur son propre pic. Piquets verticaux tous les quarts
+    /// d'heure : la grille qui rend la hauteur lisible (les pointillés
+    /// d'Helios).
+    private func rebuildConsumptionCurve(coordinator: Coordinator) {
+        guard let container = coordinator.consumptionNode else { return }
+        container.childNodes.forEach { $0.removeFromParentNode() }
+        guard showRibbon, homePeak > 1, homeCurve.count > 1 else { return }
+
+        let lineMaterial = SCNMaterial()
+        lineMaterial.diffuse.contents = NSColor(calibratedRed: 0.35, green: 0.62, blue: 0.95, alpha: 1)
+        lineMaterial.emission.contents = NSColor(calibratedRed: 0.16, green: 0.32, blue: 0.60, alpha: 1)
+        let postMaterial = SCNMaterial()
+        postMaterial.diffuse.contents = NSColor(calibratedRed: 0.35, green: 0.62, blue: 0.95, alpha: 0.35)
+
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let points: [SunRoadGeometry.Point3] = homeCurve.enumerated().map { index, watts in
+            let instant = startOfDay.addingTimeInterval(Double(index) * 300)
+            let sun = SunCalc.compute(at: instant, latitude: latitude, longitude: longitude)
+            let ground = SunRoadGeometry.domePoint(azimuth: sun.azimuth, elevation: 0,
+                                                   radius: Self.consumptionRadius)
+            return SunRoadGeometry.Point3(x: ground.x,
+                                          y: 0.5 + 13 * max(watts, 0) / homePeak,
+                                          z: ground.z)
+        }
+        for (a, b) in zip(points, points.dropFirst()) {
+            container.addChildNode(Self.segment(from: a, to: b, radius: 0.28, material: lineMaterial))
+        }
+        for index in stride(from: 0, to: points.count, by: 3) where points[index].y > 0.8 {
+            let top = points[index]
+            container.addChildNode(Self.segment(
+                from: SunRoadGeometry.Point3(x: top.x, y: 0.1, z: top.z),
+                to: top, radius: 0.09, material: postMaterial))
+        }
+    }
+
+    /// « ⌂ n W » face caméra au-dessus de la maison (à la Helios).
+    private func rebuildBadge(coordinator: Coordinator) {
+        guard let container = coordinator.badgeNode else { return }
+        container.childNodes.forEach { $0.removeFromParentNode() }
+        guard homeWatts > 0.5 else { return }
+
+        let text = SCNText(string: "⌂ \(Int(homeWatts)) W", extrusionDepth: 0.4)
+        text.font = NSFont.systemFont(ofSize: 4.2, weight: .bold)
+        text.flatness = 0.05
+        text.firstMaterial?.diffuse.contents = NSColor.white
+        text.firstMaterial?.emission.contents = NSColor(calibratedRed: 0.45, green: 0.70, blue: 1, alpha: 1)
+        let node = SCNNode(geometry: text)
+        let (minB, maxB) = text.boundingBox
+        node.pivot = SCNMatrix4MakeTranslation((minB.x + maxB.x) / 2, minB.y, 0)
+        node.position = SCNVector3(0, 13.5, 0)
+        node.constraints = [SCNBillboardConstraint()]
+        node.castsShadow = false
+        container.addChildNode(node)
     }
 
     // MARK: - Le quartier (Overpass/OSM)
@@ -668,6 +731,9 @@ struct SunRoadSceneView: NSViewRepresentable {
         var flowsNode: SCNNode?
         var energyPropsNode: SCNNode?
         var ribbonNode: SCNNode?
+        var consumptionNode: SCNNode?
+        var badgeNode: SCNNode?
+        var badgeKey = Int.min
         var arcKey = ""
         var originKey = ""
         var arraysKey: [PanelArray] = []
