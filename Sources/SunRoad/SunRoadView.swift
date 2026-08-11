@@ -63,6 +63,16 @@ struct SunRoadView: View {
     private var configured: Bool { latitude != 0 || longitude != 0 }
     private var arrays: [PanelArray] { PanelArrayStore.decode(arraysJSON) }
 
+    /// Conso maison instantanée pour le badge de la scène : CT + injection
+    /// quand le compteur répond, injection SolarFlow seule sinon (même
+    /// convention que le schéma de flux et la courbe du jour).
+    private var homeWatts: Double {
+        guard let state = monitor.state else { return 0 }
+        guard let ct = monitor.ctReport else { return state.outputHomePower }
+        return EnergyMath.homeTotal(ctTotal: ct.totalPower, gridIn: state.gridInputPower,
+                                    outputHome: state.outputHomePower)
+    }
+
     var body: some View {
         Group {
             if configured {
@@ -76,6 +86,7 @@ struct SunRoadView: View {
                                         curvePeak: max(monitor.peakTodayW, 1),
                                         homeCurve: monitor.todayHomeCurve,
                                         homePeak: monitor.homePeakTodayW,
+                                        homeWatts: homeWatts,
                                         showRibbon: Calendar.current.isDate(sceneDate, inSameDayAs: now),
                                         cloudCover: (weather.weather?.cloudCover ?? 0) / 100,
                                         pickingHouse: pickingHouse,
