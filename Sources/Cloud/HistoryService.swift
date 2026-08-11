@@ -29,8 +29,9 @@ final class HistoryService: ObservableObject {
     /// (mot de passe masqué), affiché dans la fenêtre Historique.
     @Published private(set) var exchanges: [ZendureAppAPI.Exchange] = []
     /// Appareils du compte sans historique d'énergie (ex. SmartMeter 3CT :
-    /// l'endpoint tdengine solarFlow ne le couvre pas) — masqués de la
-    /// fenêtre, et leurs 365 jours ne sont jamais demandés.
+    /// l'endpoint tdengine solarFlow lui répond la structure complète mais
+    /// avec toutes les valeurs à 0) — masqués de la fenêtre, et leurs
+    /// 365 jours ne sont jamais demandés.
     @Published private(set) var unsupported: Set<String> = []
 
     private var session: ZendureAppAPI.Session?
@@ -127,11 +128,13 @@ final class HistoryService: ObservableObject {
                     )
                     let totals = try ZendureAppAPI.parseEnergyFields(totalsData)
                     done += 1
-                    // « Aucune donnée » = totaux vides ET aucun jour PORTEUR
-                    // de champs — des jours en cache aux champs vides (récoltés
-                    // avant ce filtre) ne comptent pas, et sont purgés.
-                    let meaningfulDays = (days[item.device.id] ?? []).contains { !$0.fields.isEmpty }
-                    if totals.isEmpty, !meaningfulDays {
+                    // « Aucune donnée » = totaux sans signal ET aucun jour
+                    // porteur. Le SmartMeter 3CT renvoie la structure solarFlow
+                    // complète avec toutes les valeurs à 0 : des champs
+                    // présents mais nuls ne comptent pas — les jours en cache
+                    // récoltés avant ce filtre sont purgés.
+                    let meaningfulDays = (days[item.device.id] ?? []).contains { ZendureAppAPI.hasEnergySignal($0.fields) }
+                    if !ZendureAppAPI.hasEnergySignal(totals), !meaningfulDays {
                         unsupported.insert(item.device.id)
                         days[item.device.id] = []
                         HistoryCache.save([], deviceId: item.device.id)
@@ -162,8 +165,8 @@ final class HistoryService: ObservableObject {
                     // Filet après coup : si même les jours fraîchement
                     // récupérés sont vides et les totaux aussi, l'appareil
                     // n'a réellement pas d'historique.
-                    if (lifetime[item.device.id]?.isEmpty ?? true),
-                       !stored.contains(where: { !$0.fields.isEmpty }) {
+                    if !ZendureAppAPI.hasEnergySignal(lifetime[item.device.id] ?? [:]),
+                       !stored.contains(where: { ZendureAppAPI.hasEnergySignal($0.fields) }) {
                         unsupported.insert(item.device.id)
                     }
                 } catch {

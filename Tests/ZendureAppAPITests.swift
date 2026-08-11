@@ -75,6 +75,17 @@ final class ZendureAppAPITests: XCTestCase {
         XCTAssertNil(fields["nested"])
     }
 
+    func testHasEnergySignal() {
+        // SmartMeter 3CT : structure solarFlow complète mais tout à zéro,
+        // y compris les clés méta — aucun signal.
+        XCTAssertFalse(ZendureAppAPI.hasEnergySignal([:]))
+        XCTAssertFalse(ZendureAppAPI.hasEnergySignal(["solar": 0, "home": 0, "type": 0, "productType": 0]))
+        // Les clés méta seules ne font pas un signal, même non nulles.
+        XCTAssertFalse(ZendureAppAPI.hasEnergySignal(["type": 3, "productType": 2]))
+        // Une seule vraie valeur suffit.
+        XCTAssertTrue(ZendureAppAPI.hasEnergySignal(["solar": 0.5, "home": 0, "type": 0]))
+    }
+
     func testRedactedBodyMasksPassword() throws {
         let body = try JSONSerialization.data(withJSONObject: ["account": "a@b.c", "password": "secret123"])
         let redacted = ZendureAppAPI.redactedBody(body)

@@ -204,6 +204,18 @@ enum ZendureAppAPI {
         return fields
     }
 
+    /// Clés méta renvoyées même par un appareil sans historique — le
+    /// SmartMeter 3CT reçoit de tdengine la structure solarFlow complète,
+    /// toutes valeurs à 0.
+    static let energyMetaKeys: Set<String> = ["type", "productType"]
+
+    /// Vrai si les champs portent un signal réel : au moins une valeur non
+    /// nulle hors clés méta. Des champs présents mais tous à zéro (SmartMeter
+    /// 3CT) ne comptent pas comme de l'historique.
+    static func hasEnergySignal(_ fields: [String: Double]) -> Bool {
+        fields.contains { !energyMetaKeys.contains($0.key) && $0.value != 0 }
+    }
+
     // MARK: - Helpers
 
     /// `id` d'appareil re-présentable en String, qu'il arrive en nombre ou en
