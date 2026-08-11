@@ -51,6 +51,19 @@ enum ZendureParser {
         }
         let props = (root["properties"] as? [String: Any]) ?? root
 
+        // Le Smart CT (même API zenSDK) répond aussi sur /properties/report :
+        // sans garde-fou son payload « réussissait » en DeviceState tout à
+        // zéro, affiché comme une mesure réelle (vécu : deviceHost pointé sur
+        // le CT après un changement d'IP DHCP). Un payload de compteur est
+        // refusé avec une erreur dédiée, un payload sans aucun champ SolarFlow
+        // est illisible.
+        if props["total_power"] != nil || props["a_aprt_power"] != nil {
+            throw ZendureError.notASolarFlow
+        }
+        guard signatureKeys.contains(where: { props[$0] != nil }) || root["packData"] != nil else {
+            throw ZendureError.badPayload
+        }
+
         var state = DeviceState()
         state.solarInputPower = number(props["solarInputPower"]) ?? 0
         state.electricLevel = number(props["electricLevel"]) ?? number(props["socLevel"])
@@ -86,6 +99,15 @@ enum ZendureParser {
         return state
     }
 
+    /// Au moins un de ces champs doit être présent pour accepter le payload
+    /// comme un SolarFlow (`sn` et `rssi` exclus : le CT les publie aussi).
+    private static let signatureKeys = [
+        "solarInputPower", "solarPower1", "electricLevel", "socLevel",
+        "outputHomePower", "gridInputPower", "packInputPower", "outputPackPower",
+        "gridOffPower", "hyperTmp", "remainOutTime", "acMode",
+        "inputLimit", "outputLimit", "BatVolt", "socSet", "minSoc",
+    ]
+
     private static func number(_ value: Any?) -> Double? {
         switch value {
         case let d as Double: return d
@@ -99,6 +121,7 @@ enum ZendureParser {
 
 enum ZendureError: LocalizedError {
     case badPayload
+    case notASolarFlow
     case badResponse(Int)
     case noHost
     case noCloudKey
@@ -110,6 +133,7 @@ enum ZendureError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .badPayload: return String(localized: "Réponse du device illisible (JSON inattendu).")
+        case .notASolarFlow: return String(localized: "Cette adresse répond comme un Smart CT (compteur), pas comme un SolarFlow — vérifiez l'adresse du device dans les Réglages.")
         case .badResponse(let code): return String(localized: "Le device a répondu HTTP \(code).")
         case .noHost: return String(localized: "Aucune adresse configurée — ouvrez les Réglages.")
         case .noCloudKey: return String(localized: "Aucune Cloud Key enregistrée — ouvrez les Réglages.")
