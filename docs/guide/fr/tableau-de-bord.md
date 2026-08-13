@@ -12,7 +12,11 @@ Ouvrez-la depuis l'icône **jauge bleue** de l'en-tête du panneau, ou d'un doub
 
 *Le tableau de bord : schéma de flux animé en haut, cartes d'indicateurs en dessous.*
 
-## Le schéma de flux d'énergie
+## Le flux d'énergie : deux représentations
+
+Un sélecteur en haut de la carte bascule entre **Schéma** et **Sankey**. Ce sont les **mêmes flux et les mêmes valeurs** — seule la lecture change, et votre choix est mémorisé.
+
+### Schéma
 
 Le **SolarFlow est au centre** du schéma ; autour de lui, cinq satellites :
 
@@ -22,7 +26,16 @@ Le **SolarFlow est au centre** du schéma ; autour de lui, cinq satellites :
 - **Maison** — la sortie AC vers votre installation ;
 - **Prise hors-réseau** — la sortie de secours du SolarFlow, quand l'appareil la mesure.
 
-Chaque lien ne **s'anime que lorsque l'énergie circule réellement**, dans le vrai sens du flux, avec la puissance affichée en pastille sur le lien.
+Chaque lien ne **s'anime que lorsque l'énergie circule réellement**, dans le vrai sens du flux, avec la puissance affichée en pastille sur le lien. Le schéma montre la **topologie** de votre installation : qui est branché sur quoi.
+
+### Sankey
+
+Ici, c'est la **largeur du ruban qui vaut les watts** : la répartition se lit d'un coup d'œil (quelle part du solaire part vers la maison, quelle part va dans la batterie). Les sources sont à gauche (Réseau, Panneaux, Batteries en décharge), le SolarFlow au centre, les usages à droite (Maison, Batteries en charge, prise hors-réseau).
+
+Deux points de lecture importants :
+
+- **Le bilan du hub ne boucle jamais exactement** (pertes de conversion, bruit de mesure). Un Sankey affirme visuellement que tout ce qui entre ressort : l'écart est donc dessiné en gris, explicitement, sous le nom **« Pertes & conversion »** (il entre plus qu'il ne sort) ou **« Écart de mesure »** (l'inverse) — jamais absorbé en silence.
+- **Sans Smart CT**, le soutirage direct de la maison sur le réseau existe mais n'est pas mesuré. Il garde une bande **hachurée d'épaisseur fixe**, hors échelle, marquée « non mesuré », et coiffe de la même façon la barre du nœud Maison : lui donner une largeur reviendrait à inventer une valeur, le supprimer reviendrait à affirmer qu'il vaut zéro.
 
 ## Carte Production solaire
 
