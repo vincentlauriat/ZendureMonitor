@@ -174,12 +174,15 @@
       header — the key value stays visible) and can be hidden entirely in Settings.</p>
     </div>
     <div class="card">
-      <h3>🔀 Energy-flow dashboard</h3>
-      <p>Redesigned in 1.10: a strictly aligned diagram — panels on top, the SolarFlow at the
-      center, batteries right underneath with per-pack SOC chips, grid and home on the sides.
-      Links animate only when energy actually flows, with the wattage on each link, and the
-      grid→home draw is drawn explicitly: measured with a Smart CT, honestly marked
-      “not measured” without one — plus savings estimates in € and CO₂.</p>
+      <h3>🔀 Energy flow — two readings</h3>
+      <p>New in 2.2: the same flows, the same numbers, read <strong>two ways</strong> — a picker
+      switches between them and remembers your choice. <strong>Schematic</strong> shows the
+      topology: the SolarFlow at the center, panels, batteries with per-pack SOC chips, grid,
+      home and the off-grid outlet around it, each link animating only when energy actually
+      flows. <strong>Sankey</strong> makes ribbon width the wattage, so the split reads at a
+      glance — and it shows what the schematic can't: how much of your consumption never goes
+      through the battery at all. In both, the grid→home draw is explicit — measured with a
+      Smart CT, honestly marked “not measured” without one — plus savings in € and CO₂.</p>
     </div>
     <div class="card">
       <h3>☁️ Cloud mode &amp; Smart CT</h3>
@@ -244,8 +247,9 @@
 
 <section class="wrap">
   <h2>The <span class="em">dashboard</span> — and SunRoad in 3D</h2>
-  <p class="lead">A dedicated window for the whole picture — and, since 2.0, a real-3D scene of your
-  home under its sun (SunRoad replaces the former Sun window; its analytics live on in the sidebar).</p>
+  <p class="lead">A dedicated window for the whole picture — with the energy flow readable as a
+  schematic or as a Sankey since 2.2 — and, since 2.0, a real-3D scene of your home under its sun
+  (SunRoad replaces the former Sun window; its analytics live on in the sidebar).</p>
   <figure class="shot" style="max-width:900px">
     <img src="sunroad.png" alt="Zendure Monitor SunRoad window: a real-3D scene with the OpenStreetMap neighborhood (buildings and roads), the user's house highlighted in amber, the sun's arc with hourly markers, the compass ring, a ±48 h timeline at the bottom, and a sidebar with the panel-array orientation sliders, the 14-day production histogram and the ephemerides">
     <figcaption>SunRoad — your neighborhood from OpenStreetMap, your house in amber, the sun's real
@@ -253,8 +257,15 @@
     sliders, production histogram and ephemerides.</figcaption>
   </figure>
   <figure class="shot" style="max-width:760px; margin-top:32px">
-    <img src="dashboard.png" alt="Zendure Monitor dashboard: hub-centric energy-flow diagram with the SolarFlow at the center and panels, batteries, public grid, home and off-grid outlet as peripherals, plus production, battery, device and history cards">
-    <figcaption>The energy-flow diagram: links animate only when energy actually flows, with live wattage — and with a Smart CT, the real grid draw and the home's total consumption.</figcaption>
+    <img src="dashboard.png" alt="Zendure Monitor dashboard: the Schéma / Sankey picker above a hub-centric energy-flow diagram with the SolarFlow at the center and panels, batteries, public grid, home and off-grid outlet as peripherals, plus production, battery, device and history cards">
+    <figcaption>The dashboard in its <strong>Schematic</strong> reading: links animate only when energy actually flows, with live wattage — and with a Smart CT, the real grid draw and the home's total consumption.</figcaption>
+  </figure>
+  <figure class="shot" style="max-width:760px; margin-top:32px">
+    <img src="dashboard-sankey.png" alt="The same energy-flow card read as a Sankey diagram: the public grid feeds the home through a wide band passing above the SolarFlow, while the solar production flows through the SolarFlow to the home, each ribbon's width proportional to its wattage">
+    <figcaption>The same moment and the same numbers as a <strong>Sankey</strong>: ribbon width is
+    the wattage. Here the grid (1.19 kW) feeds the house through a band that bypasses the
+    SolarFlow entirely, while the solar production (435 W) flows through it — a proportion the
+    schematic, with its constant-width links, cannot show.</figcaption>
   </figure>
 </section>
 
