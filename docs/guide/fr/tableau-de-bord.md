@@ -10,7 +10,7 @@ Ouvrez-la depuis l'icône **jauge bleue** de l'en-tête du panneau, ou d'un doub
 
 ![Tableau de bord](../images/dashboard-light.png)
 
-*Le tableau de bord : schéma de flux animé en haut, cartes d'indicateurs en dessous.*
+*Le tableau de bord : le flux d'énergie en haut — ici en lecture « Schéma », le sélecteur permet de passer en Sankey — puis les cartes d'indicateurs.*
 
 ## Le flux d'énergie : deux représentations
 
@@ -34,7 +34,7 @@ Ici, c'est la **largeur du ruban qui vaut les watts** : la répartition se lit d
 
 ![Le tableau de bord en lecture Sankey](../images/dashboard-sankey.png)
 
-*La même installation en Sankey : le réseau alimente la maison en bande large au-dessus du hub, la production solaire passe par le SolarFlow.*
+*La même installation au même instant, en Sankey : le réseau (1,19 kW) alimente la maison en bande large qui contourne le hub, pendant que la production solaire (435 W) le traverse.*
 
 Deux points de lecture importants :
 
