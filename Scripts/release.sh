@@ -171,5 +171,8 @@ echo "✅ Built, signed, notarized, stapled and Sparkle-signed: $DMG ($DMG_SIZE)
 echo "✅ appcast.xml written for v$VERSION"
 echo ""
 echo "Next steps:"
-echo "  1. git add appcast.xml && git commit -m 'chore: appcast for v$VERSION' && push/merge to main"
+# Les notes de release sont versionnées (le DMG, lui, est gitignoré) : sans
+# elles dans ce rappel, elles restent non suivies — c'est ce qui est arrivé à
+# la 2.1.0, seule version manquante sur les 21.
+echo "  1. git add appcast.xml release/release-notes-$VERSION.md && git commit -m 'chore: appcast and release notes for v$VERSION' && push/merge to main"
 echo "  2. gh release create v$VERSION $DMG --title \"v$VERSION\" --notes-file release/release-notes-$VERSION.md"
