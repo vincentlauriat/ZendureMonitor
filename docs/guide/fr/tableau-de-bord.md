@@ -32,6 +32,10 @@ Chaque lien ne **s'anime que lorsque l'énergie circule réellement**, dans le v
 
 Ici, c'est la **largeur du ruban qui vaut les watts** : la répartition se lit d'un coup d'œil (quelle part du solaire part vers la maison, quelle part va dans la batterie). Les sources sont à gauche (Réseau, Panneaux, Batteries en décharge), le SolarFlow au centre, les usages à droite (Maison, Batteries en charge, prise hors-réseau).
 
+![Le tableau de bord en lecture Sankey](../images/dashboard-sankey.png)
+
+*La même installation en Sankey : le réseau alimente la maison en bande large au-dessus du hub, la production solaire passe par le SolarFlow.*
+
 Deux points de lecture importants :
 
 - **Le bilan du hub ne boucle jamais exactement** (pertes de conversion, bruit de mesure). Un Sankey affirme visuellement que tout ce qui entre ressort : l'écart est donc dessiné en gris, explicitement, sous le nom **« Pertes & conversion »** (il entre plus qu'il ne sort) ou **« Écart de mesure »** (l'inverse) — jamais absorbé en silence.
