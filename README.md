@@ -53,7 +53,7 @@ Options: choose what the menu bar shows (solar W, battery %, home W — or icon 
 
 ![Dashboard, schematic reading](docs/dashboard.png)
 
-The same moment, same numbers, read as a Sankey — here the grid feeds the house as a wide band that bypasses the hub entirely, while the solar production goes through the SolarFlow:
+The same moment and the same numbers, read as a Sankey — the grid (1.19 kW) feeds the house as a wide band that bypasses the hub entirely, while the solar production (435 W) flows through it:
 
 ![Dashboard, Sankey reading](docs/dashboard-sankey.png)
 

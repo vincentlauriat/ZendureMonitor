@@ -10,7 +10,7 @@ Open it from the **blue gauge** icon in the panel header, or by double-clicking 
 
 ![Dashboard](../images/dashboard-light.png)
 
-*The dashboard: animated flow diagram on top, indicator cards below.*
+*The dashboard: the energy flow on top — shown here in "Schéma" reading, the picker switches it to Sankey — then the indicator cards.*
 
 ## The energy flow: two readings
 
@@ -34,7 +34,7 @@ Here the **ribbon width is the wattage**: the split reads at a glance (how much 
 
 ![The dashboard in Sankey reading](../images/dashboard-sankey.png)
 
-*The same installation as a Sankey: the grid feeds the house as a wide band above the hub, while the solar production goes through the SolarFlow.*
+*The same installation at the same instant, as a Sankey: the grid (1.19 kW) feeds the house as a wide band that bypasses the hub, while the solar production (435 W) flows through it.*
 
 Two things worth knowing when reading it:
 
