@@ -46,7 +46,10 @@ Options: choose what the menu bar shows (solar W, battery %, home W — or icon 
 
 ![SunRoad — the neighborhood in 3D under the sun's real arc, with the sidebar](docs/sunroad.png)
 
-**Dashboard window** — hub-centric animated energy-flow diagram and every indicator the local API exposes:
+**Dashboard window** — the energy flow in **two readings you can switch between** (the choice is remembered), plus every indicator the local API exposes:
+
+- **Schematic** — the hub-centric animated diagram: SolarFlow at the center, panels, batteries, public grid, home and the off-grid outlet around it. Shows the *topology* of the installation.
+- **Sankey** — the same flows as proportional ribbons: ribbon width is watts, so the *split* reads at a glance (how much PV goes to the house vs into the battery). Sources on the left, uses on the right, and because a Sankey visually asserts that everything in comes back out, the hub's residual is drawn explicitly as a grey "Pertes & conversion" (or "Écart de mesure") ribbon rather than silently absorbed. Without a Smart CT the unmeasured grid→home draw keeps a **fixed, hatched, non-proportional** band — giving it a width would invent a number, dropping it would claim it is zero.
 
 ![Dashboard](docs/dashboard.png)
 

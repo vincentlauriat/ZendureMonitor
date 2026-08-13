@@ -28,6 +28,9 @@
     "Appareil SolarFlow" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow device" } } }
     },
+    "Aucun flux mesurable" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No measurable flow" } } }
+    },
     "Aucune adresse configurée — ouvrez les Réglages." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No address configured — open Settings." } } }
     },
@@ -39,6 +42,12 @@
     },
     "Ciel clair : direct pondéré par l'incidence et l'atmosphère, plus le diffus. Sans météo ni ombrage." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Clear sky: direct weighted by incidence and atmosphere, plus diffuse. No weather or shading." } } }
+    },
+    "Écart de mesure" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Measurement gap" } } }
+    },
+    "entrées \u003e sorties" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "inputs \u003e outputs" } } }
     },
     "Hauteur = élévation, largeur = azimut. Trait plein : la course du jour, heure par heure — la portion vive est déjà parcourue. Pointillés : les solstices, bornes de l'année. Zone jaune : production mesurée, posée là où était le soleil à cet instant. Losanges : la direction que vise chaque champ de panneaux, avec l'écart d'incidence actuel — quand le soleil l'atteint, ce champ est à son maximum." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Height = elevation, width = azimuth. Solid line: today's path, hour by hour — the bright portion is already travelled. Dotted: the solstices, the year's bounds. Yellow area: measured production, placed where the sun stood at that moment. Diamonds: the direction each panel array faces, with the current incidence gap — when the sun reaches it, that array is at its maximum." } } }
@@ -52,8 +61,26 @@
     "Inclinaison du champ : 0° à plat, 30° pour une toiture courante, 90° en façade." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Array tilt: 0° flat, 30° for a typical roof, 90° for a wall." } } }
     },
+    "sorties \u003e entrées" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "outputs \u003e inputs" } } }
+    },
+    "Schéma" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Schematic" } } }
+    },
+    "Sankey" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Sankey" } } }
+    },
+    "Représentation" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Representation" } } }
+    },
+    "Pertes \u0026 conversion" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Losses \u0026 conversion" } } }
+    },
     "Source : Open-Meteo, rafraîchie toutes les 30 min." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Source: Open-Meteo, refreshed every 30 min." } } }
+    },
+    "soutirage direct : non mesuré" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "direct draw: not measured" } } }
     },
     "Vu du dessus : centre = zénith, cercle = horizon." : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Seen from above: centre = zenith, circle = horizon." } } }

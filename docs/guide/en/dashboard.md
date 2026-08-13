@@ -12,7 +12,11 @@ Open it from the **blue gauge** icon in the panel header, or by double-clicking 
 
 *The dashboard: animated flow diagram on top, indicator cards below.*
 
-## The energy-flow diagram
+## The energy flow: two readings
+
+A picker at the top of the card switches between **Schematic** and **Sankey**. Both show the **same flows and the same values** — only the reading changes, and your choice is remembered.
+
+### Schematic
 
 The **SolarFlow sits at the center** of the diagram; around it, five satellites:
 
@@ -22,7 +26,16 @@ The **SolarFlow sits at the center** of the diagram; around it, five satellites:
 - **Home** — the AC output to your installation;
 - **Off-grid outlet** — the SolarFlow's backup outlet, when the device reports it.
 
-Each link **animates only when energy actually flows**, in the real direction, with the live wattage shown in a badge on the link.
+Each link **animates only when energy actually flows**, in the real direction, with the live wattage shown in a badge on the link. The schematic shows the **topology** of your installation: what is wired to what.
+
+### Sankey
+
+Here the **ribbon width is the wattage**: the split reads at a glance (how much of the solar goes to the house, how much goes into the battery). Sources are on the left (Grid, Panels, Batteries discharging), the SolarFlow in the middle, uses on the right (Home, Batteries charging, off-grid outlet).
+
+Two things worth knowing when reading it:
+
+- **The hub never balances exactly** (conversion losses, measurement noise). A Sankey visually asserts that everything in comes back out, so the residual is drawn explicitly in grey as **"Pertes & conversion"** (more goes in than comes out) or **"Écart de mesure"** (the other way round) — never silently absorbed.
+- **Without a Smart CT**, the home's direct grid draw exists but is not measured. It keeps a **fixed-width hatched band**, off scale, marked "non mesuré", and caps the Home node's bar the same way: giving it a width would invent a number, dropping it would claim it is zero.
 
 ## Solar production card
 

@@ -16,8 +16,16 @@ struct DashboardView: View {
 
 /// Contenu du tableau de bord, séparé du ScrollView pour rester rendable
 /// hors fenêtre (ImageRenderer ne rend pas l'intérieur d'un ScrollView).
+/// Les deux façons de lire les mêmes flux : le schéma nodal (topologie de
+/// l'installation) ou le Sankey (proportions des puissances).
+enum FlowStyle: String {
+    case schematic
+    case sankey
+}
+
 struct DashboardContent: View {
     @EnvironmentObject var monitor: Monitor
+    @AppStorage("energyFlowStyle") private var flowStyle: FlowStyle = .schematic
 
     private let solarColor = Color.yellow
     private let homeColor = Color.blue
@@ -30,8 +38,22 @@ struct DashboardContent: View {
             if let state = monitor.state {
                 VStack(spacing: 14) {
                     MetricCard(title: "Flux d'énergie", systemImage: "arrow.triangle.swap") {
-                        EnergyFlowView(state: state, ctTotalPower: monitor.ctReport?.totalPower)
-                            .frame(height: 310)
+                        Picker("Représentation", selection: $flowStyle) {
+                            Text("Schéma").tag(FlowStyle.schematic)
+                            Text("Sankey").tag(FlowStyle.sankey)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .frame(maxWidth: 220)
+                        Group {
+                            switch flowStyle {
+                            case .schematic:
+                                EnergyFlowView(state: state, ctTotalPower: monitor.ctReport?.totalPower)
+                            case .sankey:
+                                SankeyFlowView(state: state, ctTotalPower: monitor.ctReport?.totalPower)
+                            }
+                        }
+                        .frame(height: 310)
                         if let ct = monitor.ctReport {
                             Text("Soutirage réseau mesuré par le Smart CT (\(phasesText(ct))). Consommation totale de la maison = réseau + injection SolarFlow.")
                                 .font(.caption2)
