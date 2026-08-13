@@ -32,6 +32,10 @@ Each link **animates only when energy actually flows**, in the real direction, w
 
 Here the **ribbon width is the wattage**: the split reads at a glance (how much of the solar goes to the house, how much goes into the battery). Sources are on the left (Grid, Panels, Batteries discharging), the SolarFlow in the middle, uses on the right (Home, Batteries charging, off-grid outlet).
 
+![The dashboard in Sankey reading](../images/dashboard-sankey.png)
+
+*The same installation as a Sankey: the grid feeds the house as a wide band above the hub, while the solar production goes through the SolarFlow.*
+
 Two things worth knowing when reading it:
 
 - **The hub never balances exactly** (conversion losses, measurement noise). A Sankey visually asserts that everything in comes back out, so the residual is drawn explicitly in grey as **"Pertes & conversion"** (more goes in than comes out) or **"Écart de mesure"** (the other way round) — never silently absorbed.

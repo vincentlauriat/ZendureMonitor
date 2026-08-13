@@ -51,7 +51,11 @@ Options: choose what the menu bar shows (solar W, battery %, home W — or icon 
 - **Schematic** — the hub-centric animated diagram: SolarFlow at the center, panels, batteries, public grid, home and the off-grid outlet around it. Shows the *topology* of the installation.
 - **Sankey** — the same flows as proportional ribbons: ribbon width is watts, so the *split* reads at a glance (how much PV goes to the house vs into the battery). Sources on the left, uses on the right, and because a Sankey visually asserts that everything in comes back out, the hub's residual is drawn explicitly as a grey "Pertes & conversion" (or "Écart de mesure") ribbon rather than silently absorbed. Without a Smart CT the unmeasured grid→home draw keeps a **fixed, hatched, non-proportional** band — giving it a width would invent a number, dropping it would claim it is zero.
 
-![Dashboard](docs/dashboard.png)
+![Dashboard, schematic reading](docs/dashboard.png)
+
+The same moment, same numbers, read as a Sankey — here the grid feeds the house as a wide band that bypasses the hub entirely, while the solar production goes through the SolarFlow:
+
+![Dashboard, Sankey reading](docs/dashboard-sankey.png)
 
 **Sun window** — an animated sky dome (the sun's real path, the solstice arcs, today's production and where each panel array is aimed), a solar compass, a per-array breakdown with **azimuth and tilt sliders** that re-aim an array live, local ephemerides (NOAA algorithm, nothing leaves the Mac), the clear-sky theoretical output and the local weather (Open-Meteo) with a cloud-adjusted forecast — everything on one screen:
 
