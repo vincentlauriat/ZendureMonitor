@@ -42,7 +42,7 @@ struct SankeyFlowView: View {
                     ForEach(layout.bands) { band($0) }
                     ForEach(layout.nodes) { nodeBar($0) }
                     ForEach(layout.nodes) { nodeLabel($0, labelWidth: layout.labelWidth) }
-                    hub(layout)
+                    hub(layout, height: geo.size.height)
                 }
             } else {
                 idleView
@@ -99,9 +99,11 @@ struct SankeyFlowView: View {
         let ghostH: CGFloat = 10
         let minBar: CGFloat = 3
 
-        let leftX = size.width * 0.19
+        // Les colonnes de texte encadrent le diagramme : « + réseau : non
+        // mesuré » ou « Pertes & conversion » ne doivent jamais être tronqués.
+        let leftX = size.width * 0.24
         let hubX = size.width * 0.50
-        let rightX = size.width * 0.81
+        let rightX = size.width * 0.76
         let labelW = max(56, leftX - barW / 2 - 10)
 
         let usable = size.height - topInset - bottomInset
@@ -259,21 +261,18 @@ struct SankeyFlowView: View {
                   detail: LocalizedStringKey? = nil, extra: String? = nil,
                   packs: [String] = [], dimmed: Bool = false) {
             guard let slot = slots[id] else { return }
-            // Un nœud très fin (barre réduite à sa coiffe « non mesuré », par
-            // exemple) a un centre trop près d'un bord : son libellé sortirait
-            // de la vue. On le recentre sur la hauteur estimée du bloc de
-            // texte — la barre reste, elle, à sa place exacte.
-            let labelHeight: CGFloat = 28
+            // `detail` compte double : à cette largeur de colonne il se replie
+            // souvent sur deux lignes.
+            let labelHeight: CGFloat = 30
                 + (extra == nil ? 0 : 13)
-                + (detail == nil ? 0 : 13)
+                + (detail == nil ? 0 : 26)
                 + (packs.isEmpty ? 0 : 16)
-            let half = labelHeight / 2 + 2
-            let center = min(max(slot.top + slot.height / 2, half), size.height - half)
             nodes.append(SankeyNode(id: id, side: side, x: side == .left ? leftX : rightX,
                                     yTop: slot.top, height: slot.height, ghostHeight: slot.ghost,
                                     width: barW, color: color, title: title, value: value,
                                     detail: detail, extra: extra, packs: packs, dimmed: dimmed,
-                                    labelCenterY: center))
+                                    labelCenterY: slot.top + slot.height / 2,
+                                    labelHeight: labelHeight))
         }
 
         node("grid", side: .left, slots: left, color: gridColor,
@@ -303,6 +302,28 @@ struct SankeyFlowView: View {
         node("losses", side: .right, slots: right, color: .secondary,
              title: "Pertes & conversion", value: Format.watts(losses),
              detail: "entrées > sorties")
+
+        // Les barres restent à leur place exacte, mais les blocs de texte
+        // doivent tenir dans la vue sans se chevaucher : un nœud très fin (la
+        // coiffe « non mesuré » seule, un ruban de bilan de quelques watts) a
+        // un centre trop près de son voisin ou d'un bord. Passe descendante
+        // puis remontante, comme un dépliage de libellés d'axe.
+        for side in [SankeyNode.Side.left, .right] {
+            var indices = nodes.indices.filter { nodes[$0].side == side }
+            indices.sort { nodes[$0].labelCenterY < nodes[$1].labelCenterY }
+            var previousBottom = CGFloat(0)
+            for i in indices {
+                let half = nodes[i].labelHeight / 2
+                nodes[i].labelCenterY = max(nodes[i].labelCenterY, previousBottom + half)
+                previousBottom = nodes[i].labelCenterY + half
+            }
+            var ceiling = size.height
+            for i in indices.reversed() {
+                let half = nodes[i].labelHeight / 2
+                nodes[i].labelCenterY = min(nodes[i].labelCenterY, ceiling - half)
+                ceiling = nodes[i].labelCenterY - half
+            }
+        }
 
         return SankeyLayout(
             nodes: nodes,
@@ -379,13 +400,25 @@ struct SankeyFlowView: View {
                 )
                 // Même langage que le schéma nodal : des tirets défilent dans
                 // le sens réel du flux, à une vitesse liée à la puissance.
+                // Ils courent sur quelques VOIES parallèles à l'intérieur du
+                // ruban, jamais sur toute son épaisseur : un trait aussi large
+                // que la bande donne des dalles perpendiculaires au tracé, qui
+                // se pincent dans les courbes et masquent le ruban.
                 TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: false)) { timeline in
                     let t = timeline.date.timeIntervalSinceReferenceDate
                     let speed = 12.0 + min(band.watts / 40.0, 48.0)
                     let phase = CGFloat((t * speed).truncatingRemainder(dividingBy: 26)) * -1
-                    center.stroke(band.color.opacity(0.75),
-                                  style: StrokeStyle(lineWidth: max(1, band.thickness),
-                                                     dash: [9, 17], dashPhase: phase))
+                    ZStack {
+                        ForEach(0..<band.laneCount, id: \.self) { lane in
+                            let offset = band.thickness * (CGFloat(lane) + 0.5) / CGFloat(band.laneCount)
+                            RibbonCenterline(x0: band.x0, y0: band.y0 + offset,
+                                             x1: band.x1, y1: band.y1 + offset)
+                                .stroke(band.color.opacity(0.85),
+                                        style: StrokeStyle(lineWidth: band.laneWidth,
+                                                           lineCap: .round,
+                                                           dash: [9, 17], dashPhase: phase))
+                        }
+                    }
                 }
                 .clipShape(shape)
                 if band.thickness >= 11 {
@@ -475,7 +508,7 @@ struct SankeyFlowView: View {
     }
 
     @ViewBuilder
-    private func hub(_ layout: SankeyLayout) -> some View {
+    private func hub(_ layout: SankeyLayout, height: CGFloat) -> some View {
         RoundedRectangle(cornerRadius: 4, style: .continuous)
             .fill(Color.teal.opacity(0.85))
             .overlay(
@@ -499,12 +532,12 @@ struct SankeyFlowView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        // Fond matériel : le libellé tombe sous la barre, là où passent encore
-        // les rubans les plus bas.
+        // Posé dans la marge basse réservée, sous le pied des colonnes : juste
+        // sous la barre du hub, il chevaucherait le ruban le plus bas.
         .padding(.horizontal, 6)
         .padding(.vertical, 2)
         .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(.regularMaterial))
-        .position(x: layout.hubRect.midX, y: layout.hubRect.maxY + 16)
+        .position(x: layout.hubRect.midX, y: height - 16)
     }
 }
 
@@ -536,9 +569,11 @@ private struct SankeyNode: Identifiable {
     var extra: String?
     var packs: [String]
     var dimmed: Bool = false
-    /// Centre vertical du bloc de texte, borné pour ne pas sortir de la vue —
-    /// il peut donc différer légèrement du centre de la barre.
+    /// Centre vertical du bloc de texte, déplié pour ne sortir de la vue ni
+    /// chevaucher un voisin — il peut donc différer du centre de la barre.
     var labelCenterY: CGFloat
+    /// Hauteur estimée du bloc de texte, qui sert au dépliage.
+    var labelHeight: CGFloat
 }
 
 private struct SankeyBand: Identifiable {
@@ -553,6 +588,17 @@ private struct SankeyBand: Identifiable {
     var watts: Double
     var color: Color
     var style: Style
+
+    /// Nombre de voies de tirets à l'intérieur du ruban : une voie tous les
+    /// ~16 pt d'épaisseur, pour que le mouvement reste lisible sur un ruban
+    /// épais sans jamais couvrir toute sa largeur.
+    var laneCount: Int { min(max(Int(thickness / 16), 1), 6) }
+
+    /// Épaisseur d'une voie : au plus la moitié de la place qui lui revient,
+    /// pour que le remplissage du ruban reste visible entre les tirets.
+    var laneWidth: CGFloat {
+        min(max(thickness / CGFloat(laneCount) * 0.45, 1.5), 6)
+    }
 }
 
 /// Ruban de Sankey : deux cubiques symétriques fermées par les bords verticaux.
