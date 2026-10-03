@@ -555,6 +555,7 @@ private struct ControlSettingsTab: View {
     @State private var pending: [String: Any]?
     @State private var confirmZero = false
     @State private var confirmFeedIn = false
+    @State private var confirmReserve = false
     /// Cible : un appareil précis, ou tous (`allTag`) — jamais l'agrégat.
     @State private var targetID: String?
     private static let allTag = "*all*"
@@ -715,6 +716,12 @@ private struct ControlSettingsTab: View {
         } message: {
             Text("Une limite à 0 W coupe complètement ce flux sur la batterie.")
         }
+        .alert("Recharger depuis le réseau ?", isPresented: $confirmReserve) {
+            Button("Appliquer quand même", role: .destructive) { confirmPending() }
+            Button("Annuler", role: .cancel) { pending = nil }
+        } message: {
+            Text("Au moins un appareil est sous cette réserve : il va se recharger immédiatement DEPUIS LE RÉSEAU pour l'atteindre, à pleine puissance (environ 2,4 kW par SolarFlow). Pour l'éviter, appliquez la réserve quand la batterie est au-dessus.")
+        }
         .alert("Autoriser l'injection sur le réseau ?", isPresented: $confirmFeedIn) {
             Button("Autoriser") { confirmPending() }
             Button("Annuler", role: .cancel) { pending = nil }
@@ -759,9 +766,14 @@ private struct ControlSettingsTab: View {
         // engage vis-à-vis du réseau : confirmation dans les deux cas.
         let zeroesSomething = properties.contains { ($0.key == "outputLimit" || $0.key == "inputLimit") && ($0.value as? Int) == 0 }
         let enablesFeedIn = (properties["gridReverse"] as? Int) == 1
-        if zeroesSomething || enablesFeedIn {
+        let reserveAboveLevel = (properties["minSoc"] as? Int).map { tenths in
+            targets.contains { $0.state?.reserveWouldChargeFromGrid(Double(tenths) / 10) == true }
+        } ?? false
+        if zeroesSomething || enablesFeedIn || reserveAboveLevel {
             pending = properties
-            if enablesFeedIn { confirmFeedIn = true } else { confirmZero = true }
+            if reserveAboveLevel { confirmReserve = true }
+            else if enablesFeedIn { confirmFeedIn = true }
+            else { confirmZero = true }
             return
         }
         perform(properties)
