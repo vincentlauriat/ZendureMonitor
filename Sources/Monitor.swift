@@ -49,7 +49,14 @@ struct DayEnergy: Identifiable, Equatable {
 
 @MainActor
 final class Monitor: ObservableObject {
+    /// Installation entière : agrégat de tous les SolarFlow qui ont répondu
+    /// (voir DeviceState.combine) — identique à l'appareil s'il n'y en a qu'un.
     @Published var state: DeviceState?
+    /// Détail par appareil, dans l'ordre des réglages (local) ou du deviceList.
+    @Published var devices: [DeviceReading] = []
+    /// Message quand une partie des appareils seulement a répondu : les
+    /// totaux affichés sont alors partiels et doivent être présentés comme tels.
+    @Published var partialMessage: String?
     @Published var lastError: String?
     /// True when the last successful poll went through the fallback host.
     @Published var usingFallback = false
@@ -86,10 +93,10 @@ final class Monitor: ObservableObject {
 
     /// Phase courante de la session cloud (pour l'UI des réglages).
     @Published var cloudPhase: CloudService.Phase = .notConfigured
-    /// Appareils du compte cloud (deviceList) — en général un seul.
+    /// Appareils du compte cloud (deviceList) — tous agrégés.
     @Published var cloudDevices: [ZendureDevice] = []
-    /// Dernier état cloud fusionné de l'appareil suivi.
-    private var cloudLatest: CloudDeviceState?
+    /// Dernier état cloud fusionné de chaque appareil (clé = deviceKey).
+    private var cloudStates: [String: CloudDeviceState] = [:]
     private var cloudService: CloudService?
     /// Au-delà de cet âge, l'instantané cloud est considéré périmé (le poll
     /// getAll tourne à 60 s : 3 cycles manqués = vraie coupure).
@@ -117,15 +124,20 @@ final class Monitor: ObservableObject {
     /// True quand le mode Cloud courant résulte d'une bascule automatique
     /// (le pied de connexion du panneau l'indique).
     @Published var autoSwitchedToCloud = false
-    /// Appareil cloud suivi (deviceKey) — vide tant que la liste n'est pas connue.
-    @Published var cloudDeviceKey: String {
+    /// Hôtes locaux des SolarFlow de l'installation, interrogés en parallèle.
+    /// Le premier garde l'hôte de secours (`fallbackHost`). `deviceHost`
+    /// (ancienne clé mono-appareil) reste écrit avec le premier hôte pour
+    /// qu'un retour à une version antérieure retrouve son réglage.
+    @Published var deviceHosts: [String] {
         didSet {
-            UserDefaults.standard.set(cloudDeviceKey, forKey: "cloudDeviceKey")
-            if cloudDeviceKey != oldValue { cloudLatest = nil }
+            UserDefaults.standard.set(deviceHosts, forKey: "deviceHosts")
+            UserDefaults.standard.set(deviceHosts.first ?? "", forKey: "deviceHost")
+            scheduleRestart()
         }
     }
-    @Published var host: String {
-        didSet { UserDefaults.standard.set(host, forKey: "deviceHost"); scheduleRestart() }
+    /// Hôtes renseignés (vides et espaces écartés).
+    var configuredHosts: [String] {
+        deviceHosts.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }.filter { !$0.isEmpty }
     }
     /// Hôte local du compteur Smart CT (optionnel) — mesure le soutirage
     /// réseau réel de la maison. Interrogé quel que soit le mode (le CT n'est
@@ -247,17 +259,18 @@ final class Monitor: ObservableObject {
     /// Logique pure des cumuls du jour (Wh, courbe, pic) — voir DailyAccumulator.
     private var accumulator: DailyAccumulator
     private var energyDay: String
-    private var lowSocNotified = false
-    /// Host of the last successful poll — control commands go there.
-    private var activeHost: String?
+    /// Alertes batterie faible / pleine, suivies appareil par appareil.
+    private var batteryAlerts = BatteryAlerts()
     private var lastWidgetReload: Date = .distantPast
     private var lastServerFetch: Date = .distantPast
     private var lastCurveSave: Date = .distantPast
-    private var fullBatteryNotified = false
     private var lastGridDrawNotify: Date = .distantPast
     private var recordNotifiedDay = ""
-    /// Détection de panne (injoignable / production nulle en plein jour).
+    /// Détection de panne de l'installation entière (aucun appareil ne répond).
     private var watchdog = OutageWatchdog()
+    /// Détection par appareil (clé = DeviceReading.id) : un SolarFlow muet ou
+    /// à l'arrêt en plein jour se noierait dans la somme des autres.
+    private var deviceWatchdogs: [String: OutageWatchdog] = [:]
 
     init() {
         let config = URLSessionConfiguration.ephemeral
@@ -268,8 +281,16 @@ final class Monitor: ObservableObject {
         let defaults = UserDefaults.standard
         connectionMode = ConnectionMode(rawValue: defaults.string(forKey: "connectionMode") ?? "local") ?? .local
         autoSwitchMode = defaults.bool(forKey: "autoSwitchMode")
-        cloudDeviceKey = defaults.string(forKey: "cloudDeviceKey") ?? ""
-        host = defaults.string(forKey: "deviceHost") ?? ""
+        // Migration mono → multi-appareils, matérialisée dans le stockage dès
+        // l'ouverture (une migration recalculée à chaque lecture a déjà coûté
+        // des réglages perdus — voir PanelArrayStore).
+        var hosts = defaults.stringArray(forKey: "deviceHosts") ?? []
+        if hosts.isEmpty, let legacy = defaults.string(forKey: "deviceHost"),
+           !legacy.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            hosts = [legacy]
+            defaults.set(hosts, forKey: "deviceHosts")
+        }
+        deviceHosts = hosts
         ctHost = defaults.string(forKey: "ctHost") ?? ""
         fallbackHost = defaults.string(forKey: "fallbackHost") ?? ""
         historyServer = defaults.string(forKey: "historyServer") ?? ""
@@ -388,16 +409,20 @@ final class Monitor: ObservableObject {
     func refresh() async {
         if connectionMode == .cloud { await autoSwitchBackIfLocalReachable() }
         do {
-            let fresh: DeviceState
-            let viaFallback: Bool
-            if connectionMode == .cloud {
-                fresh = try cloudSnapshot()
-                viaFallback = false
-            } else {
-                (fresh, viaFallback) = try await fetchWithFallback()
+            let readings = connectionMode == .cloud ? try cloudReadings() : try await localReadings()
+            devices = readings
+            let answered = readings.compactMap(\.state)
+            checkDeviceOutages(readings, partial: !answered.isEmpty)
+            guard let fresh = DeviceState.combine(answered) else {
+                throw readings.lazy.compactMap(\.error).first ?? ZendureError.noHost
             }
+            let missing = readings.count - answered.count
+            partialMessage = missing == 0 ? nil
+                : String(localized: "\(missing) appareil(s) sur \(readings.count) sans réponse — totaux partiels.")
             state = fresh
-            usingFallback = viaFallback
+            usingFallback = connectionMode == .local && readings.first.map { reading in
+                reading.state != nil && reading.host != reading.id
+            } == true
             lastError = nil
             localNetworkDenied = false
             localFailureStreak = 0
@@ -405,9 +430,14 @@ final class Monitor: ObservableObject {
             append(fresh.outputHomePower, to: &homeHistory)
             append(fresh.batteryFlow, to: &flowHistory)
             accumulateEnergy(fresh)
-            checkLowSoc(fresh)
+            checkBatteryAlerts(readings)
             checkExtraNotifications(fresh)
-            checkOutage(fresh)
+            // Le watchdog global ne suit que « l'installation répond-elle ? » :
+            // l'anomalie de production est jugée par appareil (élévation
+            // négative = détection désactivée ici).
+            _ = watchdog.deviceResponded(solarW: fresh.solarInputPower, homeW: fresh.outputHomePower,
+                                         elevation: -90, at: .now)
+            offlineAlert = false
             publishWidgetSnapshot(fresh)
             await refreshSmartCT()
             await refreshHistoryFromServer()
@@ -416,6 +446,7 @@ final class Monitor: ObservableObject {
             // voir MenuView.isStale) plutôt que de retomber sur « Pas de
             // données » : en coupure réseau, l'état d'avant reste utile.
             lastError = error.localizedDescription
+            partialMessage = nil
             accumulator.resetSampleClock()
             localNetworkDenied = connectionMode == .local && Self.looksLikeLocalNetworkDenial(error)
             if connectionMode == .local {
@@ -457,17 +488,36 @@ final class Monitor: ObservableObject {
         return SunCalc.compute(latitude: latitude, longitude: longitude).elevation
     }
 
-    private func checkOutage(_ state: DeviceState) {
-        let event = watchdog.deviceResponded(solarW: state.solarInputPower,
-                                             homeW: state.outputHomePower,
-                                             elevation: currentSunElevation,
-                                             at: .now)
-        offlineAlert = false
-        if let event, notifyNoProduction, case .productionAnomaly(let since) = event {
-            let minutes = Int(Date.now.timeIntervalSince(since) / 60)
-            notify(id: "production-anomaly",
-                   title: String(localized: "Production solaire anormale"),
-                   body: String(localized: "Le SolarFlow ne produit ni n'injecte rien depuis \(minutes) min alors que le soleil est haut — vérifier l'appareil (défaut, batterie pleine sans exutoire…)."))
+    /// Pannes par appareil : production nulle en plein jour pour chaque
+    /// SolarFlow qui répond, et — quand les autres répondent (`partial`) —
+    /// un appareil muet. La coupure totale reste signalée par le watchdog
+    /// global (notification « SolarFlow injoignable » du chemin d'erreur).
+    private func checkDeviceOutages(_ readings: [DeviceReading], partial: Bool) {
+        let elevation = currentSunElevation
+        let several = readings.count > 1
+        deviceWatchdogs = deviceWatchdogs.filter { key, _ in readings.contains { $0.id == key } }
+        for reading in readings {
+            var dog = deviceWatchdogs[reading.id] ?? OutageWatchdog(unreachableAfter: unreachableMinutes * 60)
+            dog.unreachableAfter = unreachableMinutes * 60
+            if let state = reading.state {
+                let event = dog.deviceResponded(solarW: state.solarInputPower,
+                                                homeW: state.outputHomePower,
+                                                elevation: elevation, at: .now)
+                if let event, notifyNoProduction, case .productionAnomaly(let since) = event {
+                    let minutes = Int(Date.now.timeIntervalSince(since) / 60)
+                    let subject = several ? reading.name : String(localized: "Le SolarFlow")
+                    notify(id: "production-anomaly-\(reading.id)",
+                           title: String(localized: "Production solaire anormale"),
+                           body: String(localized: "\(subject) ne produit ni n'injecte rien depuis \(minutes) min alors que le soleil est haut — vérifier l'appareil (défaut, batterie pleine sans exutoire…)."))
+                }
+            } else if let event = dog.pollFailed(at: .now), partial, notifyUnreachable,
+                      case .unreachable(let since) = event {
+                let minutes = Int(Date.now.timeIntervalSince(since) / 60)
+                notify(id: "unreachable-\(reading.id)",
+                       title: String(localized: "Un SolarFlow ne répond plus"),
+                       body: String(localized: "\(reading.name) ne répond plus depuis \(minutes) min — les totaux affichés n'incluent plus cet appareil."))
+            }
+            deviceWatchdogs[reading.id] = dog
         }
     }
 
@@ -508,7 +558,7 @@ final class Monitor: ObservableObject {
         } else {
             cloudService?.stop()
             cloudService = nil
-            cloudLatest = nil
+            cloudStates = [:]
             cloudPhase = .notConfigured
         }
     }
@@ -525,19 +575,11 @@ final class Monitor: ObservableObject {
                 MainActor.assumeIsolated { self?.cloudPhase = phase }
             }
             service.onDevicesChanged = { [weak self] devices in
-                MainActor.assumeIsolated {
-                    guard let self else { return }
-                    self.cloudDevices = devices
-                    if self.cloudDeviceKey.isEmpty
-                        || !devices.contains(where: { $0.deviceKey == self.cloudDeviceKey }) {
-                        self.cloudDeviceKey = devices.first?.deviceKey ?? ""
-                    }
-                }
+                MainActor.assumeIsolated { self?.cloudDevices = devices }
             }
             service.onStateChanged = { [weak self] deviceKey, state in
                 MainActor.assumeIsolated {
-                    guard let self, deviceKey == self.cloudDeviceKey else { return }
-                    self.cloudLatest = state
+                    self?.cloudStates[deviceKey] = state
                 }
             }
             cloudService = service
@@ -550,24 +592,31 @@ final class Monitor: ObservableObject {
         service.start(cloudKeyToken: token)
     }
 
-    /// Instantané complet issu du flux MQTT — jette si la session cloud est en
-    /// erreur, sans données, ou avec des données périmées, pour que la chaîne
-    /// d'erreur existante (lastError, watchdog, isStale) s'applique à l'identique.
-    private func cloudSnapshot() throws -> DeviceState {
+    /// Lecture de chaque appareil du compte depuis le flux MQTT — jette si la
+    /// session cloud est en erreur ou sans appareil, pour que la chaîne
+    /// d'erreur existante (lastError, watchdog, isStale) s'applique à
+    /// l'identique ; un appareil sans données ou périmé porte son erreur.
+    private func cloudReadings() throws -> [DeviceReading] {
         if case .failed(let message) = cloudPhase {
             throw ZendureError.cloudUnavailable(message)
         }
         if cloudPhase == .notConfigured {
             throw ZendureError.noCloudKey
         }
-        guard let latest = cloudLatest, let date = latest.lastUpdate else {
-            throw ZendureError.cloudWaiting
+        guard !cloudDevices.isEmpty else { throw ZendureError.cloudWaiting }
+        return cloudDevices.map { device in
+            var reading = DeviceReading(id: device.deviceKey, name: device.displayName)
+            if let latest = cloudStates[device.deviceKey], let date = latest.lastUpdate {
+                if Date.now.timeIntervalSince(date) < Self.cloudStaleAfter {
+                    reading.state = latest.deviceState(fallbackSerial: device.snNumber)
+                } else {
+                    reading.error = ZendureError.cloudStale
+                }
+            } else {
+                reading.error = ZendureError.cloudWaiting
+            }
+            return reading
         }
-        guard Date.now.timeIntervalSince(date) < Self.cloudStaleAfter else {
-            throw ZendureError.cloudStale
-        }
-        let device = cloudDevices.first(where: { $0.deviceKey == cloudDeviceKey })
-        return latest.deviceState(fallbackSerial: device?.snNumber)
     }
 
     /// Enregistre (ou efface, si vide) le Cloud Key dans le trousseau et
@@ -577,7 +626,7 @@ final class Monitor: ObservableObject {
         if trimmed.isEmpty {
             KeychainHelper.delete(account: KeychainHelper.cloudKeyAccount)
             cloudService?.stop()
-            cloudLatest = nil
+            cloudStates = [:]
             cloudPhase = .notConfigured
         } else {
             KeychainHelper.save(trimmed, account: KeychainHelper.cloudKeyAccount)
@@ -602,23 +651,65 @@ final class Monitor: ObservableObject {
 
     // MARK: - Fetching
 
-    /// Bascule auto retour : en mode Cloud avec l'option active, sonde l'hôte
-    /// local toutes les 60 s (timeout 5 s, hors du réseau domestique la sonde
-    /// échoue vite) et repasse en local dès que le SolarFlow répond.
+    /// Bascule auto retour : en mode Cloud avec l'option active, sonde les
+    /// hôtes locaux toutes les 60 s (timeout 5 s, hors du réseau domestique la
+    /// sonde échoue vite) et repasse en local dès qu'un SolarFlow répond.
     private func autoSwitchBackIfLocalReachable() async {
         guard autoSwitchMode, connectionMode == .cloud else { return }
-        let target = host.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !target.isEmpty,
+        let targets = configuredHosts
+        guard !targets.isEmpty,
               Date.now.timeIntervalSince(lastLocalProbe) >= 60 else { return }
         lastLocalProbe = .now
-        if (try? await fetchReport(host: target)) != nil {
+        let reachable = await withTaskGroup(of: Bool.self) { group in
+            for target in targets {
+                group.addTask { [weak self] in (try? await self?.fetchReport(host: target)) != nil }
+            }
+            for await ok in group where ok { group.cancelAll(); return true }
+            return false
+        }
+        if reachable {
             localFailureStreak = 0
             autoSwitchedToCloud = false
             connectionMode = .local
         }
     }
 
-    private func fetchWithFallback() async throws -> (DeviceState, viaFallback: Bool) {
+    /// Interroge tous les SolarFlow en parallèle — en séquentiel, un appareil
+    /// éteint ajouterait son timeout (5 s) à chaque poll. Ne jette que s'il
+    /// n'y a aucun hôte ; chaque échec reste porté par sa lecture.
+    private func localReadings() async throws -> [DeviceReading] {
+        let hosts = configuredHosts
+        guard !hosts.isEmpty else { throw ZendureError.noHost }
+        let results = await withTaskGroup(of: (Int, DeviceReading).self) { group in
+            for (index, host) in hosts.enumerated() {
+                group.addTask { [weak self] in
+                    var reading = DeviceReading(id: host, name: host)
+                    guard let self else { return (index, reading) }
+                    do {
+                        // L'hôte de secours (VPN, relais) est rattaché au
+                        // premier appareil, celui de l'installation d'origine.
+                        let (state, answered) = index == 0
+                            ? try await self.fetchWithFallback(primary: host)
+                            : (try await self.fetchReport(host: host), host)
+                        reading.state = state
+                        reading.host = answered
+                        if let sn = state.serialNumber { reading.name = sn }
+                    } catch {
+                        reading.error = error
+                    }
+                    return (index, reading)
+                }
+            }
+            var collected: [(Int, DeviceReading)] = []
+            for await result in group { collected.append(result) }
+            return collected
+        }
+        return results.sorted { $0.0 < $1.0 }.map(\.1)
+    }
+
+    /// Hôte principal avec repli sur `fallbackHost` ; renvoie l'hôte qui a
+    /// effectivement répondu (cible des commandes).
+    private func fetchWithFallback(primary host: String) async throws -> (DeviceState, answeredBy: String) {
         let fallback = fallbackHost.trimmingCharacters(in: .whitespacesAndNewlines)
         // Une fois passé sur l'hôte de secours, rester dessus : réessayer le
         // principal à chaque poll coûterait son timeout (5 s) à chaque
@@ -626,33 +717,32 @@ final class Monitor: ObservableObject {
         if usingFallback, !fallback.isEmpty,
            Date.now.timeIntervalSince(lastPrimaryAttempt) < 120 {
             if let state = try? await fetchReport(host: fallback) {
-                activeHost = fallback
-                return (state, true)
+                return (state, fallback)
             }
             // Le secours ne répond plus : retomber sur l'essai complet.
         }
         lastPrimaryAttempt = .now
         do {
-            let state = try await fetchReport(host: host)
-            activeHost = host
-            return (state, false)
+            return (try await fetchReport(host: host), host)
         } catch {
             guard !fallback.isEmpty else { throw error }
-            let state = try await fetchReport(host: fallback)
-            activeHost = fallback
-            return (state, true)
+            return (try await fetchReport(host: fallback), fallback)
         }
     }
 
     // MARK: - Control (POST /properties/write)
 
-    /// Sends a control command to the device. ⚠️ This drives the real battery.
+    /// Sends a control command to ONE device. ⚠️ This drives the real battery.
+    /// La cible est une lecture d'appareil (SN + hôte qui a répondu), jamais
+    /// l'agrégat : avec plusieurs SolarFlow, un SN envoyé au mauvais hôte
+    /// piloterait une batterie à l'aveugle.
     /// Mode Cloud : lecture seule — `properties/write` via MQTT n'a jamais été
     /// validé en réel, on refuse plutôt que de piloter la batterie à l'aveugle.
-    func writeProperties(_ properties: [String: Any]) async throws {
+    func writeProperties(_ properties: [String: Any], to deviceID: DeviceReading.ID) async throws {
         guard connectionMode == .local else { throw ZendureError.cloudReadOnly }
-        guard let sn = state?.serialNumber else { throw ZendureError.noHost }
-        let target = (activeHost ?? host).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let device = devices.first(where: { $0.id == deviceID }),
+              let sn = device.state?.serialNumber, let host = device.host else { throw ZendureError.noHost }
+        let target = host.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !target.isEmpty, let url = URL(string: "http://\(target)/properties/write") else {
             throw ZendureError.noHost
         }
@@ -900,39 +990,43 @@ final class Monitor: ObservableObject {
         dayKeyFormatter.string(from: date)
     }
 
-    // MARK: - Low battery alert
+    // MARK: - Alertes batterie (par appareil)
 
-    private func checkLowSoc(_ state: DeviceState) {
-        guard lowSocAlertEnabled, let soc = state.electricLevel else { return }
-        if soc <= lowSocThreshold, !lowSocNotified {
-            lowSocNotified = true
-            let content = UNMutableNotificationContent()
-            content.title = String(localized: "Batterie SolarFlow faible")
-            content.body = String(localized: "Niveau de charge :") + " \(Int(soc)) % ("
-                + String(localized: "seuil") + " : \(Int(lowSocThreshold)) %)"
-            content.sound = .default
-            UNUserNotificationCenter.current().add(
-                UNNotificationRequest(identifier: "low-soc", content: content, trigger: nil)
-            )
-        } else if soc > lowSocThreshold + 5 {
-            lowSocNotified = false
+    /// Faible / pleine jugées sur chaque SolarFlow, pas sur la moyenne : un
+    /// appareil vide à côté d'un plein (moyenne 55 %) doit quand même alerter.
+    /// Avec un seul appareil, textes et identifiants restent ceux d'avant.
+    private func checkBatteryAlerts(_ readings: [DeviceReading]) {
+        batteryAlerts.keep(ids: Set(readings.map(\.id)))
+        let several = readings.count > 1
+        for (index, reading) in readings.enumerated() {
+            guard let state = reading.state, let soc = state.electricLevel else { continue }
+            let label = String(localized: "SolarFlow \(index + 1)")
+            let suffix = several ? "-\(reading.id)" : ""
+            for event in batteryAlerts.evaluate(id: reading.id, soc: soc, socMax: state.socMax,
+                                                lowThreshold: lowSocThreshold) {
+                switch event {
+                case .low where lowSocAlertEnabled:
+                    let body = String(localized: "Niveau de charge :") + " \(Int(soc)) % ("
+                        + String(localized: "seuil") + " : \(Int(lowSocThreshold)) %)"
+                    notify(id: "low-soc" + suffix,
+                           title: several ? String(localized: "Batterie faible — \(label)")
+                                          : String(localized: "Batterie SolarFlow faible"),
+                           body: body)
+                case .full where notifyFullBattery:
+                    notify(id: "full-battery" + suffix,
+                           title: several ? String(localized: "Batterie pleine — \(label)")
+                                          : String(localized: "Batterie SolarFlow pleine"),
+                           body: String(localized: "Niveau de charge : \(Int(soc)) %"))
+                default:
+                    break
+                }
+            }
         }
     }
 
     // MARK: - Notifications optionnelles
 
     private func checkExtraNotifications(_ state: DeviceState) {
-        if notifyFullBattery, let soc = state.electricLevel {
-            let target = min(state.socMax ?? 100, 100)
-            if soc >= target - 0.5, !fullBatteryNotified {
-                fullBatteryNotified = true
-                notify(id: "full-battery",
-                       title: String(localized: "Batterie SolarFlow pleine"),
-                       body: String(localized: "Niveau de charge : \(Int(soc)) %"))
-            } else if soc < target - 5 {
-                fullBatteryNotified = false
-            }
-        }
         if notifyGridDraw, state.gridInputPower > 50, state.solarInputPower > 100,
            Date.now.timeIntervalSince(lastGridDrawNotify) > 3600 {
             lastGridDrawNotify = .now

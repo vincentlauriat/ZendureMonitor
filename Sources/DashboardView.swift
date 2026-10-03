@@ -37,6 +37,12 @@ struct DashboardContent: View {
         Group {
             if let state = monitor.state {
                 VStack(spacing: 14) {
+                    if let partial = monitor.partialMessage {
+                        Label(partial, systemImage: "exclamationmark.triangle.fill")
+                            .font(.callout)
+                            .foregroundStyle(.orange)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                     MetricCard(title: "Flux d'énergie", systemImage: "arrow.triangle.swap") {
                         Picker("Représentation", selection: $flowStyle) {
                             Text("Schéma").tag(FlowStyle.schematic)
@@ -77,7 +83,14 @@ struct DashboardContent: View {
                         batteryCard(state)
                     }
                     HStack(alignment: .top, spacing: 14) {
-                        deviceCard(state)
+                        // Plusieurs SolarFlow : les valeurs propres à un
+                        // appareil (température, mode, limites, SN) n'existent
+                        // pas sur l'agrégat — elles passent dans le détail.
+                        if monitor.devices.count > 1 {
+                            DevicesCard(devices: monitor.devices, detailed: true)
+                        } else {
+                            deviceCard(state)
+                        }
                         historyCard()
                     }
                 }
