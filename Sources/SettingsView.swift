@@ -544,22 +544,31 @@ private struct ControlSettingsTab: View {
     @State private var acMode = 2
     @State private var outputLimit: Double = 800
     @State private var inputLimit: Double = 1200
+    @State private var reserve: Double = 20
+    @State private var chargeMax: Double = 100
+    @State private var feedIn = 2
     @State private var seeded = false
     @State private var sending = false
     @State private var status: String?
     @State private var statusOK = false
-    @State private var pendingZero: [String: Any]?
+    /// Commande en attente de confirmation (limite à 0 W, injection autorisée).
+    @State private var pending: [String: Any]?
     @State private var confirmZero = false
-    /// Appareil piloté — une commande vise toujours UN SolarFlow précis.
-    @State private var targetID: DeviceReading.ID?
+    @State private var confirmFeedIn = false
+    /// Cible : un appareil précis, ou tous (`allTag`) — jamais l'agrégat.
+    @State private var targetID: String?
+    private static let allTag = "*all*"
 
     /// Appareils pilotables : ont répondu, avec un SN et un hôte connus.
     private var controllable: [DeviceReading] {
         monitor.devices.filter { $0.state?.serialNumber != nil && $0.host != nil }
     }
 
-    private var target: DeviceReading? {
-        controllable.first { $0.id == targetID } ?? (controllable.count == 1 ? controllable.first : nil)
+    /// Appareils visés par la prochaine commande.
+    private var targets: [DeviceReading] {
+        if controllable.count == 1 { return controllable }
+        if targetID == Self.allTag { return controllable }
+        return controllable.filter { $0.id == targetID }
     }
 
     var body: some View {
@@ -583,7 +592,7 @@ private struct ControlSettingsTab: View {
 
     private var controlForm: some View {
         Form {
-            Section("Contrôle de la batterie") {
+            Section {
                 Text("⚠️ Ces commandes pilotent réellement la batterie (POST /properties/write).")
                     .font(.caption)
                     .foregroundStyle(.orange)
@@ -591,14 +600,67 @@ private struct ControlSettingsTab: View {
 
                 if controllable.count > 1 {
                     Picker("Appareil", selection: $targetID) {
-                        Text("Choisir…").tag(DeviceReading.ID?.none)
-                        ForEach(controllable) { device in
-                            Text(device.name).tag(DeviceReading.ID?.some(device.id))
+                        Text("Choisir…").tag(String?.none)
+                        Text("Tous les appareils").tag(String?.some(Self.allTag))
+                        ForEach(Array(controllable.enumerated()), id: \.element.id) { index, device in
+                            Text(verbatim: "SolarFlow \(index + 1) — \(device.name)").tag(String?.some(device.id))
                         }
                     }
                     .onChange(of: targetID) { seeded = false; seedFromDevice() }
                 }
+                ForEach(targets) { device in
+                    if let state = device.state {
+                        Text(currentSummary(device: device, state: state))
+                            .font(.caption.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
 
+            Section("Réserve, charge et injection") {
+                VStack(alignment: .leading) {
+                    Slider(value: $reserve, in: 0...50, step: 5) {
+                        Text("Réserve")
+                    }
+                    HStack {
+                        Text("La batterie ne descend pas sous \(Int(reserve)) %")
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Appliquer la réserve") { send(["minSoc": Int(reserve * 10)]) }
+                            .disabled(sending || targets.isEmpty)
+                    }
+                }
+
+                VStack(alignment: .leading) {
+                    Slider(value: $chargeMax, in: 70...100, step: 5) {
+                        Text("Charge maximale")
+                    }
+                    HStack {
+                        Text("Charge jusqu'à \(Int(chargeMax)) %")
+                            .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                        Spacer()
+                        Button("Appliquer la charge maximale") { send(["socSet": Int(chargeMax * 10)]) }
+                            .disabled(sending || targets.isEmpty)
+                    }
+                }
+
+                Picker("Injection du surplus", selection: $feedIn) {
+                    Text("Autorisée — le surplus part sur le réseau").tag(1)
+                    Text("Interdite — production bridée batterie pleine").tag(2)
+                }
+                HStack {
+                    Spacer()
+                    Button("Appliquer l'injection") { send(["gridReverse": feedIn]) }
+                        .disabled(sending || targets.isEmpty)
+                }
+
+                Text("Valeurs envoyées par l'API locale. En smartMode (cas courant), l'appareil ne les écrit pas en mémoire permanente : elles sont perdues à son redémarrage. Pour un réglage durable, faites-le aussi dans l'app Zendure.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Section("Mode et puissances") {
                 Picker("Mode AC", selection: $acMode) {
                     Text("Charge (depuis le secteur)").tag(1)
                     Text("Décharge (vers la maison)").tag(2)
@@ -606,7 +668,7 @@ private struct ControlSettingsTab: View {
                 HStack {
                     Spacer()
                     Button("Appliquer le mode") { send(["acMode": acMode]) }
-                        .disabled(sending || target == nil)
+                        .disabled(sending || targets.isEmpty)
                 }
 
                 VStack(alignment: .leading) {
@@ -617,7 +679,7 @@ private struct ControlSettingsTab: View {
                         Text(verbatim: "\(Int(outputLimit)) W").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                         Spacer()
                         Button("Appliquer la limite de sortie") { send(["outputLimit": Int(outputLimit)]) }
-                            .disabled(sending || target == nil)
+                            .disabled(sending || targets.isEmpty)
                     }
                 }
 
@@ -629,59 +691,105 @@ private struct ControlSettingsTab: View {
                         Text(verbatim: "\(Int(inputLimit)) W").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                         Spacer()
                         Button("Appliquer la limite de charge") { send(["inputLimit": Int(inputLimit)]) }
-                            .disabled(sending || target == nil)
+                            .disabled(sending || targets.isEmpty)
                     }
                 }
+                Text("Avec un Smart CT, la régulation Zendure ajuste elle-même la limite de sortie en continu : une valeur imposée ici risque d'être écrasée en quelques secondes.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
 
-                if let status {
-                    Label(status, systemImage: statusOK ? "checkmark.circle" : "xmark.circle")
-                        .foregroundStyle(statusOK ? .green : .red)
-                        .font(.callout)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
+            if let status {
+                Label(status, systemImage: statusOK ? "checkmark.circle" : "xmark.circle")
+                    .foregroundStyle(statusOK ? .green : .red)
+                    .font(.callout)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .formStyle(.grouped)
         .onAppear { seedFromDevice() }
         .alert("Mettre la limite à 0 W ?", isPresented: $confirmZero) {
-            Button("Confirmer 0 W", role: .destructive) {
-                if let props = pendingZero { send(props) }
-                pendingZero = nil
-            }
-            Button("Annuler", role: .cancel) { pendingZero = nil }
+            Button("Confirmer 0 W", role: .destructive) { confirmPending() }
+            Button("Annuler", role: .cancel) { pending = nil }
         } message: {
             Text("Une limite à 0 W coupe complètement ce flux sur la batterie.")
         }
+        .alert("Autoriser l'injection sur le réseau ?", isPresented: $confirmFeedIn) {
+            Button("Autoriser") { confirmPending() }
+            Button("Annuler", role: .cancel) { pending = nil }
+        } message: {
+            Text("Batterie pleine, le surplus partira sur le réseau public. En France, injecter suppose une convention d'autoconsommation avec Enedis (CACSI), et un contrat d'achat pour être rémunéré.")
+        }
     }
 
-    /// Pré-remplit les contrôles avec les valeurs actuelles du device (une fois).
+    /// « SolarFlow 2 : réserve 10 % · charge max 100 % · injection interdite »
+    private func currentSummary(device: DeviceReading, state: DeviceState) -> String {
+        let index = (controllable.firstIndex { $0.id == device.id } ?? 0) + 1
+        var parts: [String] = []
+        if let socMin = state.socMin { parts.append(String(localized: "réserve \(Int(socMin)) %")) }
+        if let socMax = state.socMax { parts.append(String(localized: "charge max \(Int(socMax)) %")) }
+        if let allowed = state.feedInAllowed {
+            parts.append(allowed ? String(localized: "injection autorisée") : String(localized: "injection interdite"))
+        }
+        let prefix = controllable.count > 1 ? "SolarFlow \(index) : " : ""
+        return prefix + (parts.isEmpty ? "—" : parts.joined(separator: " · "))
+    }
+
+    /// Pré-remplit les contrôles avec les valeurs actuelles du premier appareil visé.
     private func seedFromDevice() {
-        guard !seeded, let state = target?.state else { return }
+        guard !seeded, let state = targets.first?.state else { return }
         seeded = true
         if let mode = state.acMode, mode == 1 || mode == 2 { acMode = mode }
         if let output = state.outputLimit { outputLimit = min(max(output, 0), 2400) }
         if let input = state.inputLimit { inputLimit = min(max(input, 0), 2400) }
+        if let socMin = state.socMin { reserve = min(max((socMin / 5).rounded() * 5, 0), 50) }
+        if let socMax = state.socMax { chargeMax = min(max((socMax / 5).rounded() * 5, 70), 100) }
+        if let reverse = state.gridReverse { feedIn = reverse == 1 ? 1 : 2 }
+    }
+
+    private func confirmPending() {
+        guard let props = pending else { return }
+        perform(props)
+        pending = nil
     }
 
     private func send(_ properties: [String: Any]) {
-        // Une limite à 0 W coupe réellement la charge ou la sortie : confirmation.
+        // Une limite à 0 W coupe réellement un flux, et autoriser l'injection
+        // engage vis-à-vis du réseau : confirmation dans les deux cas.
         let zeroesSomething = properties.contains { ($0.key == "outputLimit" || $0.key == "inputLimit") && ($0.value as? Int) == 0 }
-        if zeroesSomething, pendingZero == nil {
-            pendingZero = properties
-            confirmZero = true
+        let enablesFeedIn = (properties["gridReverse"] as? Int) == 1
+        if zeroesSomething || enablesFeedIn {
+            pending = properties
+            if enablesFeedIn { confirmFeedIn = true } else { confirmZero = true }
             return
         }
-        guard let deviceID = target?.id else { return }
+        perform(properties)
+    }
+
+    /// Envoie la commande à chaque appareil visé, l'un après l'autre ; le
+    /// premier échec interrompt la série et dit où elle s'est arrêtée.
+    private func perform(_ properties: [String: Any]) {
+        let ids = targets.map(\.id)
+        guard !ids.isEmpty else { return }
         sending = true
         status = nil
         Task {
+            var done = 0
             do {
-                try await monitor.writeProperties(properties, to: deviceID)
+                for id in ids {
+                    try await monitor.writeProperties(properties, to: id)
+                    done += 1
+                }
                 statusOK = true
-                status = String(localized: "Commande envoyée.")
+                status = ids.count > 1
+                    ? String(localized: "Commande envoyée aux \(ids.count) appareils.")
+                    : String(localized: "Commande envoyée.")
             } catch {
                 statusOK = false
-                status = error.localizedDescription
+                status = ids.count > 1
+                    ? String(localized: "Échec après \(done)/\(ids.count) appareil(s) : \(error.localizedDescription)")
+                    : error.localizedDescription
             }
             // Anti double-envoi : les boutons restent inactifs 2 s après la réponse.
             try? await Task.sleep(for: .seconds(2))

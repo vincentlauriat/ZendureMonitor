@@ -67,6 +67,84 @@
     "Batterie pleine — %@" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery full — %@" } } }
     },
+    "Tous les appareils" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "All devices" } } }
+    },
+    "Réserve, charge et injection" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reserve, charge and feed-in" } } }
+    },
+    "Réserve" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Reserve" } } }
+    },
+    "La batterie ne descend pas sous %lld %%" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The battery does not go below %lld %%" } } }
+    },
+    "Appliquer la réserve" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply reserve" } } }
+    },
+    "Charge maximale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum charge" } } }
+    },
+    "Charge jusqu'à %lld %%" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charges up to %lld %%" } } }
+    },
+    "Appliquer la charge maximale" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply maximum charge" } } }
+    },
+    "Injection du surplus" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Surplus feed-in" } } }
+    },
+    "Autorisée — le surplus part sur le réseau" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allowed — surplus goes to the grid" } } }
+    },
+    "Interdite — production bridée batterie pleine" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Forbidden — production curtailed when full" } } }
+    },
+    "Appliquer l'injection" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply feed-in" } } }
+    },
+    "Valeurs envoyées par l'API locale. En smartMode (cas courant), l'appareil ne les écrit pas en mémoire permanente : elles sont perdues à son redémarrage. Pour un réglage durable, faites-le aussi dans l'app Zendure." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Values are sent through the local API. In smartMode (the usual case) the device does not store them permanently: they are lost when it restarts. For a lasting setting, also set it in the Zendure app." } } }
+    },
+    "Mode et puissances" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Mode and power" } } }
+    },
+    "Avec un Smart CT, la régulation Zendure ajuste elle-même la limite de sortie en continu : une valeur imposée ici risque d'être écrasée en quelques secondes." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "With a Smart CT, Zendure's own regulation keeps adjusting the output limit: a value set here may be overwritten within seconds." } } }
+    },
+    "Autoriser l'injection sur le réseau ?" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow feed-in to the grid?" } } }
+    },
+    "Autoriser" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Allow" } } }
+    },
+    "Batterie pleine, le surplus partira sur le réseau public. En France, injecter suppose une convention d'autoconsommation avec Enedis (CACSI), et un contrat d'achat pour être rémunéré." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Once the battery is full, the surplus will flow to the public grid. In France, feeding in requires a self-consumption agreement with Enedis (CACSI), and a purchase contract to be paid for it." } } }
+    },
+    "réserve %lld %%" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "reserve %lld %%" } } }
+    },
+    "charge max %lld %%" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "max charge %lld %%" } } }
+    },
+    "injection autorisée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "feed-in allowed" } } }
+    },
+    "injection interdite" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "feed-in forbidden" } } }
+    },
+    "Commande envoyée aux %lld appareils." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Command sent to %lld devices." } } }
+    },
+    "Échec après %lld/%lld appareil(s) : %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Failed after %lld/%lld device(s): %@" } } }
+    },
+    "autorisée" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "allowed" } } }
+    },
+    "interdite" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "forbidden" } } }
+    },
     "Accès distant (optionnel)" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote access (optional)" } } }
     },
