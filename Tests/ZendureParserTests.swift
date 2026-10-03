@@ -59,6 +59,17 @@ final class ZendureParserTests: XCTestCase {
         XCTAssertEqual(state.offGridPower, 0)
     }
 
+    /// Injection réseau : 0 désactivée / 1 autorisée / 2 interdite (zenSDK).
+    func testGridReverse() throws {
+        let allowed = try ZendureParser.parse(Data(#"{"properties": {"solarInputPower": 1, "gridReverse": 1}}"#.utf8))
+        XCTAssertEqual(allowed.gridReverse, 1)
+        XCTAssertEqual(allowed.feedInAllowed, true)
+        let forbidden = try ZendureParser.parse(Data(#"{"properties": {"solarInputPower": 1, "gridReverse": 2}}"#.utf8))
+        XCTAssertEqual(forbidden.feedInAllowed, false)
+        let unknown = try ZendureParser.parse(Data(#"{"properties": {"solarInputPower": 1}}"#.utf8))
+        XCTAssertNil(unknown.feedInAllowed)
+    }
+
     func testRemainOutTimeSentinelBecomesNil() throws {
         let json = #"{"properties": {"remainOutTime": 59940}}"#
         let state = try ZendureParser.parse(Data(json.utf8))

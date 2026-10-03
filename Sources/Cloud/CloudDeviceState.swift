@@ -27,6 +27,7 @@ struct CloudDeviceState: Equatable {
     var outputLimit: Double?
     var socMin: Double?              // %
     var socMax: Double?              // %
+    var gridReverse: Int?            // 0 désactivée / 1 autorisée / 2 interdite
     var deviceTemperature: Double?   // °C
     var remainOutMinutes: Double?
     var rssi: Double?
@@ -58,6 +59,7 @@ struct CloudDeviceState: Equatable {
         if let v = num("outputLimit") { outputLimit = v }
         if let v = num("minSoc") { socMin = Self.autoScaleSoc(v, directMax: 50) }
         if let v = num("socSet") { socMax = Self.autoScaleSoc(v, directMax: 100) }
+        if let v = num("gridReverse") { gridReverse = Int(v) }
         if let v = num("hyperTmp") { deviceTemperature = Self.kelvinTenthsToCelsius(v) }
         if let v = num("rssi") { rssi = v }
         if let v = num("BatVolt") { batteryVoltage = v / 100 }
@@ -126,6 +128,7 @@ struct CloudDeviceState: Equatable {
         state.batteryVoltage = batteryVoltage
         state.socMax = socMax
         state.socMin = socMin
+        state.gridReverse = gridReverse
         state.updatedAt = lastUpdate ?? .now
         return state
     }

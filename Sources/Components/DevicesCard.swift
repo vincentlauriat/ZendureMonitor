@@ -86,6 +86,10 @@ struct DevicesCard: View {
         if let socMin = state.socMin, let socMax = state.socMax {
             LegendRow(color: .teal, label: "Plage de charge", value: "\(Int(socMin)) % – \(Int(socMax)) %")
         }
+        if let allowed = state.feedInAllowed {
+            LegendRow(color: allowed ? .green : .gray, label: "Injection du surplus",
+                      value: allowed ? String(localized: "autorisée") : String(localized: "interdite"))
+        }
     }
 
     /// Nom (SN ou nom cloud) et hôte qui a répondu, quand ils diffèrent. Le

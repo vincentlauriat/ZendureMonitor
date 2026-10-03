@@ -35,10 +35,17 @@ struct DeviceState {
     var batteryVoltage: Double?          // V (BatVolt, 0.01 V)
     var socMax: Double?                  // % — plafond de charge (socSet, 0.1 %)
     var socMin: Double?                  // % — plancher de décharge (minSoc, 0.1 %)
+    /// Injection vers le réseau public (zenSDK `gridReverse`) : 0 désactivée,
+    /// 1 autorisée, 2 interdite. Seul 1 laisse partir le surplus quand la
+    /// batterie est pleine ; sinon la production est bridée.
+    var gridReverse: Int?
     var updatedAt: Date = .now
 
     /// Positive = charging, negative = discharging.
     var batteryFlow: Double { outputPackPower - packInputPower }
+
+    /// Le surplus peut-il partir sur le réseau ? nil si l'appareil ne le dit pas.
+    var feedInAllowed: Bool? { gridReverse.map { $0 == 1 } }
 
     /// Agrège plusieurs SolarFlow en une seule « installation » : puissances
     /// additionnées, packs concaténés, SOC pondéré par le nombre de packs
@@ -128,6 +135,7 @@ enum ZendureParser {
         state.batteryVoltage = number(props["BatVolt"]).map { $0 / 100.0 }
         state.socMax = number(props["socSet"]).map { $0 / 10.0 }
         state.socMin = number(props["minSoc"]).map { $0 / 10.0 }
+        state.gridReverse = number(props["gridReverse"]).map(Int.init)
         if let packData = root["packData"] as? [[String: Any]] {
             state.packs = packData.compactMap { pack in
                 guard let sn = pack["sn"] as? String else { return nil }

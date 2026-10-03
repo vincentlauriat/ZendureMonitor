@@ -25,6 +25,7 @@ final class DeviceCombineTests: XCTestCase {
         state.batteryVoltage = 51.8
         state.socMax = 100
         state.socMin = 10
+        state.gridReverse = 2
         state.updatedAt = date
         return state
     }
@@ -93,6 +94,7 @@ final class DeviceCombineTests: XCTestCase {
         XCTAssertNil(combined.batteryVoltage)
         XCTAssertNil(combined.socMax)
         XCTAssertNil(combined.socMin)
+        XCTAssertNil(combined.gridReverse)
     }
 
     /// L'agrégat est aussi vieux que sa mesure la plus ancienne.
