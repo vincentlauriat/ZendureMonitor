@@ -145,6 +145,15 @@
     "interdite" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "forbidden" } } }
     },
+    "Recharger depuis le réseau ?" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge from the grid?" } } }
+    },
+    "Appliquer quand même" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Apply anyway" } } }
+    },
+    "Au moins un appareil est sous cette réserve : il va se recharger immédiatement DEPUIS LE RÉSEAU pour l'atteindre, à pleine puissance (environ 2,4 kW par SolarFlow). Pour l'éviter, appliquez la réserve quand la batterie est au-dessus." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "At least one device is below this reserve: it will immediately charge FROM THE GRID to reach it, at full power (about 2.4 kW per SolarFlow). To avoid this, apply the reserve when the battery is above it." } } }
+    },
     "Accès distant (optionnel)" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote access (optional)" } } }
     },

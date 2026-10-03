@@ -44,6 +44,14 @@ struct DeviceState {
     /// Positive = charging, negative = discharging.
     var batteryFlow: Double { outputPackPower - packInputPower }
 
+    /// Une réserve (`minSoc`) au-dessus du niveau actuel déclenche la recharge
+    /// de protection du firmware DEPUIS LE RÉSEAU, à pleine puissance
+    /// (~2,4 kW par SolarFlow 2400 Pro, constaté le 2026-10-03).
+    func reserveWouldChargeFromGrid(_ reserve: Double) -> Bool {
+        guard let level = electricLevel else { return false }
+        return level < reserve
+    }
+
     /// Le surplus peut-il partir sur le réseau ? nil si l'appareil ne le dit pas.
     var feedInAllowed: Bool? { gridReverse.map { $0 == 1 } }
 

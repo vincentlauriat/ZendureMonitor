@@ -30,6 +30,18 @@ final class DeviceCombineTests: XCTestCase {
         return state
     }
 
+    /// Vécu le 2026-10-03 : réserve passée à 20 % sur des batteries à 10 % →
+    /// recharge de protection depuis le réseau à ~2,4 kW par appareil.
+    func testReserveAboveCurrentLevelTriggersGridCharge() {
+        var state = DeviceState()
+        state.electricLevel = 10
+        XCTAssertTrue(state.reserveWouldChargeFromGrid(20))
+        XCTAssertFalse(state.reserveWouldChargeFromGrid(10))
+        XCTAssertFalse(state.reserveWouldChargeFromGrid(5))
+        state.electricLevel = nil
+        XCTAssertFalse(state.reserveWouldChargeFromGrid(50))
+    }
+
     func testEmptyIsNil() {
         XCTAssertNil(DeviceState.combine([]))
     }
