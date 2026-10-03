@@ -165,7 +165,9 @@ struct SankeyFlowView: View {
         func fixedHeight(_ entries: [Entry]) -> CGFloat {
             CGFloat(max(0, entries.count - 1)) * gap + entries.reduce(0) { $0 + $1.ghost }
         }
-        let scale = (usable - max(fixedHeight(leftEntries), fixedHeight(rightEntries))) / columnTotal
+        // CGFloat explicite : Swift 6.4 convertit Double → CGFloat à l'affectation,
+        // le compilateur d'Xcode 26 (CI macos-latest) non — `h` restait Double.
+        let scale = (usable - max(fixedHeight(leftEntries), fixedHeight(rightEntries))) / CGFloat(columnTotal)
         guard scale > 0 else { return nil }
 
         func stack(_ entries: [Entry]) -> [String: (top: CGFloat, height: CGFloat, ghost: CGFloat)] {
