@@ -1,10 +1,12 @@
 # Claude session docs
-COMMANDS.md
-MEMORY.md
-CHANGES.md
-TODOS.md
-PLAN.md
-PRD.md
+/COMMANDS.md
+/MEMORY.md
+/CHANGES.md
+/TODOS.md
+/PLAN.md
+/PRD.md
+# Contains the real values it masks — never publish
+Scripts/anonymize-docs.py
 
 # Build
 build/

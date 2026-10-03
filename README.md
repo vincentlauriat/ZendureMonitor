@@ -85,6 +85,7 @@ Updates are delivered in-app via [Sparkle](https://sparkle-project.org).
 - **[User guide — Français](docs/guide/fr/)** · **[English](docs/guide/en/)** — installation, first setup, every window explained, widgets, battery control, remote access, FAQ & troubleshooting ([index](docs/guide/README.md))
 - **[Project wiki](https://github.com/vincentlauriat/ZendureMonitor/wiki)** — same guide, browsable online
 - **[Landing page](https://vincentlauriat.github.io/ZendureMonitor/)** — overview with screenshots
+- **[Project documents](project/)** — the working docs behind the app (PRD, plan, change log, decisions, request log), in French with English translations, anonymized
 
 ## How it works — the full technical story
 
