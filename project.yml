@@ -83,6 +83,7 @@ targets:
       - path: Sources/Shared/EnergyMath.swift
       - path: Sources/Shared/DailyAccumulator.swift
       - path: Sources/Shared/OutageWatchdog.swift
+      - path: Sources/Shared/BatteryAlerts.swift
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.lauriat.ZendureMonitorTests

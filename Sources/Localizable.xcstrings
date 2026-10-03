@@ -1,6 +1,72 @@
 {
   "sourceLanguage" : "fr",
   "strings" : {
+    "%@ ne produit ni n'injecte rien depuis %lld min alors que le soleil est haut — vérifier l'appareil (défaut, batterie pleine sans exutoire…)." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ has produced and injected nothing for %lld min while the sun is high — check the device (fault, full battery with no outlet…)." } } }
+    },
+    "Le SolarFlow" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The SolarFlow" } } }
+    },
+    "Un SolarFlow ne répond plus" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "A SolarFlow stopped responding" } } }
+    },
+    "%@ ne répond plus depuis %lld min — les totaux affichés n'incluent plus cet appareil." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%@ has not responded for %lld min — the totals shown no longer include this device." } } }
+    },
+    "%lld appareil(s) sur %lld sans réponse — totaux partiels." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld of %lld device(s) not responding — partial totals." } } }
+    },
+    "Appareils SolarFlow" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow devices" } } }
+    },
+    "Retirer cet appareil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remove this device" } } }
+    },
+    "Ajouter un appareil" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add a device" } } }
+    },
+    "Ajouté" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Added" } } }
+    },
+    "Ajouter" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Add" } } }
+    },
+    "Tous les appareils sont interrogés à chaque rafraîchissement : l'app affiche le total de l'installation et le détail par appareil. L'hôte de secours (onglet Réseau) s'applique au premier." : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Every device is polled on each refresh: the app shows the installation total and a per-device breakdown. The fallback host (Network tab) applies to the first one." } } }
+    },
+    "Appareils" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Devices" } } }
+    },
+    "Choisir…" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Choose…" } } }
+    },
+    "%lld/%lld en ligne" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "%lld/%lld online" } } }
+    },
+    "SolarFlow %lld" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "SolarFlow %lld" } } }
+    },
+    "Solaire" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Solar" } } }
+    },
+    "Sans réponse" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "No response" } } }
+    },
+    "Entrées PV" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "PV inputs" } } }
+    },
+    "Limites charge / sortie" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge / output limits" } } }
+    },
+    "Plage de charge" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Charge range" } } }
+    },
+    "Batterie faible — %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Low battery — %@" } } }
+    },
+    "Batterie pleine — %@" : {
+      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Battery full — %@" } } }
+    },
     "Accès distant (optionnel)" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote access (optional)" } } }
     },
@@ -156,9 +222,6 @@
     },
     "hors ligne" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "offline" } } }
-    },
-    "Le SolarFlow ne produit ni n'injecte rien depuis %lld min alors que le soleil est haut — vérifier l'appareil (défaut, batterie pleine sans exutoire…)." : {
-      "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "The SolarFlow has produced and injected nothing for %lld min while the sun is high — check the device (fault, full battery with no outlet…)." } } }
     },
     "Notification après" : {
       "localizations" : { "en" : { "stringUnit" : { "state" : "translated", "value" : "Notification after" } } }

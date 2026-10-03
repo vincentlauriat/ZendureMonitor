@@ -34,8 +34,8 @@ struct SettingsView: View {
 private struct DeviceSettingsTab: View {
     @EnvironmentObject var monitor: Monitor
     @StateObject private var discovery = DeviceDiscovery()
-    @State private var testResult: String?
-    @State private var testOK = false
+    /// Résultat du dernier test, par hôte.
+    @State private var testResults: [String: (ok: Bool, text: String)] = [:]
     @State private var testing = false
 
     var body: some View {
@@ -63,36 +63,57 @@ private struct DeviceSettingsTab: View {
             if monitor.connectionMode == .cloud {
                 CloudSettingsSection()
             } else {
-            Section("Appareil SolarFlow") {
-                TextField("Adresse IP ou nom d'hôte", text: $monitor.host, prompt: Text("192.168.1.xx ou Zendure-….local"))
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
+            Section("Appareils SolarFlow") {
+                ForEach(Array(monitor.deviceHosts.enumerated()), id: \.offset) { index, _ in
+                    HStack {
+                        TextField("Adresse IP ou nom d'hôte", text: hostBinding(index),
+                                  prompt: Text("192.168.1.xx ou Zendure-….local"))
+                            .textFieldStyle(.roundedBorder)
+                            .autocorrectionDisabled()
+                        if monitor.deviceHosts.count > 1 {
+                            Button {
+                                monitor.deviceHosts.remove(at: index)
+                                testResults = [:]
+                            } label: {
+                                Image(systemName: "minus.circle")
+                            }
+                            .buttonStyle(.borderless)
+                            .help("Retirer cet appareil")
+                        }
+                    }
+                    if let result = testResults[monitor.deviceHosts[index].trimmingCharacters(in: .whitespacesAndNewlines)] {
+                        Label(result.text, systemImage: result.ok ? "checkmark.circle" : "xmark.circle")
+                            .foregroundStyle(result.ok ? .green : .red)
+                            .font(.callout)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
 
                 HStack {
+                    Button("Ajouter un appareil") { monitor.deviceHosts.append("") }
                     Button(discovery.isSearching ? "Recherche…" : "Rechercher sur le réseau") {
                         discovery.start()
                     }
                     .disabled(discovery.isSearching)
 
-                    Button(testing ? "Test…" : "Tester la connexion") { runTest() }
-                        .disabled(testing || monitor.host.isEmpty)
+                    Button(testing ? "Test…" : "Tester") { runTest() }
+                        .disabled(testing || monitor.configuredHosts.isEmpty)
                 }
 
-                if let testResult {
-                    Label(testResult, systemImage: testOK ? "checkmark.circle" : "xmark.circle")
-                        .foregroundStyle(testOK ? .green : .red)
-                        .font(.callout)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-
-                ForEach(discovery.devices) { device in
+                // Le Smart CT s'annonce aussi en Bonjour (même préfixe
+                // « Zendure ») : il a sa propre section, on l'écarte ici.
+                ForEach(discovery.devices.filter { !$0.name.lowercased().contains("smartmeter") }) { device in
                     HStack {
                         VStack(alignment: .leading) {
                             Text(device.name).font(.callout)
                             Text(device.host).font(.caption).foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Button("Utiliser") { monitor.host = device.host }
+                        if monitor.configuredHosts.contains(device.host) {
+                            Text("Ajouté").font(.caption).foregroundStyle(.secondary)
+                        } else {
+                            Button("Ajouter") { add(host: device.host) }
+                        }
                     }
                 }
                 if discovery.hasSearched, !discovery.isSearching, discovery.devices.isEmpty {
@@ -105,6 +126,15 @@ private struct DeviceSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 }
+
+                Text("Tous les appareils sont interrogés à chaque rafraîchissement : l'app affiche le total de l'installation et le détail par appareil. L'hôte de secours (onglet Réseau) s'applique au premier.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .onAppear {
+                // Toujours au moins une ligne à remplir (première installation).
+                if monitor.deviceHosts.isEmpty { monitor.deviceHosts = [""] }
             }
             }
             Section("Rafraîchissement") {
@@ -123,25 +153,46 @@ private struct DeviceSettingsTab: View {
         .formStyle(.grouped)
     }
 
+    /// Liaison sûre vers une ligne de la liste (une suppression peut
+    /// invalider l'index pendant que SwiftUI relit encore la ligne).
+    private func hostBinding(_ index: Int) -> Binding<String> {
+        Binding(
+            get: { monitor.deviceHosts.indices.contains(index) ? monitor.deviceHosts[index] : "" },
+            set: { value in
+                guard monitor.deviceHosts.indices.contains(index) else { return }
+                monitor.deviceHosts[index] = value
+            }
+        )
+    }
+
+    /// Ajoute un hôte découvert : remplit la première ligne vide s'il y en a.
+    private func add(host: String) {
+        if let empty = monitor.deviceHosts.firstIndex(where: { $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) {
+            monitor.deviceHosts[empty] = host
+        } else {
+            monitor.deviceHosts.append(host)
+        }
+    }
+
     private func runTest() {
         testing = true
-        testResult = nil
-        let host = monitor.host
+        testResults = [:]
+        let hosts = monitor.configuredHosts
         Task {
-            let result = await monitor.test(host: host)
-            switch result {
-            case .success(let state):
-                testOK = true
-                var parts = [String(localized: "Connecté"),
-                             Format.watts(state.solarInputPower) + " " + String(localized: "solaire")]
-                if let soc = state.electricLevel {
-                    parts.append("\(Int(soc)) % " + String(localized: "batterie"))
+            for host in hosts {
+                let result = await monitor.test(host: host)
+                switch result {
+                case .success(let state):
+                    var parts = [String(localized: "Connecté"),
+                                 Format.watts(state.solarInputPower) + " " + String(localized: "solaire")]
+                    if let soc = state.electricLevel {
+                        parts.append("\(Int(soc)) % " + String(localized: "batterie"))
+                    }
+                    if let sn = state.serialNumber { parts.append("SN \(sn)") }
+                    testResults[host] = (true, parts.joined(separator: " — "))
+                case .failure(let error):
+                    testResults[host] = (false, error.localizedDescription)
                 }
-                if let sn = state.serialNumber { parts.append("SN \(sn)") }
-                testResult = parts.joined(separator: " — ")
-            case .failure(let error):
-                testOK = false
-                testResult = error.localizedDescription
             }
             testing = false
         }
@@ -256,11 +307,7 @@ private struct CloudSettingsSection: View {
             phaseRow
 
             if monitor.cloudDevices.count > 1 {
-                Picker("Appareil suivi", selection: $monitor.cloudDeviceKey) {
-                    ForEach(monitor.cloudDevices) { device in
-                        Text(device.displayName).tag(device.deviceKey)
-                    }
-                }
+                LabeledContent("Appareils", value: monitor.cloudDevices.map(\.displayName).joined(separator: ", "))
             } else if let device = monitor.cloudDevices.first {
                 LabeledContent("Appareil", value: device.displayName)
             }
@@ -503,6 +550,17 @@ private struct ControlSettingsTab: View {
     @State private var statusOK = false
     @State private var pendingZero: [String: Any]?
     @State private var confirmZero = false
+    /// Appareil piloté — une commande vise toujours UN SolarFlow précis.
+    @State private var targetID: DeviceReading.ID?
+
+    /// Appareils pilotables : ont répondu, avec un SN et un hôte connus.
+    private var controllable: [DeviceReading] {
+        monitor.devices.filter { $0.state?.serialNumber != nil && $0.host != nil }
+    }
+
+    private var target: DeviceReading? {
+        controllable.first { $0.id == targetID } ?? (controllable.count == 1 ? controllable.first : nil)
+    }
 
     var body: some View {
         if monitor.connectionMode == .cloud {
@@ -531,6 +589,16 @@ private struct ControlSettingsTab: View {
                     .foregroundStyle(.orange)
                     .fixedSize(horizontal: false, vertical: true)
 
+                if controllable.count > 1 {
+                    Picker("Appareil", selection: $targetID) {
+                        Text("Choisir…").tag(DeviceReading.ID?.none)
+                        ForEach(controllable) { device in
+                            Text(device.name).tag(DeviceReading.ID?.some(device.id))
+                        }
+                    }
+                    .onChange(of: targetID) { seeded = false; seedFromDevice() }
+                }
+
                 Picker("Mode AC", selection: $acMode) {
                     Text("Charge (depuis le secteur)").tag(1)
                     Text("Décharge (vers la maison)").tag(2)
@@ -538,7 +606,7 @@ private struct ControlSettingsTab: View {
                 HStack {
                     Spacer()
                     Button("Appliquer le mode") { send(["acMode": acMode]) }
-                        .disabled(sending || monitor.state == nil)
+                        .disabled(sending || target == nil)
                 }
 
                 VStack(alignment: .leading) {
@@ -549,7 +617,7 @@ private struct ControlSettingsTab: View {
                         Text(verbatim: "\(Int(outputLimit)) W").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                         Spacer()
                         Button("Appliquer la limite de sortie") { send(["outputLimit": Int(outputLimit)]) }
-                            .disabled(sending || monitor.state == nil)
+                            .disabled(sending || target == nil)
                     }
                 }
 
@@ -561,7 +629,7 @@ private struct ControlSettingsTab: View {
                         Text(verbatim: "\(Int(inputLimit)) W").font(.caption.monospacedDigit()).foregroundStyle(.secondary)
                         Spacer()
                         Button("Appliquer la limite de charge") { send(["inputLimit": Int(inputLimit)]) }
-                            .disabled(sending || monitor.state == nil)
+                            .disabled(sending || target == nil)
                     }
                 }
 
@@ -588,7 +656,7 @@ private struct ControlSettingsTab: View {
 
     /// Pré-remplit les contrôles avec les valeurs actuelles du device (une fois).
     private func seedFromDevice() {
-        guard !seeded, let state = monitor.state else { return }
+        guard !seeded, let state = target?.state else { return }
         seeded = true
         if let mode = state.acMode, mode == 1 || mode == 2 { acMode = mode }
         if let output = state.outputLimit { outputLimit = min(max(output, 0), 2400) }
@@ -603,11 +671,12 @@ private struct ControlSettingsTab: View {
             confirmZero = true
             return
         }
+        guard let deviceID = target?.id else { return }
         sending = true
         status = nil
         Task {
             do {
-                try await monitor.writeProperties(properties)
+                try await monitor.writeProperties(properties, to: deviceID)
                 statusOK = true
                 status = String(localized: "Commande envoyée.")
             } catch {

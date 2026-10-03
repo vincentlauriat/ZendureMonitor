@@ -29,6 +29,7 @@ struct MenuView: View {
                 Group {
                     if showSolarCard { solarCard(state) }
                     if showBatteryCard { batteryCard(state) }
+                    if monitor.devices.count > 1 { DevicesCard(devices: monitor.devices) }
                     if showFlowsCard { flowsCard(state) }
                     if showConsumptionCard { consumptionCard(state) }
                     if showHistoryCard { historyCard() }
@@ -368,6 +369,12 @@ struct MenuView: View {
 
     @ViewBuilder
     private var warnings: some View {
+        if let partial = monitor.partialMessage {
+            Label(partial, systemImage: "exclamationmark.triangle")
+                .font(.caption)
+                .foregroundStyle(.orange)
+                .fixedSize(horizontal: false, vertical: true)
+        }
         if monitor.state != nil, let error = monitor.lastError {
             Label(error, systemImage: "exclamationmark.triangle")
                 .font(.caption)

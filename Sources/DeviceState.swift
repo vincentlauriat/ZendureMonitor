@@ -39,6 +39,50 @@ struct DeviceState {
 
     /// Positive = charging, negative = discharging.
     var batteryFlow: Double { outputPackPower - packInputPower }
+
+    /// Agrège plusieurs SolarFlow en une seule « installation » : puissances
+    /// additionnées, packs concaténés, SOC pondéré par le nombre de packs
+    /// (`packData` ne donne aucune capacité : packs supposés équivalents).
+    /// Les valeurs propres à un appareil (SN, limites, voies PV, température…)
+    /// n'ont pas de sens sur la somme et passent à nil — le SN surtout, pour
+    /// qu'aucune commande ne puisse partir vers une batterie à partir de
+    /// l'agrégat. Un seul appareil est renvoyé tel quel.
+    static func combine(_ states: [DeviceState]) -> DeviceState? {
+        guard let first = states.first else { return nil }
+        guard states.count > 1 else { return first }
+
+        var combined = DeviceState()
+        combined.solarInputPower = states.reduce(0) { $0 + $1.solarInputPower }
+        combined.outputHomePower = states.reduce(0) { $0 + $1.outputHomePower }
+        combined.gridInputPower = states.reduce(0) { $0 + $1.gridInputPower }
+        combined.packInputPower = states.reduce(0) { $0 + $1.packInputPower }
+        combined.outputPackPower = states.reduce(0) { $0 + $1.outputPackPower }
+        combined.offGridPower = states.reduce(0) { $0 + $1.offGridPower }
+        combined.packs = states.flatMap(\.packs)
+
+        let weighted = states.compactMap { state in
+            state.electricLevel.map { (level: $0, weight: Double(max(state.packs.count, 1))) }
+        }
+        let totalWeight = weighted.reduce(0) { $0 + $1.weight }
+        if totalWeight > 0 {
+            combined.electricLevel = weighted.reduce(0) { $0 + $1.level * $1.weight } / totalWeight
+        }
+        combined.updatedAt = states.map(\.updatedAt).min() ?? first.updatedAt
+        return combined
+    }
+}
+
+/// Dernière lecture d'un SolarFlow de l'installation — alimente la carte
+/// « Appareils » et désigne la cible d'une commande (jamais l'agrégat).
+struct DeviceReading: Identifiable {
+    /// Hôte configuré (local) ou deviceKey (cloud).
+    let id: String
+    /// Nom cloud de l'appareil, sinon son SN, sinon l'hôte.
+    var name: String
+    /// Hôte qui a effectivement répondu (principal ou secours) — nil en cloud.
+    var host: String?
+    var state: DeviceState?
+    var error: Error?
 }
 
 enum ZendureParser {
