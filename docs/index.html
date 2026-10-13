@@ -1,375 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" style="--accent:#facc15;--on-accent:#141414;--accent-ink:#836903">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Zendure Monitor — live solar production of your Zendure SolarFlow, in the macOS menu bar</title>
-<meta name="description" content="A tiny native macOS menu bar app showing the live solar production of a Zendure SolarFlow battery. 100% local through the device's zenSDK REST API — no Zendure cloud account, no MQTT, no credentials. Free, open source, signed &amp; notarized.">
+<meta name="description" content="A tiny native macOS menu bar app showing the live solar production of a Zendure SolarFlow battery. 100% local through the device&#x27;s zenSDK REST API — no Zendure cloud account, no MQTT, no credentials. Free, open source, signed &amp; notarized.">
+<meta name="theme-color" content="#eff1f2">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Zendure Monitor — your Zendure SolarFlow in the macOS menu bar">
-<meta property="og:description" content="Live solar production, battery state of charge and per-MPPT detail, refreshed every 5 seconds — 100% local through the zenSDK REST API. Free and open source for macOS 14+.">
+<meta property="og:title" content="Zendure Monitor — live solar production of your Zendure SolarFlow, in the macOS menu bar">
+<meta property="og:description" content="A tiny native macOS menu bar app showing the live solar production of a Zendure SolarFlow battery. 100% local through the device&#x27;s zenSDK REST API — no Zendure cloud account, no MQTT, no credentials. Free, open source, signed &amp; notarized.">
 <meta property="og:url" content="https://vincentlauriat.github.io/ZendureMonitor/">
 <meta property="og:image" content="https://vincentlauriat.github.io/ZendureMonitor/panel-dark.png">
 <meta name="twitter:card" content="summary_large_image">
-<style>
-  :root {
-    --bg: #0b0d14;
-    --bg-card: #151824;
-    --text: #e9ecf5;
-    --muted: #98a1b8;
-    --accent: #facc15;
-    --accent-soft: rgba(250, 204, 21, .14);
-    --border: #232838;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
-    line-height: 1.6;
-  }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px; }
-  header { text-align: center; padding: 76px 0 24px; }
-  h1 { font-size: 2.7rem; margin: 20px 0 10px; letter-spacing: -.02em; }
-  .tagline { font-size: 1.22rem; color: var(--muted); max-width: 660px; margin: 0 auto; }
-  .tagline strong { color: var(--accent); font-weight: 600; }
 
-  .menubar {
-    display: inline-flex; align-items: center; gap: 14px;
-    background: rgba(255,255,255,.06); border: 1px solid var(--border);
-    border-radius: 10px; padding: 7px 14px;
-    font-size: .98rem; letter-spacing: .01em;
-    box-shadow: 0 8px 30px rgba(0,0,0,.45);
-  }
-  .menubar .watt { font-weight: 600; }
-  .menubar .dim { color: var(--muted); font-size: .9rem; }
-  .menubar-note { color: var(--muted); font-size: .85rem; margin-top: 10px; }
+<link rel="preload" href="/assets/schibsted.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/assets/monograph/v1/monograph.css">
 
-  .buttons { margin: 34px 0 10px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
-  .btn {
-    display: inline-block; padding: 13px 26px; border-radius: 12px;
-    font-weight: 600; text-decoration: none; font-size: 1.02rem;
-    transition: transform .12s ease, box-shadow .12s ease;
-  }
-  .btn:hover { transform: translateY(-2px); }
-  .btn-primary { background: var(--accent); color: #1b1400; box-shadow: 0 6px 26px rgba(250,204,21,.3); }
-  .btn-secondary { background: var(--bg-card); color: var(--text); border: 1px solid var(--border); }
-  .fineprint { color: var(--muted); font-size: .88rem; }
-
-  .shot { margin: 48px auto 0; max-width: 360px; }
-  .shot img {
-    display: block; width: 100%; height: auto;
-    border-radius: 14px; border: 1px solid var(--border);
-    box-shadow: 0 20px 60px rgba(0,0,0,.55);
-  }
-  .shot figcaption { color: var(--muted); font-size: .88rem; margin-top: 14px; text-align: center; }
-
-  section { padding: 60px 0 8px; }
-  h2 { font-size: 1.7rem; margin-bottom: 8px; letter-spacing: -.01em; }
-  h2 .em { color: var(--accent); }
-  .lead { color: var(--muted); margin-bottom: 22px; max-width: 720px; }
-
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(268px, 1fr)); gap: 16px; }
-  .card {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 20px 22px;
-  }
-  .card h3 { font-size: 1.05rem; margin-bottom: 6px; }
-  .card p { color: var(--muted); font-size: .95rem; }
-
-  .panel {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 14px; padding: 24px 26px;
-  }
-  .panel ul { list-style: none; }
-  .panel li { color: var(--muted); padding-left: 26px; position: relative; margin-bottom: 10px; }
-  .panel li::before { content: "✓"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
-  .panel li strong { color: var(--text); }
-  .panel li:last-child { margin-bottom: 0; }
-
-  .warn {
-    margin-top: 20px; padding: 16px 18px;
-    background: var(--accent-soft); border: 1px solid rgba(250,204,21,.3);
-    border-radius: 12px; color: var(--text); font-size: .93rem;
-  }
-
-  .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
-  .chip {
-    background: var(--bg-card); border: 1px solid var(--border);
-    border-radius: 999px; padding: 7px 15px; font-size: .92rem;
-  }
-
-  .steps { counter-reset: step; margin-top: 8px; }
-  .step { display: flex; gap: 16px; margin-bottom: 22px; }
-  .step .n {
-    counter-increment: step; flex: 0 0 36px; height: 36px; border-radius: 50%;
-    background: var(--accent); color: #1b1400; font-weight: 700;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .step .n::before { content: counter(step); }
-  .step p { color: var(--muted); }
-  .step strong { color: var(--text); }
-
-  code {
-    font-family: "SF Mono", ui-monospace, Menlo, monospace;
-    background: rgba(255,255,255,.06); border: 1px solid var(--border);
-    border-radius: 7px; padding: 2px 7px; font-size: .9em;
-  }
-  a { color: var(--accent); }
-  footer { text-align: center; padding: 66px 0 44px; color: var(--muted); font-size: .9rem; }
-  footer a { color: var(--muted); }
-  footer .disclaimer { margin-top: 10px; font-size: .84rem; opacity: .8; }
-
-  @media (max-width: 560px) {
-    h1 { font-size: 2.1rem; }
-    .tagline { font-size: 1.08rem; }
-    header { padding-top: 52px; }
-  }
-</style>
 </head>
 <body>
-
-<header class="wrap">
-  <div class="menubar">
-    <span class="watt">☀️ 842 W</span>
-    <span class="dim">🔋 76 %</span>
-    <span class="dim">🏠 410 W</span>
-  </div>
-  <p class="menubar-note">…right there in your menu bar, refreshed every 5 seconds.</p>
-
-  <h1>Zendure Monitor</h1>
-  <p class="tagline">A tiny native macOS menu bar app showing the live solar production of a
-  Zendure SolarFlow battery — <strong>local-first</strong> (no account, no broker, no credentials
-  on your LAN), with an optional <strong>Zendure Cloud mode</strong> for when the local API
-  isn't reachable.</p>
-
-  <div class="buttons">
-    <a class="btn btn-primary" href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">⬇︎&nbsp; Download for macOS</a>
-    <a class="btn btn-secondary" href="https://github.com/vincentlauriat/ZendureMonitor">View on GitHub</a>
-  </div>
-  <p class="fineprint">Free &amp; open source (MIT) · macOS 14+ · signed &amp; notarized DMG · Sparkle auto-updates · local-first</p>
-
-  <figure class="shot">
-    <img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: header with icon actions, solar production with a period selector, battery state of charge with a ring gauge, energy flows and 14-day history">
-    <figcaption>Click the menu bar item for the full picture — production, state of charge, energy flows, history and stats.</figcaption>
-  </figure>
-</header>
-
-<section class="wrap">
-  <h2>Features</h2>
-  <p class="lead">Everything the SolarFlow reports on your LAN, one click away — and a few things
-  you can send back to it.</p>
-  <div class="grid">
-    <div class="card">
-      <h3>☀️ Live wattage in the menu bar</h3>
-      <p>Your current solar production sits permanently in the menu bar, polled every 5 seconds.
-      Prefer something else? Show the battery percentage, the power sent to the home — or just the icon.</p>
-    </div>
-    <div class="card">
-      <h3>📊 The full panel</h3>
-      <p>Battery state of charge, charge and discharge power, output to the home, grid input,
-      per-MPPT PV input, today's solar energy, per-pack SOC and temperature, the home's total
-      consumption — with a 15 min / day / 14 days selector, daily peak and a vs-yesterday
-      comparison. New in 1.11: every card <strong>collapses to one line</strong> (click its
-      header — the key value stays visible) and can be hidden entirely in Settings.</p>
-    </div>
-    <div class="card">
-      <h3>🔀 Energy flow — two readings</h3>
-      <p>New in 2.2: the same flows, the same numbers, read <strong>two ways</strong> — a picker
-      switches between them and remembers your choice. <strong>Schematic</strong> shows the
-      topology: the SolarFlow at the center, panels, batteries with per-pack SOC chips, grid,
-      home and the off-grid outlet around it, each link animating only when energy actually
-      flows. <strong>Sankey</strong> makes ribbon width the wattage, so the split reads at a
-      glance — and it shows what the schematic can't: how much of your consumption never goes
-      through the battery at all. In both, the grid→home draw is explicit — measured with a
-      Smart CT, honestly marked “not measured” without one — plus savings in € and CO₂.</p>
-    </div>
-    <div class="card">
-      <h3>🔋🔋 Several SolarFlow, one installation</h3>
-      <p>New in 2.3. Own more than one SolarFlow? List them all (the network search fills the
-      addresses in): they are polled in parallel and the whole app shows their <strong>sum</strong>,
-      with a <strong>Devices</strong> card for each unit's share. A unit that stops answering
-      flags the totals as <strong>partial</strong> rather than letting them silently drop, and
-      battery alerts are evaluated <strong>per device</strong> — an empty battery cannot hide
-      behind a full one. Works in Cloud mode too.</p>
-    </div>
-    <div class="card">
-      <h3>☁️ Cloud mode &amp; Smart CT</h3>
-      <p>New in 1.10. Away from home or LAN down? Switch to the optional <strong>Zendure Cloud
-      mode</strong>: paste the app's Authorization Cloud Key (kept in the macOS Keychain) and the
-      data arrives in real time over MQTT — read-only, the local API stays the default. And if a
-      <strong>SmartMeter3CT</strong> sits in your electrical panel, the app polls it on the LAN
-      for the home's real grid draw and total consumption. New in 1.11: an opt-in
-      <strong>automatic switch</strong> moves to Cloud when the battery stops answering locally,
-      and back to local as soon as it does again.</p>
-    </div>
-    <div class="card">
-      <h3>🌅 Sun analytics — now inside SunRoad</h3>
-      <p>Everything the Sun window pioneered lives on in SunRoad's sidebar: per-array
-      <strong>azimuth/tilt sliders</strong> that re-aim the panels live in the 3D scene,
-      ephemerides computed locally (NOAA — nothing leaves your Mac), twilights and golden
-      hours, clear-sky theoretical output with estimated efficiency, and the local weather
-      (Open-Meteo) with a cloud-adjusted forecast.</p>
-    </div>
-    <div class="card">
-      <h3>🧊 SunRoad — your home in 3D</h3>
-      <p>New in 2.0. A real-3D scene of <strong>your house, your neighborhood and the sun</strong>:
-      building footprints and roads from OpenStreetMap, the sun as an actual light source with
-      <strong>real cast shadows</strong> sweeping across the day, your panel arrays at their true
-      azimuth and tilt, animated energy-flow beads paced by the live watts, a production ribbon
-      along the sun's arc, real cloud cover veiling the light, a <strong>±48 h timeline</strong>,
-      per-layer visibility toggles and a clean wall mode. Inspired by the Helios card for
-      Home Assistant — in native SceneKit.</p>
-    </div>
-    <div class="card">
-      <h3>📈 History window</h3>
-      <p>New in 1.12. Daily energy fetched from Zendure's servers — up to <strong>365 days</strong>
-      back, even for periods when your Mac was off. Bar charts over 7/30/90/365 days per device,
-      <strong>per-device metric lists</strong> (solar, home, battery charge/discharge…), lifetime
-      totals, and a local cache so past days are only downloaded once. Signs in with your main
-      Zendure account, stored only in the Keychain — works in local and cloud modes alike.</p>
-    </div>
-    <div class="card">
-      <h3>🧩 macOS widgets</h3>
-      <p>Three sizes for the desktop and Notification Center: small and medium with the live
-      production, and — new in 1.7 — a large widget carrying the full 14-day production
-      histogram, so the trend stays visible even with the panel closed.</p>
-    </div>
-    <div class="card">
-      <h3>🎛️ Battery control</h3>
-      <p>A dedicated tab to change the AC mode and the output and charge limits of the battery,
-      written straight to the device over the local API.</p>
-    </div>
-    <div class="card">
-      <h3>📄 CSV export</h3>
-      <p>Export the recorded production history to CSV and take it to a spreadsheet — daily kWh,
-      multi-day trends, whatever you feel like plotting yourself.</p>
-    </div>
-    <div class="card">
-      <h3>🔔 Smart notifications</h3>
-      <p>Optional alerts: battery low or full, unexpected grid draw while the sun is shining, and
-      daily production records. Plus launch at login, a theme override, an upfront permissions
-      check, and a UI localized in French and English.</p>
-    </div>
-  </div>
-</section>
-
-<section class="wrap">
-  <h2>The <span class="em">dashboard</span> — and SunRoad in 3D</h2>
-  <p class="lead">A dedicated window for the whole picture — with the energy flow readable as a
-  schematic or as a Sankey since 2.2 — and, since 2.0, a real-3D scene of your home under its sun
-  (SunRoad replaces the former Sun window; its analytics live on in the sidebar).</p>
-  <figure class="shot" style="max-width:900px">
-    <img src="sunroad.png" alt="Zendure Monitor SunRoad window: a real-3D scene with the OpenStreetMap neighborhood (buildings and roads), the user's house highlighted in amber, the sun's arc with hourly markers, the compass ring, a ±48 h timeline at the bottom, and a sidebar with the panel-array orientation sliders, the 14-day production histogram and the ephemerides">
-    <figcaption>SunRoad — your neighborhood from OpenStreetMap, your house in amber, the sun's real
-    arc with its hourly markers, the ±48 h timeline, and the sidebar carrying the orientation
-    sliders, production histogram and ephemerides.</figcaption>
-  </figure>
-  <figure class="shot" style="max-width:760px; margin-top:32px">
-    <img src="dashboard.png" alt="Zendure Monitor dashboard: the Schéma / Sankey picker above a hub-centric energy-flow diagram with the SolarFlow at the center and panels, batteries, public grid, home and off-grid outlet as peripherals, plus production, battery, device and history cards">
-    <figcaption>The dashboard in its <strong>Schematic</strong> reading: links animate only when energy actually flows, with live wattage — and with a Smart CT, the real grid draw and the home's total consumption.</figcaption>
-  </figure>
-  <figure class="shot" style="max-width:760px; margin-top:32px">
-    <img src="dashboard-sankey.png" alt="The same energy-flow card read as a Sankey diagram: the public grid feeds the home through a wide band passing above the SolarFlow, while the solar production flows through the SolarFlow to the home, each ribbon's width proportional to its wattage">
-    <figcaption>The same moment and the same numbers as a <strong>Sankey</strong>: ribbon width is
-    the wattage. Here the grid (1.19 kW) feeds the house through a band that bypasses the
-    SolarFlow entirely, while the solar production (435 W) flows through it — a proportion the
-    schematic, with its constant-width links, cannot show.</figcaption>
-  </figure>
-</section>
-
-<section class="wrap">
-  <h2>Three <span class="em">connection paths</span> — your choice</h2>
-  <p class="lead">Local-first by design, but never stuck: the app can reach your battery three
-  different ways, and the bottom of the panel always tells you which one is in use, with a
-  green/orange status dot.</p>
-  <div class="grid">
-    <div class="card">
-      <h3>🏠 Local — primary host</h3>
-      <p>The default and the recommendation. Recent Zendure firmwares embed a plain HTTP server
-      on the device itself — the <a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API.
-      One <code>GET /properties/report</code> on your LAN every few seconds, found over Bonjour
-      or by IP. No account, no broker, no credentials, nothing leaves your network.</p>
-    </div>
-    <div class="card">
-      <h3>🔒 Local — fallback host (VPN)</h3>
-      <p>Away from home? Set a second address — the same battery reached through a Tailscale or
-      WireGuard tunnel. The app polls the primary host first and switches over automatically when
-      it doesn't answer, then keeps checking the primary to switch back. Same local API, same
-      data, still nothing shared with anyone.</p>
-    </div>
-    <div class="card">
-      <h3>☁️ Zendure Cloud</h3>
-      <p>New in 1.10, and optional. When the local API isn't reachable at all, switch the data
-      source to Zendure's servers: paste the mobile app's <em>Authorization Cloud Key</em> (kept
-      in the macOS Keychain) and the reports arrive in real time over MQTT, from anywhere —
-      no VPN. Read-only by design: battery control stays local-only. Since 1.11 the switch can
-      even be <strong>automatic</strong>, both ways.</p>
-    </div>
-  </div>
-  <div class="panel" style="margin-top:24px">
-    <ul>
-      <li><strong>In the default local mode, nothing goes to Zendure's servers.</strong> The app never signs in anywhere, has nothing to host and no token to store.</li>
-      <li><strong>Bonjour discovery.</strong> The app finds the device (and the Smart CT meter) on your network by itself — or you can simply type an IP address.</li>
-      <li><strong>The Smart CT is always read locally.</strong> Zendure's cloud does not relay the meter's readings, so the real grid draw and total consumption appear whenever your Mac is on the home LAN — in either mode.</li>
-      <li><strong>Automatic switching (1.11, opt-in).</strong> With a Cloud Key saved, the app moves to Cloud by itself after two failed local polls — typically when your Mac leaves the house — probes the local host every minute, and comes back to local as soon as the battery answers. The footer says "bascule auto" so you always know.</li>
-    </ul>
-    <p class="warn"><strong>⚠️ A word on remote access:</strong> the zenSDK API has no authentication
-    whatsoever. Never port-forward the device's port 80 to the internet — use a VPN into your home
-    network and point the fallback host at that, or use the Cloud mode. The
-    <a href="https://github.com/vincentlauriat/ZendureMonitor#remote-access-away-from-home">README</a>
-    walks through the Tailscale setup.</p>
-  </div>
-</section>
-
-<section class="wrap">
-  <h2>Supported hardware</h2>
-  <p class="lead">Developed and tested on a <strong>SolarFlow 2400 Pro</strong>. Any Zendure device
-  that ships the local zenSDK REST API should work:</p>
-  <div class="chips">
-    <span class="chip">SolarFlow 2400 Pro</span>
-    <span class="chip">SolarFlow 2400 AC</span>
-    <span class="chip">SolarFlow 2400 AC+</span>
-    <span class="chip">SolarFlow 2400 AC Pro</span>
-    <span class="chip">SolarFlow 800 Pro</span>
-    <span class="chip">SolarFlow 800 Plus</span>
-    <span class="chip">SolarFlow 1600 AC+</span>
-    <span class="chip">SolarFlow 3000 Mix AC+</span>
-    <span class="chip">SolarFlow 4000 Mix</span>
-  </div>
-  <p class="lead" style="margin-top:20px">If discovery finds nothing, the local API may simply be
-  disabled on your unit — adding a <strong>HEMS</strong> integration in the Zendure mobile app and
-  then quitting it is the documented way to turn it on for good.</p>
-</section>
-
-<section class="wrap">
-  <h2>Install</h2>
-  <div class="steps">
-    <div class="step"><span class="n"></span><p><strong>Download the DMG</strong> from the <a href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">latest release</a> — signed and notarized, so it opens without a Gatekeeper detour.</p></div>
-    <div class="step"><span class="n"></span><p><strong>Drag ZendureMonitor.app to <code>/Applications</code></strong> and launch it. It lives in the menu bar, not in the Dock.</p></div>
-    <div class="step"><span class="n"></span><p><strong>Accept the local network prompt</strong> — macOS asks for it, and the app needs it to reach the battery on your LAN.</p></div>
-    <div class="step"><span class="n"></span><p><strong>Point it at your device.</strong> Click the ☀️ icon → Settings → scan the network (or type the IP address) → test the connection. Done.</p></div>
-  </div>
-  <p class="lead">Updates land in-app afterwards through <a href="https://sparkle-project.org">Sparkle</a> — no need to come back here.</p>
-  <p class="lead">Need more? The full user guide covers every window, the widgets, battery control, remote access and troubleshooting — in <a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/fr">French</a> or <a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/en">English</a>, also on the <a href="https://github.com/vincentlauriat/ZendureMonitor/wiki">wiki</a>.</p>
-</section>
-
-<section class="wrap">
-  <h2>Light appearance too</h2>
-  <p class="lead">The panel follows the system appearance — and you can pin it to dark or light if
-  you'd rather it didn't follow along.</p>
-  <figure class="shot" style="margin-top:24px">
-    <img src="panel-light.png" alt="The same Zendure Monitor panel rendered in the macOS light theme">
-    <figcaption>The same panel, with the system set to light.</figcaption>
-  </figure>
-</section>
-
-<footer>
-  <p>MIT © Vincent Lauriat ·
-    <a href="https://github.com/vincentlauriat/ZendureMonitor">github.com/vincentlauriat/ZendureMonitor</a> ·
-    <a href="https://vincentlauriat.github.io/">more apps</a></p>
-  <p class="disclaimer">An independent open-source project. Not affiliated with Zendure.</p>
-</footer>
-
+<a class="skip" href="#content"><span class="en">Skip to content</span><span class="fr">Aller au contenu</span><span class="zh">跳至內容</span></a>
+<header class="running"><div class="wrap">
+<a class="back" href="https://vincentlauriat.github.io/#w22"><svg class="arw l" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg><span class="en">Vincent Lauriat</span><span class="fr">Vincent Lauriat</span><span class="zh">Vincent Lauriat</span></a>
+<span class="here"><span class="num">22</span> · Zendure Monitor</span>
+<div class="langs" role="group" aria-label="Language / Langue / 語言"><button type="button" data-lang="en" aria-pressed="false">EN</button><button type="button" data-lang="fr" aria-pressed="false">FR</button><button type="button" data-lang="zh" aria-pressed="false">中文</button></div>
+<a class="gh" href="https://github.com/vincentlauriat/ZendureMonitor">GitHub</a>
+</div></header>
+<main>
+<section class="title"><div class="wrap g12">
+<h1 class="nm long" style="--len:15"><span class="no" aria-label="Work no. 22">22</span><span>Zendure Monitor</span></h1>
+<p class="role"><span class="en">Native macOS menu bar app for Zendure SolarFlow</span><span class="fr">App native de barre des menus macOS pour Zendure SolarFlow</span><span class="zh">Zendure SolarFlow 專用的原生 macOS 選單列應用程式</span></p>
+<div class="t-left">
+<p class="thesis"><span class="en">A tiny native macOS menu bar app showing the live solar production of a Zendure SolarFlow battery.</span><span class="fr">Une minuscule app native de barre des menus macOS qui affiche la production solaire en direct d'une batterie Zendure SolarFlow.</span><span class="zh">一款小巧的原生 macOS 選單列應用程式，即時顯示 Zendure SolarFlow 電池的太陽能發電量。</span></p>
+<p class='lede'><span class="en"><b>Local-first</b> (no account, no broker, no credentials on your LAN), with an optional <b>Zendure Cloud mode</b> for when the local API isn't reachable. <code>842 W · 76 % · 410 W</code> …right there in your menu bar, refreshed every 5 seconds.</span><span class="fr"><b>Local d'abord</b> (pas de compte, pas de broker, pas d'identifiants sur votre réseau local), avec un <b>mode Zendure Cloud</b> optionnel pour quand l'API locale n'est pas joignable. <code>842 W · 76 % · 410 W</code> …directement dans votre barre des menus, rafraîchi toutes les 5 secondes.</span><span class="zh"><b>本機優先</b>（區域網路上不需帳號、不需 broker、不需憑證），另有選用的 <b>Zendure Cloud 模式</b>，供本機 API 無法連線時使用。<code>842 W · 76 % · 410 W</code> ……就在你的選單列上，每 5 秒更新一次。</span></p>
+<div class="acts"><a class="btn" href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest"><span class="en">Download for macOS</span><span class="fr">Télécharger pour macOS</span><span class="zh">下載 macOS 版</span></a><a class="lnk" href="https://github.com/vincentlauriat/ZendureMonitor"><span class="en">View on GitHub</span><span class="fr">Voir sur GitHub</span><span class="zh">在 GitHub 上檢視</span><svg class="arw" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div>
+<dl class="facts"><div><dt><span class="en">Requires</span><span class="fr">Configuration</span><span class="zh">系統需求</span></dt><dd>macOS 14+</dd></div><div><dt><span class="en">Distribution</span><span class="fr">Distribution</span><span class="zh">發行</span></dt><dd><span class="en">Signed &amp; notarized DMG</span><span class="fr">DMG signé et notarié</span><span class="zh">已簽章與公證的 DMG</span></dd></div><div><dt><span class="en">Updates</span><span class="fr">Mises à jour</span><span class="zh">更新</span></dt><dd><span class="en">Sparkle auto-updates</span><span class="fr">Mises à jour automatiques Sparkle</span><span class="zh">Sparkle 自動更新</span></dd></div><div><dt><span class="en">Data</span><span class="fr">Données</span><span class="zh">資料</span></dt><dd><span class="en">Local-first</span><span class="fr">Local d'abord</span><span class="zh">本機優先</span></dd></div><div><dt><span class="en">Licence</span><span class="fr">Licence</span><span class="zh">授權</span></dt><dd><span class="en">Free &amp; open source (MIT)</span><span class="fr">Gratuit et open source (MIT)</span><span class="zh">免費開源（MIT）</span></dd></div></dl>
+</div>
+<div class="t-right"><figure class="plate ink"><div class="pl"><img src="panel-dark.png" alt="Zendure Monitor panel in dark theme: header with icon actions, solar production with a period selector, battery state of charge with a ring gauge, energy flows and 14-day history" width="640" height="1762" decoding="async"></div><figcaption><span class="fg"><span class="en">Fig.</span><span class="fr">Fig.</span><span class="zh">圖</span> 1</span><span class="en">Click the menu bar item for the full picture — production, state of charge, energy flows, history and stats.</span><span class="fr">Cliquez sur l'élément de la barre des menus pour la vue complète — production, état de charge, flux d'énergie, historique et statistiques.</span><span class="zh">點一下選單列項目即可看到全貌——發電量、充電狀態、能量流向、歷史與統計。</span></figcaption></figure></div>
+</div></section>
+<section class="opener" id="content"><div class="wrap"><div class="op-grid"><div class="numeral" aria-hidden="true">22</div><div class="op-text"><h2><span class="en">Features</span><span class="fr">Fonctionnalités</span><span class="zh">功能</span></h2><p><span class="en">Everything the SolarFlow reports on your LAN, one click away — and a few things you can send back to it.</span><span class="fr">Tout ce que le SolarFlow rapporte sur votre réseau local, à un clic — et quelques commandes que vous pouvez lui renvoyer.</span><span class="zh">SolarFlow 在區域網路上回報的一切，一鍵即得——還有幾項你可以回傳給它的設定。</span></p></div></div></div></section>
+<section class="chapter"><div class="wrap"><ul class="specs"><li><h3><span class="en">Live wattage in the menu bar</span><span class="fr">La puissance en direct dans la barre des menus</span><span class="zh">選單列上的即時瓦數</span></h3><div><p><span class="en">Your current solar production sits permanently in the menu bar, polled every 5 seconds. Prefer something else? Show the battery percentage, the power sent to the home — or just the icon.</span><span class="fr">Votre production solaire du moment reste en permanence dans la barre des menus, interrogée toutes les 5 secondes. Vous préférez autre chose ? Affichez le pourcentage de batterie, la puissance envoyée à la maison — ou juste l'icône.</span><span class="zh">目前的太陽能發電量常駐在選單列上，每 5 秒輪詢一次。想看別的？可以改顯示電池百分比、送往住家的功率——或只顯示圖示。</span></p></div></li><li><h3><span class="en">The full panel</span><span class="fr">Le panneau complet</span><span class="zh">完整面板</span></h3><div><p><span class="en">Battery state of charge, charge and discharge power, output to the home, grid input, per-MPPT PV input, today's solar energy, per-pack SOC and temperature, the home's total consumption — with a 15 min / day / 14 days selector, daily peak and a vs-yesterday comparison. New in 1.11: every card <b>collapses to one line</b> (click its header — the key value stays visible) and can be hidden entirely in Settings.</span><span class="fr">État de charge de la batterie, puissance de charge et de décharge, sortie vers la maison, entrée réseau, entrée PV par MPPT, énergie solaire du jour, SOC et température par pack, consommation totale de la maison — avec un sélecteur 15 min / jour / 14 jours, le pic du jour et une comparaison avec la veille. Nouveau en 1.11 : chaque carte <b>se replie sur une ligne</b> (cliquez sur son en-tête — la valeur clé reste visible) et peut être masquée entièrement dans les Réglages.</span><span class="zh">電池充電狀態、充放電功率、送往住家的輸出、電網輸入、各 MPPT 的 PV 輸入、今日太陽能電量、各電池組的 SOC 與溫度、住家總用電——搭配 15 分鐘／日／14 日選擇器、每日峰值與「與昨日相比」。1.11 新增：每張卡片都能<b>收合成一行</b>（點標題即可——關鍵數值仍然可見），也能在設定中完全隱藏。</span></p></div></li><li><h3><span class="en">Energy flow — two readings</span><span class="fr">Flux d'énergie — deux lectures</span><span class="zh">能量流向——兩種讀法</span></h3><div><p><span class="en">New in 2.2: the same flows, the same numbers, read <b>two ways</b> — a picker switches between them and remembers your choice. <b>Schematic</b> shows the topology: the SolarFlow at the center, panels, batteries with per-pack SOC chips, grid, home and the off-grid outlet around it, each link animating only when energy actually flows. <b>Sankey</b> makes ribbon width the wattage, so the split reads at a glance — and it shows what the schematic can't: how much of your consumption never goes through the battery at all. In both, the grid→home draw is explicit — measured with a Smart CT, honestly marked “not measured” without one — plus savings in € and CO₂.</span><span class="fr">Nouveau en 2.2 : les mêmes flux, les mêmes chiffres, lus <b>de deux façons</b> — un sélecteur bascule de l'une à l'autre et mémorise votre choix. <b>Schéma</b> montre la topologie : le SolarFlow au centre, avec autour les panneaux, les batteries et leurs pastilles de SOC par pack, le réseau, la maison et la prise hors réseau, chaque lien ne s'animant que lorsque l'énergie circule vraiment. <b>Sankey</b> fait de la largeur du ruban la puissance, pour que la répartition se lise d'un coup d'œil — et montre ce que le schéma ne peut pas montrer : quelle part de votre consommation ne passe jamais par la batterie. Dans les deux, le soutirage réseau→maison est explicite — mesuré avec un Smart CT, honnêtement marqué « non mesuré » sans — plus les économies en € et en CO₂.</span><span class="zh">2.2 新增：同樣的流向、同樣的數字，有<b>兩種讀法</b>——切換器可在兩者間切換並記住你的選擇。<b>示意圖</b>呈現拓撲：SolarFlow 居中，周圍是太陽能板、附各電池組 SOC 標籤的電池、電網、住家與離網插座，每條連線只在能量真正流動時才有動畫。<b>Sankey</b> 以帶狀寬度代表瓦數，讓分配一目了然——還能呈現示意圖做不到的事：你的用電有多少完全沒經過電池。兩種讀法都明確標出電網→住家的用電——有 Smart CT 時為實測，沒有時則誠實標示「未量測」——另附以 € 與 CO₂ 計算的節省。</span></p></div></li><li><h3><span class="en">Several SolarFlow, one installation</span><span class="fr">Plusieurs SolarFlow, une installation</span><span class="zh">多台 SolarFlow，一套系統</span></h3><div><p><span class="en">New in 2.3. Own more than one SolarFlow? List them all (the network search fills the addresses in): they are polled in parallel and the whole app shows their <b>sum</b>, with a <b>Devices</b> card for each unit's share. A unit that stops answering flags the totals as <b>partial</b> rather than letting them silently drop, and battery alerts are evaluated <b>per device</b> — an empty battery cannot hide behind a full one. Works in Cloud mode too.</span><span class="fr">Nouveau en 2.3. Vous avez plus d'un SolarFlow ? Listez-les tous (la recherche réseau remplit les adresses) : ils sont interrogés en parallèle et toute l'app affiche leur <b>somme</b>, avec une carte <b>Appareils</b> pour la part de chaque unité. Une unité qui ne répond plus signale les totaux comme <b>partiels</b> au lieu de les laisser chuter en silence, et les alertes batterie sont évaluées <b>par appareil</b> — une batterie vide ne peut pas se cacher derrière une pleine. Fonctionne aussi en mode Cloud.</span><span class="zh">2.3 新增。擁有不只一台 SolarFlow？把它們全部列出（網路搜尋會自動填入位址）：它們會被平行輪詢，整個 App 顯示的是<b>總和</b>，並有<b>裝置</b>卡片顯示每台的占比。某台停止回應時，總數會被標示為<b>部分</b>，而不是無聲地掉下來；電池警示也是<b>逐台</b>評估——空的電池無法躲在滿的電池後面。Cloud 模式下同樣適用。</span></p></div></li><li><h3><span class="en">Cloud mode &amp; Smart CT</span><span class="fr">Mode Cloud et Smart CT</span><span class="zh">Cloud 模式與 Smart CT</span></h3><div><p><span class="en">New in 1.10. Away from home or LAN down? Switch to the optional <b>Zendure Cloud mode</b>: paste the app's Authorization Cloud Key (kept in the macOS Keychain) and the data arrives in real time over MQTT — read-only, the local API stays the default. And if a <b>SmartMeter3CT</b> sits in your electrical panel, the app polls it on the LAN for the home's real grid draw and total consumption. New in 1.11: an opt-in <b>automatic switch</b> moves to Cloud when the battery stops answering locally, and back to local as soon as it does again.</span><span class="fr">Nouveau en 1.10. Loin de chez vous ou réseau local en panne ? Passez au <b>mode Zendure Cloud</b> optionnel : collez l'Authorization Cloud Key de l'app (conservée dans le trousseau macOS) et les données arrivent en temps réel par MQTT — en lecture seule, l'API locale reste le mode par défaut. Et si un <b>SmartMeter3CT</b> est installé dans votre tableau électrique, l'app l'interroge sur le réseau local pour connaître le vrai soutirage réseau de la maison et sa consommation totale. Nouveau en 1.11 : une <b>bascule automatique</b>, à activer, passe en Cloud quand la batterie ne répond plus en local, et revient au local dès qu'elle répond à nouveau.</span><span class="zh">1.10 新增。不在家或區域網路斷線？切換到選用的 <b>Zendure Cloud 模式</b>：貼上 App 的 Authorization Cloud Key（保存在 macOS 鑰匙圈中），資料就會透過 MQTT 即時送達——唯讀，本機 API 仍是預設。若你的配電盤裝有 <b>SmartMeter3CT</b>，App 會在區域網路上輪詢它，取得住家真實的電網用電與總用電。1.11 新增：可選用的<b>自動切換</b>會在電池停止本機回應時改用 Cloud，並在它恢復回應後立刻切回本機。</span></p></div></li><li><h3><span class="en">Sun analytics — now inside SunRoad</span><span class="fr">Analyse solaire — désormais dans SunRoad</span><span class="zh">太陽分析——現已整合進 SunRoad</span></h3><div><p><span class="en">Everything the Sun window pioneered lives on in SunRoad's sidebar: per-array <b>azimuth/tilt sliders</b> that re-aim the panels live in the 3D scene, ephemerides computed locally (NOAA — nothing leaves your Mac), twilights and golden hours, clear-sky theoretical output with estimated efficiency, and the local weather (Open-Meteo) with a cloud-adjusted forecast.</span><span class="fr">Tout ce qu'avait inauguré la fenêtre Soleil vit désormais dans la barre latérale de SunRoad : des <b>curseurs d'azimut et d'inclinaison</b> par champ qui réorientent les panneaux en direct dans la scène 3D, des éphémérides calculées localement (NOAA — rien ne quitte votre Mac), crépuscules et heures dorées, production théorique par ciel clair avec rendement estimé, et la météo locale (Open-Meteo) avec une prévision corrigée de la nébulosité.</span><span class="zh">Sun 視窗開創的一切，都延續在 SunRoad 的側邊欄裡：每組陣列的<b>方位角／傾角滑桿</b>，可在 3D 場景中即時重新調整太陽能板方向；在本機計算的星曆（NOAA——資料不離開你的 Mac）、曙暮光與黃金時刻、晴空理論發電量與估計效率，以及本地天氣（Open-Meteo）與依雲量修正的預報。</span></p></div></li><li><h3><span class="en">SunRoad — your home in 3D</span><span class="fr">SunRoad — votre maison en 3D</span><span class="zh">SunRoad——你家的 3D 場景</span></h3><div><p><span class="en">New in 2.0. A real-3D scene of <b>your house, your neighborhood and the sun</b>: building footprints and roads from OpenStreetMap, the sun as an actual light source with <b>real cast shadows</b> sweeping across the day, your panel arrays at their true azimuth and tilt, animated energy-flow beads paced by the live watts, a production ribbon along the sun's arc, real cloud cover veiling the light, a <b>±48 h timeline</b>, per-layer visibility toggles and a clean wall mode. Inspired by the Helios card for Home Assistant — in native SceneKit.</span><span class="fr">Nouveau en 2.0. Une vraie scène 3D de <b>votre maison, votre quartier et le soleil</b> : emprises des bâtiments et routes issues d'OpenStreetMap, le soleil comme véritable source de lumière avec de <b>vraies ombres portées</b> qui balaient la journée, vos champs de panneaux à leur azimut et leur inclinaison réels, des perles de flux d'énergie animées au rythme des watts en direct, un ruban de production le long de l'arc solaire, la couverture nuageuse réelle qui voile la lumière, une <b>timeline ±48 h</b>, des interrupteurs de visibilité par calque et un mode mural épuré. Inspiré de la carte Helios pour Home Assistant — en SceneKit natif.</span><span class="zh">2.0 新增。一個真正 3D 的<b>你家、你的街區與太陽</b>場景：來自 OpenStreetMap 的建築輪廓與道路；太陽是真正的光源，<b>真實的投影</b>隨著一天推移掃過；你的太陽能板陣列依真實方位角與傾角擺放；能量流動的光點依即時瓦數律動；沿著太陽軌跡的發電量帶狀圖；真實雲量遮蔽光線；<b>±48 小時時間軸</b>、各圖層的顯示開關，以及簡潔的壁掛模式。靈感來自 Home Assistant 的 Helios 卡片——以原生 SceneKit 打造。</span></p></div></li><li><h3><span class="en">History window</span><span class="fr">Fenêtre Historique</span><span class="zh">歷史視窗</span></h3><div><p><span class="en">New in 1.12. Daily energy fetched from Zendure's servers — up to <b>365 days</b> back, even for periods when your Mac was off. Bar charts over 7/30/90/365 days per device, <b>per-device metric lists</b> (solar, home, battery charge/discharge…), lifetime totals, and a local cache so past days are only downloaded once. Signs in with your main Zendure account, stored only in the Keychain — works in local and cloud modes alike.</span><span class="fr">Nouveau en 1.12. L'énergie quotidienne récupérée sur les serveurs de Zendure — jusqu'à <b>365 jours</b> en arrière, même pour les périodes où votre Mac était éteint. Histogrammes sur 7/30/90/365 jours par appareil, <b>listes de métriques par appareil</b> (solaire, maison, charge/décharge batterie…), totaux depuis l'origine, et un cache local pour que les jours passés ne soient téléchargés qu'une fois. Se connecte avec votre compte Zendure principal, conservé uniquement dans le trousseau — fonctionne en mode local comme en mode cloud.</span><span class="zh">1.12 新增。從 Zendure 伺服器取得每日電量——最多回溯 <b>365 天</b>，即使是你的 Mac 關機的期間也有。每台裝置 7／30／90／365 天的長條圖、<b>逐台指標清單</b>（太陽能、住家、電池充放電……）、累計總量，以及本機快取，過去的日子只需下載一次。以你的 Zendure 主帳號登入，帳號只存在鑰匙圈中——本機與雲端模式皆可使用。</span></p></div></li><li><h3><span class="en">macOS widgets</span><span class="fr">Widgets macOS</span><span class="zh">macOS 小工具</span></h3><div><p><span class="en">Three sizes for the desktop and Notification Center: small and medium with the live production, and — new in 1.7 — a large widget carrying the full 14-day production histogram, so the trend stays visible even with the panel closed.</span><span class="fr">Trois tailles pour le bureau et le Centre de notifications : petit et moyen avec la production en direct, et — nouveau en 1.7 — un grand widget qui porte l'histogramme complet de production sur 14 jours, pour que la tendance reste visible même panneau fermé.</span><span class="zh">三種尺寸，可放在桌面與通知中心：小型與中型顯示即時發電量，以及——1.7 新增——大型小工具，帶有完整的 14 天發電量直方圖，即使面板關閉，趨勢仍一目了然。</span></p></div></li><li><h3><span class="en">Battery control</span><span class="fr">Contrôle de la batterie</span><span class="zh">電池控制</span></h3><div><p><span class="en">A dedicated tab to change the AC mode and the output and charge limits of the battery, written straight to the device over the local API.</span><span class="fr">Un onglet dédié pour changer le mode AC et les limites de sortie et de charge de la batterie, écrits directement dans l'appareil via l'API locale.</span><span class="zh">專屬分頁可變更電池的 AC 模式以及輸出與充電上限，透過本機 API 直接寫入裝置。</span></p></div></li><li><h3><span class="en">CSV export</span><span class="fr">Export CSV</span><span class="zh">CSV 匯出</span></h3><div><p><span class="en">Export the recorded production history to CSV and take it to a spreadsheet — daily kWh, multi-day trends, whatever you feel like plotting yourself.</span><span class="fr">Exportez l'historique de production enregistré en CSV et emportez-le dans un tableur — kWh quotidiens, tendances sur plusieurs jours, tout ce que vous avez envie de tracer vous-même.</span><span class="zh">把記錄下來的發電歷史匯出成 CSV，帶進試算表——每日 kWh、多日趨勢，想自己畫什麼都行。</span></p></div></li><li><h3><span class="en">Smart notifications</span><span class="fr">Notifications intelligentes</span><span class="zh">智慧通知</span></h3><div><p><span class="en">Optional alerts: battery low or full, unexpected grid draw while the sun is shining, and daily production records. Plus launch at login, a theme override, an upfront permissions check, and a UI localized in French and English.</span><span class="fr">Alertes optionnelles : batterie faible ou pleine, soutirage réseau inattendu alors que le soleil brille, et records de production quotidienne. Plus le lancement à l'ouverture de session, le forçage du thème, une vérification des autorisations dès le départ et une interface localisée en français et en anglais.</span><span class="zh">選用警示：電池電量低或已滿、陽光充足時卻意外從電網用電，以及每日發電紀錄。另有登入時啟動、主題覆寫、預先的權限檢查，以及法文與英文的在地化介面。</span></p></div></li></ul></div></section>
+<section class="chapter" id="dashboard"><div class="wrap g12"><div class="ch-head"><h2><span class="en">The dashboard — and SunRoad in 3D</span><span class="fr">Le tableau de bord — et SunRoad en 3D</span><span class="zh">儀表板——以及 3D 的 SunRoad</span></h2><p><span class="en">A dedicated window for the whole picture — with the energy flow readable as a schematic or as a Sankey since 2.2 — and, since 2.0, a real-3D scene of your home under its sun (SunRoad replaces the former Sun window; its analytics live on in the sidebar).</span><span class="fr">Une fenêtre dédiée pour la vue d'ensemble — avec le flux d'énergie lisible en schéma ou en Sankey depuis la 2.2 — et, depuis la 2.0, une vraie scène 3D de votre maison sous son soleil (SunRoad remplace l'ancienne fenêtre Soleil ; ses analyses vivent dans la barre latérale).</span><span class="zh">一個專屬視窗呈現全貌——自 2.2 起，能量流向可用示意圖或 Sankey 閱讀——而自 2.0 起，還有你家在陽光下的真 3D 場景（SunRoad 取代了先前的 Sun 視窗；其分析功能延續在側邊欄中）。</span></p></div><div class="ch-body"><div class="plates"><figure class="plate wide"><div class="pl"><img src="sunroad.png" alt="Zendure Monitor SunRoad window: a real-3D scene with the OpenStreetMap neighborhood (buildings and roads), the user&#x27;s house highlighted in amber, the sun&#x27;s arc with hourly markers, the compass ring, a ±48 h timeline at the bottom, and a sidebar with the panel-array orientation sliders, the 14-day production histogram and the ephemerides" width="2200" height="1520" loading="lazy" decoding="async"></div><figcaption><span class="fg"><span class="en">Fig.</span><span class="fr">Fig.</span><span class="zh">圖</span> 2</span><span class="en">SunRoad — your neighborhood from OpenStreetMap, your house in amber, the sun's real arc with its hourly markers, the ±48 h timeline, and the sidebar carrying the orientation sliders, production histogram and ephemerides.</span><span class="fr">SunRoad — votre quartier tiré d'OpenStreetMap, votre maison en ambre, l'arc réel du soleil avec ses repères horaires, la timeline ±48 h, et la barre latérale avec les curseurs d'orientation, l'histogramme de production et les éphémérides.</span><span class="zh">SunRoad——來自 OpenStreetMap 的街區、以琥珀色標示的你家、太陽的真實軌跡與每小時標記、±48 小時時間軸，以及載有方位滑桿、發電量直方圖與星曆的側邊欄。</span></figcaption></figure><figure class="plate"><div class="pl"><img src="dashboard.png" alt="Zendure Monitor dashboard: the Schéma / Sankey picker above a hub-centric energy-flow diagram with the SolarFlow at the center and panels, batteries, public grid, home and off-grid outlet as peripherals, plus production, battery, device and history cards" width="1640" height="2102" loading="lazy" decoding="async"></div><figcaption><span class="fg"><span class="en">Fig.</span><span class="fr">Fig.</span><span class="zh">圖</span> 3</span><span class="en">The dashboard in its <b>Schematic</b> reading: links animate only when energy actually flows, with live wattage — and with a Smart CT, the real grid draw and the home's total consumption.</span><span class="fr">Le tableau de bord en lecture <b>Schéma</b> : les liens ne s'animent que lorsque l'énergie circule vraiment, avec la puissance en direct — et avec un Smart CT, le vrai soutirage réseau et la consommation totale de la maison.</span><span class="zh"><b>示意圖</b>讀法下的儀表板：連線只在能量真正流動時才有動畫，並顯示即時瓦數——有 Smart CT 時，還有真實的電網用電與住家總用電。</span></figcaption></figure><figure class="plate"><div class="pl"><img src="dashboard-sankey.png" alt="The same energy-flow card read as a Sankey diagram: the public grid feeds the home through a wide band passing above the SolarFlow, while the solar production flows through the SolarFlow to the home, each ribbon&#x27;s width proportional to its wattage" width="1640" height="900" loading="lazy" decoding="async"></div><figcaption><span class="fg"><span class="en">Fig.</span><span class="fr">Fig.</span><span class="zh">圖</span> 4</span><span class="en">The same moment and the same numbers as a <b>Sankey</b>: ribbon width is the wattage. Here the grid (1.19 kW) feeds the house through a band that bypasses the SolarFlow entirely, while the solar production (435 W) flows through it — a proportion the schematic, with its constant-width links, cannot show.</span><span class="fr">Le même instant et les mêmes chiffres en <b>Sankey</b> : la largeur du ruban est la puissance. Ici le réseau (1,19 kW) alimente la maison par une bande qui contourne entièrement le SolarFlow, tandis que la production solaire (435 W) le traverse — une proportion que le schéma, avec ses liens de largeur constante, ne peut pas montrer.</span><span class="zh">同一時刻、同樣的數字，以 <b>Sankey</b> 呈現：帶狀寬度就是瓦數。這裡電網（1.19 kW）透過一條完全繞過 SolarFlow 的帶子供電給住家，而太陽能發電（435 W）則流經 SolarFlow——這種比例，連線寬度固定的示意圖無法呈現。</span></figcaption></figure></div></div></div></section><section class="chapter" id="connection"><div class="wrap g12"><div class="ch-head"><h2><span class="en">Three connection paths — your choice</span><span class="fr">Trois chemins de connexion — à vous de choisir</span><span class="zh">三種連線方式——由你選擇</span></h2><p><span class="en">Local-first by design, but never stuck: the app can reach your battery three different ways, and the bottom of the panel always tells you which one is in use, with a green/orange status dot.</span><span class="fr">Local d'abord par conception, mais jamais bloqué : l'app peut joindre votre batterie de trois façons différentes, et le bas du panneau vous indique toujours laquelle est utilisée, avec un point d'état vert/orange.</span><span class="zh">設計上本機優先，但從不受困：App 能以三種不同方式連到你的電池，面板底部永遠會以綠色／橘色狀態點告訴你目前使用哪一種。</span></p></div><div class="ch-body"><ul class="specs"><li><h3><span class="en">Local — primary host</span><span class="fr">Local — hôte principal</span><span class="zh">本機——主要主機</span></h3><div><p><span class="en">The default and the recommendation. Recent Zendure firmwares embed a plain HTTP server on the device itself — the <a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API. One <code>GET /properties/report</code> on your LAN every few seconds, found over Bonjour or by IP. No account, no broker, no credentials, nothing leaves your network.</span><span class="fr">Le mode par défaut et recommandé. Les firmwares Zendure récents embarquent un simple serveur HTTP sur l'appareil lui-même — l'API REST <a href="https://github.com/Zendure/zenSDK">zenSDK</a>. Un <code>GET /properties/report</code> sur votre réseau local toutes les quelques secondes, trouvé par Bonjour ou par IP. Pas de compte, pas de broker, pas d'identifiants, rien ne quitte votre réseau.</span><span class="zh">預設且推薦的方式。較新的 Zendure 韌體在裝置本身內建了一個簡單的 HTTP 伺服器——<a href="https://github.com/Zendure/zenSDK">zenSDK</a> REST API。每隔幾秒在區域網路上發出一次 <code>GET /properties/report</code>，透過 Bonjour 或 IP 找到裝置。不需帳號、不需 broker、不需憑證，資料不離開你的網路。</span></p></div></li><li><h3><span class="en">Local — fallback host (VPN)</span><span class="fr">Local — hôte de secours (VPN)</span><span class="zh">本機——備援主機（VPN）</span></h3><div><p><span class="en">Away from home? Set a second address — the same battery reached through a Tailscale or WireGuard tunnel. The app polls the primary host first and switches over automatically when it doesn't answer, then keeps checking the primary to switch back. Same local API, same data, still nothing shared with anyone.</span><span class="fr">Loin de chez vous ? Indiquez une seconde adresse — la même batterie joignable par un tunnel Tailscale ou WireGuard. L'app interroge d'abord l'hôte principal et bascule automatiquement quand il ne répond pas, puis continue de vérifier le principal pour y revenir. Même API locale, mêmes données, toujours rien de partagé avec personne.</span><span class="zh">不在家？設定第二個位址——透過 Tailscale 或 WireGuard 通道連到同一顆電池。App 會先輪詢主要主機，在它沒回應時自動切換，並持續檢查主要主機以便切回。同樣的本機 API、同樣的資料，依然不與任何人分享。</span></p></div></li><li><h3><span class="en">Zendure Cloud</span><span class="fr">Zendure Cloud</span><span class="zh">Zendure Cloud</span></h3><div><p><span class="en">New in 1.10, and optional. When the local API isn't reachable at all, switch the data source to Zendure's servers: paste the mobile app's <em>Authorization Cloud Key</em> (kept in the macOS Keychain) and the reports arrive in real time over MQTT, from anywhere — no VPN. Read-only by design: battery control stays local-only. Since 1.11 the switch can even be <b>automatic</b>, both ways.</span><span class="fr">Nouveau en 1.10, et optionnel. Quand l'API locale est totalement injoignable, basculez la source de données vers les serveurs de Zendure : collez l'<em>Authorization Cloud Key</em> de l'app mobile (conservée dans le trousseau macOS) et les rapports arrivent en temps réel par MQTT, de n'importe où — sans VPN. En lecture seule par conception : le contrôle de la batterie reste uniquement local. Depuis la 1.11, la bascule peut même être <b>automatique</b>, dans les deux sens.</span><span class="zh">1.10 新增，且為選用。當本機 API 完全無法連線時，把資料來源切換到 Zendure 的伺服器：貼上行動 App 的 <em>Authorization Cloud Key</em>（保存在 macOS 鑰匙圈中），報告就會透過 MQTT 從任何地方即時送達——不需 VPN。設計上為唯讀：電池控制只能在本機進行。自 1.11 起，切換甚至可以雙向<b>自動</b>進行。</span></p></div></li></ul><ul class="specs"><li><h3><span class="en">In the default local mode, nothing goes to Zendure's servers.</span><span class="fr">En mode local par défaut, rien ne part vers les serveurs de Zendure.</span><span class="zh">在預設的本機模式下，沒有任何資料送往 Zendure 的伺服器。</span></h3><div><p><span class="en">The app never signs in anywhere, has nothing to host and no token to store.</span><span class="fr">L'app ne se connecte jamais nulle part, n'a rien à héberger et aucun jeton à stocker.</span><span class="zh">App 從不登入任何地方，沒有東西需要託管，也沒有權杖需要儲存。</span></p></div></li><li><h3><span class="en">Bonjour discovery.</span><span class="fr">Découverte Bonjour.</span><span class="zh">Bonjour 探索。</span></h3><div><p><span class="en">The app finds the device (and the Smart CT meter) on your network by itself — or you can simply type an IP address.</span><span class="fr">L'app trouve d'elle-même l'appareil (et le compteur Smart CT) sur votre réseau — ou vous pouvez simplement saisir une adresse IP.</span><span class="zh">App 會自行在你的網路上找到裝置（以及 Smart CT 電表）——你也可以直接輸入 IP 位址。</span></p></div></li><li><h3><span class="en">The Smart CT is always read locally.</span><span class="fr">Le Smart CT est toujours lu en local.</span><span class="zh">Smart CT 永遠在本機讀取。</span></h3><div><p><span class="en">Zendure's cloud does not relay the meter's readings, so the real grid draw and total consumption appear whenever your Mac is on the home LAN — in either mode.</span><span class="fr">Le cloud de Zendure ne relaie pas les mesures du compteur : le vrai soutirage réseau et la consommation totale apparaissent dès que votre Mac est sur le réseau local de la maison — dans l'un ou l'autre mode.</span><span class="zh">Zendure 的雲端不會轉送電表讀數，因此只要你的 Mac 位於家中區域網路，就會顯示真實的電網用電與總用電——兩種模式皆然。</span></p></div></li><li><h3><span class="en">Automatic switching (1.11, opt-in).</span><span class="fr">Bascule automatique (1.11, à activer).</span><span class="zh">自動切換（1.11，需自行啟用）。</span></h3><div><p><span class="en">With a Cloud Key saved, the app moves to Cloud by itself after two failed local polls — typically when your Mac leaves the house — probes the local host every minute, and comes back to local as soon as the battery answers. The footer says "bascule auto" so you always know.</span><span class="fr">Avec une Cloud Key enregistrée, l'app passe d'elle-même en Cloud après deux interrogations locales échouées — typiquement quand votre Mac quitte la maison — sonde l'hôte local chaque minute, et revient au local dès que la batterie répond. Le pied de panneau indique « bascule auto » pour que vous le sachiez toujours.</span><span class="zh">儲存 Cloud Key 後，App 會在本機輪詢連續失敗兩次後自行切換到 Cloud——通常是你的 Mac 離開家時——每分鐘探測一次本機主機，並在電池回應後立刻切回本機。面板底部會顯示「bascule auto」，讓你隨時知道。</span></p></div></li></ul><p><span class="en"><b>A word on remote access:</b> the zenSDK API has no authentication whatsoever. Never port-forward the device's port 80 to the internet — use a VPN into your home network and point the fallback host at that, or use the Cloud mode. The <a href="https://github.com/vincentlauriat/ZendureMonitor#remote-access-away-from-home">README</a> walks through the Tailscale setup.</span><span class="fr"><b>Un mot sur l'accès à distance :</b> l'API zenSDK n'a aucune authentification. Ne redirigez jamais le port 80 de l'appareil vers internet — utilisez un VPN vers votre réseau domestique et pointez l'hôte de secours dessus, ou utilisez le mode Cloud. Le <a href="https://github.com/vincentlauriat/ZendureMonitor#remote-access-away-from-home">README</a> détaille la configuration Tailscale.</span><span class="zh"><b>關於遠端存取：</b>zenSDK API 完全沒有任何驗證。絕對不要把裝置的 80 埠轉發到網際網路——請使用連回家中網路的 VPN，並把備援主機指向它，或改用 Cloud 模式。<a href="https://github.com/vincentlauriat/ZendureMonitor#remote-access-away-from-home">README</a> 一步步說明了 Tailscale 的設定方式。</span></p></div></div></section><section class="chapter" id="hardware"><div class="wrap g12"><div class="ch-head"><h2><span class="en">Supported hardware</span><span class="fr">Matériel pris en charge</span><span class="zh">支援的硬體</span></h2><p><span class="en">Developed and tested on a <b>SolarFlow 2400 Pro</b>. Any Zendure device that ships the local zenSDK REST API should work:</span><span class="fr">Développé et testé sur un <b>SolarFlow 2400 Pro</b>. Tout appareil Zendure qui embarque l'API REST locale zenSDK devrait fonctionner :</span><span class="zh">在 <b>SolarFlow 2400 Pro</b> 上開發與測試。任何內建本機 zenSDK REST API 的 Zendure 裝置都應該能用：</span></p></div><div class="ch-body"><p>SolarFlow 2400 Pro · SolarFlow 2400 AC · SolarFlow 2400 AC+ · SolarFlow 2400 AC Pro · SolarFlow 800 Pro · SolarFlow 800 Plus · SolarFlow 1600 AC+ · SolarFlow 3000 Mix AC+ · SolarFlow 4000 Mix</p><p><span class="en">If discovery finds nothing, the local API may simply be disabled on your unit — adding a <b>HEMS</b> integration in the Zendure mobile app and then quitting it is the documented way to turn it on for good.</span><span class="fr">Si la découverte ne trouve rien, l'API locale est peut-être simplement désactivée sur votre unité — ajouter une intégration <b>HEMS</b> dans l'app mobile Zendure puis la quitter est la méthode documentée pour l'activer définitivement.</span><span class="zh">如果探索找不到任何東西，可能只是你的裝置停用了本機 API——在 Zendure 行動 App 中新增 <b>HEMS</b> 整合後再退出，是官方文件記載的永久啟用方式。</span></p></div></div></section><section class="chapter" id="install"><div class="wrap g12"><div class="ch-head"><h2><span class="en">Install</span><span class="fr">Installation</span><span class="zh">安裝</span></h2></div><div class="ch-body"><ol class="steps"><li><p><span class="en"><b>Download the DMG</b> from the <a href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">latest release</a> — signed and notarized, so it opens without a Gatekeeper detour.</span><span class="fr"><b>Téléchargez le DMG</b> depuis la <a href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">dernière release</a> — signé et notarié, il s'ouvre donc sans détour par Gatekeeper.</span><span class="zh">從<a href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest">最新版本</a><b>下載 DMG</b>——已簽章與公證，開啟時不必繞過 Gatekeeper。</span></p></li><li><p><span class="en"><b>Drag ZendureMonitor.app to <code>/Applications</code></b> and launch it. It lives in the menu bar, not in the Dock.</span><span class="fr"><b>Glissez ZendureMonitor.app dans <code>/Applications</code></b> et lancez-la. Elle vit dans la barre des menus, pas dans le Dock.</span><span class="zh"><b>把 ZendureMonitor.app 拖到 <code>/Applications</code></b> 並啟動。它住在選單列，而不是 Dock。</span></p></li><li><p><span class="en"><b>Accept the local network prompt</b> — macOS asks for it, and the app needs it to reach the battery on your LAN.</span><span class="fr"><b>Acceptez la demande d'accès au réseau local</b> — macOS la pose, et l'app en a besoin pour joindre la batterie sur votre réseau local.</span><span class="zh"><b>接受區域網路存取提示</b>——macOS 會詢問，而 App 需要它才能連到你區域網路上的電池。</span></p></li><li><p><span class="en"><b>Point it at your device.</b> Click the sun icon → Settings → scan the network (or type the IP address) → test the connection. Done.</span><span class="fr"><b>Indiquez-lui votre appareil.</b> Cliquez sur l'icône soleil → Réglages → analysez le réseau (ou saisissez l'adresse IP) → testez la connexion. C'est fait.</span><span class="zh"><b>把它指向你的裝置。</b>點太陽圖示 → 設定 → 掃描網路（或輸入 IP 位址）→ 測試連線。完成。</span></p></li></ol><p><span class="en">Updates land in-app afterwards through <a href="https://sparkle-project.org">Sparkle</a> — no need to come back here.</span><span class="fr">Les mises à jour arrivent ensuite dans l'app via <a href="https://sparkle-project.org">Sparkle</a> — inutile de revenir ici.</span><span class="zh">之後的更新會透過 <a href="https://sparkle-project.org">Sparkle</a> 直接在 App 內送達——不必再回到這裡。</span></p><p><span class="en">Need more? The full user guide covers every window, the widgets, battery control, remote access and troubleshooting — in <a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/fr">French</a> or <a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/en">English</a>, also on the <a href="https://github.com/vincentlauriat/ZendureMonitor/wiki">wiki</a>.</span><span class="fr">Besoin de plus ? Le guide utilisateur complet couvre chaque fenêtre, les widgets, le contrôle de la batterie, l'accès à distance et le dépannage — en <a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/fr">français</a> ou en <a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/en">anglais</a>, et aussi sur le <a href="https://github.com/vincentlauriat/ZendureMonitor/wiki">wiki</a>.</span><span class="zh">需要更多資訊？完整的使用者指南涵蓋每個視窗、小工具、電池控制、遠端存取與疑難排解——提供<a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/fr">法文</a>與<a href="https://github.com/vincentlauriat/ZendureMonitor/tree/main/docs/guide/en">英文</a>版，也可在 <a href="https://github.com/vincentlauriat/ZendureMonitor/wiki">wiki</a> 上閱讀。</span></p></div></div></section><section class="chapter" id="light"><div class="wrap g12"><div class="ch-head"><h2><span class="en">Light appearance too</span><span class="fr">En apparence claire aussi</span><span class="zh">也有淺色外觀</span></h2><p><span class="en">The panel follows the system appearance — and you can pin it to dark or light if you'd rather it didn't follow along.</span><span class="fr">Le panneau suit l'apparence du système — et vous pouvez le fixer en sombre ou en clair si vous préférez qu'il ne suive pas.</span><span class="zh">面板會跟隨系統外觀——如果你不希望它跟著變，也可以固定為深色或淺色。</span></p></div><div class="ch-body"><div class="plates"><figure class="plate"><div class="pl"><img src="panel-light.png" alt="The same Zendure Monitor panel rendered in the macOS light theme" width="640" height="1762" loading="lazy" decoding="async"></div><figcaption><span class="fg"><span class="en">Fig.</span><span class="fr">Fig.</span><span class="zh">圖</span> 5</span><span class="en">The same panel, with the system set to light.</span><span class="fr">Le même panneau, avec le système en apparence claire.</span><span class="zh">同一個面板，系統設為淺色時。</span></figcaption></figure></div></div></div></section>
+<section class="close"><div class="wrap g12"><h2><span class="en">Your SolarFlow, in the menu bar</span><span class="fr">Votre SolarFlow, dans la barre des menus</span><span class="zh">你的 SolarFlow，就在選單列</span></h2><div class="c-r"><p><span class="en">Free &amp; open source (MIT) · macOS 14+ · signed &amp; notarized DMG · Sparkle auto-updates · local-first</span><span class="fr">Gratuit et open source (MIT) · macOS 14+ · DMG signé et notarié · mises à jour automatiques Sparkle · local d'abord</span><span class="zh">免費開源（MIT）· macOS 14+ · 已簽章與公證的 DMG · Sparkle 自動更新 · 本機優先</span></p><div class="acts"><a class="btn" href="https://github.com/vincentlauriat/ZendureMonitor/releases/latest"><span class="en">Download for macOS</span><span class="fr">Télécharger pour macOS</span><span class="zh">下載 macOS 版</span></a><a class="lnk" href="https://github.com/vincentlauriat/ZendureMonitor"><span class="en">View on GitHub</span><span class="fr">Voir sur GitHub</span><span class="zh">在 GitHub 上檢視</span><svg class="arw" viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h11M9 4l4 4-4 4"/></svg></a></div></div></div></section>
+</main>
+<footer class="colophon"><div class="wrap g12"><div class="c1"><h2>Zendure Monitor</h2><p><span class="en">Work no.</span><span class="fr">Réalisation n°</span><span class="zh">作品編號</span> <span class="num">22</span> <span class="en">in the works of Vincent Lauriat</span><span class="fr">dans les réalisations de Vincent Lauriat</span><span class="zh">收錄於 Vincent Lauriat 作品集</span>.</p><p><a href="https://vincentlauriat.github.io/#w22"><span class="en">All works</span><span class="fr">Toutes les réalisations</span><span class="zh">全部作品</span></a></p></div><div class="c2"><h2><span class="en">Source</span><span class="fr">Source</span><span class="zh">原始碼</span></h2><p><a href="https://github.com/vincentlauriat/ZendureMonitor">github.com/vincentlauriat/ZendureMonitor</a></p><p><span class="en">MIT License</span><span class="fr">Licence MIT</span><span class="zh">MIT 授權</span> · © 2026 Vincent Lauriat</p><p><span class="en">An independent open-source project. Not affiliated with Zendure.</span><span class="fr">Un projet open source indépendant. Sans lien avec Zendure.</span><span class="zh">獨立的開源專案，與 Zendure 無關。</span></p></div><div class="c3"><h2><span class="en">About this page</span><span class="fr">À propos de cette page</span><span class="zh">關於本頁</span></h2><p><span class="en">Set in Schibsted Grotesk, on the grid of the book it belongs to.</span><span class="fr">Composée en Schibsted Grotesk, sur la grille du livre auquel elle appartient.</span><span class="zh">以 Schibsted Grotesk 排版，沿用其所屬作品集的網格。</span></p></div></div></footer>
+<script src="/assets/monograph/v1/monograph.js"></script>
 </body>
 </html>
